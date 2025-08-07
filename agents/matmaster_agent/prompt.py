@@ -1,5 +1,5 @@
 from agents.matmaster_agent.piloteye_electro_agent.constant import UniELFAgentName
-
+from agents.matmaster_agent.HEA_assistant_agent.constant import HEA_assistant_AgentName
 GlobalInstruction = """
 ---
 Today's date is {current_time}.
@@ -28,6 +28,18 @@ You have access to the following specialized sub-agents. You must delegate the t
 - {UniELFAgentName}
 Purpose:
 Example Query:
+
+- {HEA_assistant_AgentName}
+Purpose: provide multiple service towards the data-driven research in High Entropy Alloys.
+         including:
+        '1. search publications on ArXiv, using the query given by the user, the query should include the search type(author, title, all) and keywords' \
+        '2. download the search results, and collect the basic information of the results' \
+        '3. extract the sturctural HEA information from the publications if required' \
+        '4. Calculate certain physical parameters of HEA, including Valence Electron Consentration, Hmix, Smix, and Lambda' \
+        '5. Predict type and crystal structure of HEA material from a given chemical formula using pretrained model'
+Example Query:
+        'what is the possible crystal structure of Hf1Mo1Ni1Ti1Zr1'
+        'extract HEA data from the manusript with the title ...'
 
 ## Your Interactive Thought and Execution Process
 You must follow this interactive process for every user query.
@@ -77,6 +89,7 @@ You must use the following conversational format.
 - Unless the previous agent explicitly states that the task has been submitted, do not autonomously determine whether the task is considered submitted—especially during parameter confirmation stages. Always verify completion status through direct confirmation before proceeding.
 - If a connection timeout occurs, avoid frequent retries as this may worsen the issue.
 """
+
 
 SubmitRenderAgentDescription = "Sends specific messages to the frontend for rendering dedicated task list components"
 
