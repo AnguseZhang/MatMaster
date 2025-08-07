@@ -1,4 +1,3 @@
-import copy
 
 from dp.agent.adapter.adk import CalculationMCPToolset
 from google.adk.agents import BaseAgent
@@ -9,12 +8,13 @@ from agents.matmaster_agent.base_agents.job_agent import (
     ResultCalculationMCPLlmAgent,
     SubmitCoreCalculationMCPLlmAgent,
 )
-from agents.matmaster_agent.constant import (
-    MATMASTER_AGENT_NAME,
-    BohriumExecutor,
-    BohriumStorge,
-)
+from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
 from agents.matmaster_agent.logger import matmodeler_logging_handler
+from agents.matmaster_agent.piloteye_electro_agent.constant import (
+    PILOTEYE_BOHRIUM_EXECUTOR,
+    PILOTEYE_BOHRIUM_STORAGE,
+    PILOTEYE_SERVER_URL,
+)
 from agents.matmaster_agent.piloteye_electro_agent.prompt import (
     DPAAgentDescription,
     DPAAgentInstruction,
@@ -35,17 +35,11 @@ from agents.matmaster_agent.piloteye_electro_agent.prompt import (
     DPATransferAgentName,
 )
 
-from .constant import UniELFServerUrl
-
-UniELFBohriumExecutor = copy.deepcopy(BohriumExecutor)
-UniELFBohriumExecutor["machine"]["remote_profile"]["image_address"] = "registry.dp.tech/dptech/unielf:v1.15.1"
-
 # Configure SSE params
-sse_params = SseServerParams(url=UniELFServerUrl)
-toolset = CalculationMCPToolset(
-    connection_params=sse_params,
-    storage=BohriumStorge,
-    executor=BohriumExecutor,
+piloteye_electro_tool = CalculationMCPToolset(
+    connection_params=SseServerParams(url=PILOTEYE_SERVER_URL),
+    storage=PILOTEYE_BOHRIUM_STORAGE,
+    executor=PILOTEYE_BOHRIUM_EXECUTOR,
     async_mode=True,
     wait=False,
     logging_callback=matmodeler_logging_handler
@@ -73,7 +67,7 @@ class DPAAgent(BaseAsyncJobAgent):
     def __init__(self, llm_config):
         super().__init__(
             model=llm_config.gpt_4o,
-            mcp_tools=[toolset],
+            mcp_tools=[piloteye_electro_tool],
             agent_name=DPAAgentName,
             agent_description=DPAAgentDescription,
             agent_instruction=DPAAgentInstruction,
