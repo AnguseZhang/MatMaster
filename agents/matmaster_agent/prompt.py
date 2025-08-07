@@ -1,8 +1,11 @@
+
 from agents.matmaster_agent.DPACalculator_agent.constant import DPACalulator_AGENT_NAME
 from agents.matmaster_agent.piloteye_electro_agent.constant import (
     PILOTEYE_ELECTRO_AGENT_NAME,
 )
+from agents.matmaster_agent.HEA_assistant_agent.constant import HEA_assistant_AgentName
 from agents.matmaster_agent.optimade_database_agent.constant import OPTIMADE_DATABASE_AGENT_NAME
+
 
 GlobalInstruction = """
 ---
@@ -33,6 +36,19 @@ You have access to the following specialized sub-agents. You must delegate the t
 Purpose:
 Example Query:
 
+
+- {HEA_assistant_AgentName}
+Purpose: provide multiple service towards the data-driven research in High Entropy Alloys.
+         including:
+        '1. search publications on ArXiv, using the query given by the user, the query should include the search type(author, title, all) and keywords' \
+        '2. download the search results, and collect the basic information of the results' \
+        '3. extract the sturctural HEA information from the publications if required' \
+        '4. Calculate certain physical parameters of HEA, including Valence Electron Consentration, Hmix, Smix, and Lambda' \
+        '5. Predict type and crystal structure of HEA material from a given chemical formula using pretrained model'
+Example Query:
+        'what is the possible crystal structure of Hf1Mo1Ni1Ti1Zr1'
+        'extract HEA data from the manusript with the title ...'
+
 - {DPACalulator_AGENT_NAME}
 Purpose: Performs deep potential-based simulations, including:
     - structure building
@@ -41,6 +57,7 @@ Purpose: Performs deep potential-based simulations, including:
     - phonon calculation
     - elastic constants
     - NEB calculations
+
 
 ## Your Interactive Thought and Execution Process
 You must follow this interactive process for every user query.
@@ -99,6 +116,7 @@ Example Queries:
 - “查找3个包含 Al、O、Mg 的晶体结构，并保存为 CIF 文件。”
 - “查找一个 OZr 的结构，我想要全部信息。”
 """
+
 
 SubmitRenderAgentDescription = "Sends specific messages to the frontend for rendering dedicated task list components"
 
