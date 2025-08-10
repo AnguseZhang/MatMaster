@@ -30,6 +30,13 @@ MODEL_MAPPING = {
 
 DEFAULT_MODEL = "azure/gpt-4o-mini"
 
+DB_NAMES = {
+    'polymer': 'polymer_db',
+    'electrolyte': 'electrolyte_db', 
+    'solid_electrolyte': 'solid_electrolyte_db',
+    'default': 'polymer_db'  
+}
+
 
 class LLMConfig(object):
     _instance = None
@@ -65,6 +72,10 @@ class LLMConfig(object):
                 )
             )
 
+        # Helper to get database name
+        def _init_database(db_type: str = 'default'):
+            return DB_NAMES.get(db_type, DB_NAMES['default'])
+
         self.gpt_4o = _init_model(gpt_provider, gpt_4o)
         self.gemini_2_0_flash = _init_model(litellm_provider, gemini_2_0_flash)
         self.gemini_2_5_flash = _init_model(litellm_provider, gemini_2_5_flash)
@@ -74,6 +85,11 @@ class LLMConfig(object):
 
         # tracing
         self.opik_tracer = OpikTracer()
+        
+        # database configuration
+        self.polymer_db = _init_database('polymer')
+        self.electrolyte_db = _init_database('electrolyte')
+        self.solid_electrolyte = _init_database('solid_electrolyte')
 
         self._initialized = True
 

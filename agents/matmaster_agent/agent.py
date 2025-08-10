@@ -35,6 +35,7 @@ from agents.matmaster_agent.traj_analysis_agent.agent import (
 from agents.matmaster_agent.organic_reaction_agent.agent import (
     init_organic_reaction_agent,
 )
+from agents.matmaster_agent.ssebrain_agent.agent import init_solid_state_electrolyte_research_agent
 
 
 class MatMasterAgent(HandleFileUploadLlmAgent):
@@ -51,6 +52,8 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
         apex_agent = init_apex_agent(llm_config, use_deepseek=True)
         abacus_calculator_agent = init_abacus_calculation_agent(llm_config)
         organic_reaction_agent = init_organic_reaction_agent(llm_config)
+        ssebrain_agent = init_solid_state_electrolyte_research_agent()
+
 
         super().__init__(
             name=MATMASTER_AGENT_NAME,
@@ -66,7 +69,8 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
                 crystalformer_agent,
                 abacus_calculator_agent,
                 invar_agent,
-                organic_reaction_agent
+                organic_reaction_agent,
+                ssebrain_agent,
             ],
             global_instruction=GlobalInstruction,
             instruction=AgentInstruction,
