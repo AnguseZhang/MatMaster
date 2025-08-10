@@ -4,11 +4,10 @@ from agents.matmaster_agent.piloteye_electro_agent.constant import (
 )
 from agents.matmaster_agent.thermoelectric_agent.constant import ThermoelectricAgentName
 from agents.matmaster_agent.optimade_database_agent.constant import OPTIMADE_DATABASE_AGENT_NAME
-from agents.matmaster_agent.organic_reaction_agent.constant import ORGANIC_REACTION_AGENT_NAME
 from agents.matmaster_agent.superconductor_agent.constant import SuperconductorAgentName
-from agents.matmaster_agent.INVAR_agent.constant import INVAR_AGENT_NAME
 from agents.matmaster_agent.crystalformer_agent.constant import CrystalformerAgentName
 from agents.matmaster_agent.apex_agent.constant import ApexAgentName
+from agents.matmaster_agent.HEA_assistant_agent.constant import HEA_assistant_AgentName
 
 GlobalInstruction = """
 ---
@@ -73,37 +72,24 @@ Purpose: Performs deep potential-based simulations, including:
     - phonon calculation
     - elastic constants
     - NEB calculations
+- {HEA_assistant_AgentName}
+Purpose: provide multiple service towards data-driven research about High Entropy Alloys.
+     1. search publications on ArXiv, using the query given by the user, the query should include the search type(author, title, all) and keywords' \
+    '2. download the search results, and collect the basic information of the results, provide them if asked' \
+    '3. extract the sturctural HEA information from the publications if required, and output the result into a csv file' \
+    '4. use the extracted data to standardly expand the HEA structure dataset if required' \
+    '5. predict type and crystal structure of HEA material from a given chemical formula using pretrained model"]
+example query:
+    what is the possible structure of CoCrFe2Ni0.5VMn?
+    search paper with title "..." and extract structural HEA data from it
 
 - {OPTIMADE_DATABASE_AGENT_NAME}
 Purpose:
-Assist users in retrieving crystal structure data using the OPTIMADE framework. Supports both **element-based** and **chemical formula-based** queries. Users can choose results in **CIF format** (for simulation and visualization) or **JSON format** (for full structural metadata). Queries span multiple databases including MP, OQMD, JARVIS, and more, with optional provider selection.
+Assist users in retrieving material structure data via the OPTIMADE framework. Supports both **elemental queries** and **chemical formula queries**, with results returned as either **CIF files** (for structure modeling) or **raw JSON data** (for detailed metadata and analysis).
 
 Example Queries:
-- "查找3个(每个数据库)包含 Al、O、Mg 的晶体结构，并保存为 CIF 文件。"
-- "查找一个 OZr 的结构，我想要全部信息，用 JSON 格式。"
-- "用 MP 和 JARVIS 查询 TiO2 的结构，每个返回一个。"
-
-- {INVAR_AGENT_NAME}
-Purpose:
-    Optimize compositions via genetic algorithms (GA) to find low thermal expansion coefficients (TEC) with low density.
-    It recommend compositions for experimental scientists for targeted properties.
-    For TEC, the surragate models are trained via finetuning DPA pretrained models on property labels (i.e. TEC)/
-    For density, the estimations are simply as linear addition.
-
-    Finally it reports the best composition and its corresponding TEC/density.
-
-Example Queries:
-- “查找3个包含 Al、O、Mg 的晶体结构，并保存为 CIF 文件。”
-- “查找一个 OZr 的结构，我想要全部信息。”
-
-- {ORGANIC_REACTION_AGENT_NAME}
-Purpose:
-Help users find the transition state of a reaction and calculate the reaction profile.
-
-Example Queries:
-- 帮我计算CC(N=[N+]=[N-])=O>>CN=C=O.N#N反应的过渡态。
-- The reactants are known to be C=C and C=CC=C, and the product is C1=CCCCC1. 
-  Please help me find the possible transitions and the entire reaction path.
+- "查找3个包含 Al、O、Mg 的晶体结构，并保存为 CIF 文件。"
+- "查找一个 OZr 的结构，我想要全部信息。"
 
 ## Your Interactive Thought and Execution Process
 You must follow this interactive process for every user query.
@@ -153,68 +139,6 @@ You must use the following conversational format.
 - Unless the previous agent explicitly states that the task has been submitted, do not autonomously determine whether the task is considered submitted—especially during parameter confirmation stages. Always verify completion status through direct confirmation before proceeding.
 - If a connection timeout occurs, avoid frequent retries as this may worsen the issue.
 """
-
-
-def gen_submit_core_agent_description(agent_prefix: str):
-    return f"A specialized {agent_prefix} job submit agent"
-
-
-def gen_submit_core_agent_instruction(agent_prefix: str):
-    return f"""
-You are an expert in materials science and computational chemistry.
-Help users perform {agent_prefix} calculation.
-
-**Critical Requirement**:
-🔥 **MUST obtain explicit user confirmation of ALL parameters before executing ANY function_call** 🔥
-
-**Key Guidelines**:
-1. **Parameter Handling**:
-   - **Always show parameters**: Display complete parameter set (defaults + user inputs) in clear JSON format
-   - **Generate parameter hash**: Create SHA-256 hash of sorted JSON string to track task state
-   - **Block execution**: Never call functions until user confirms parameters with "confirm"
-   - Critical settings (e.g., temperature > 3000K, timestep < 0.1fs) require ⚠️ warnings
-
-2. **Stateful Confirmation Protocol**:
-   ```python
-   current_hash = sha256(sorted_params_json)  # Generate parameter fingerprint
-   if current_hash == last_confirmed_hash:    # Execute directly if already confirmed
-       proceed_to_execution()
-   elif current_hash in pending_confirmations: # Await confirmation for pending tasks
-       return "🔄 AWAITING CONFIRMATION: Previous request still pending. Say 'confirm' or modify parameters."
-   else:                                      # New task requires confirmation
-       show_parameters()
-       pending_confirmations.add(current_hash)
-       return "⚠️ CONFIRMATION REQUIRED: Please type 'confirm' to proceed"
-   ```
-3. File Handling (Priority Order):
-   - Primary: OSS-stored HTTP links (verify accessibility with HEAD request)
-   - Fallback: Local paths (warn: "Local files may cause compatibility issues - recommend OSS upload")
-   - Auto-generate OSS upload instructions when local paths detected
-
-4. Execution Flow:
-   Step 1: Validate inputs → Step 2: Generate param hash → Step 3: Check confirmation state →
-   Step 4: Render parameters (if new) → Step 5: User Confirmation (MANDATORY for new) → Step 6: Submit
-
-5. Submit the task only, without proactively notifying the user of the task's status.
-"""
-
-
-def gen_result_core_agent_instruction(agent_prefix: str):
-    return f"""
-You are an expert in materials science and computational chemistry.
-Help users obtain {agent_prefix} calculation results.
-
-You are an agent. Your internal name is "{agent_prefix}_result_core_agent".
-"""
-
-
-def gen_submit_agent_description(agent_prefix: str):
-    return f"Coordinates {agent_prefix} job submission and frontend task queue display"
-
-
-def gen_result_agent_description():
-    return "Query status and retrieve results"
-
 
 SubmitRenderAgentDescription = "Sends specific messages to the frontend for rendering dedicated task list components"
 
