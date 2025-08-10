@@ -38,8 +38,12 @@ from agents.matmaster_agent.organic_reaction_agent.agent import (
 from agents.matmaster_agent.HEA_assistant_agent.agent import (
     init_HEA_assistant_agent
 )
-class MatMasterAgent(HandleFileUploadLlmAgent):
+from agents.matmaster_agent.ssebrain_agent.agent import init_solid_state_electrolyte_research_agent
+from agents.matmaster_agent.chembrain_agent.agent import init_chembrain_agent
 
+
+
+class MatMasterAgent(HandleFileUploadLlmAgent):
     def __init__(self, llm_config):
         piloteye_electro_agent = init_piloteye_electro_agent(llm_config)
         traj_analysis_agent = init_traj_analysis_agent(llm_config)
@@ -53,6 +57,8 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
         abacus_calculator_agent = init_abacus_calculation_agent(llm_config)
         organic_reaction_agent = init_organic_reaction_agent(llm_config)
         HEA_assistant_agent = init_HEA_assistant_agent(llm_config)
+        ssebrain_agent = init_solid_state_electrolyte_research_agent(llm_config)
+        chembrain_agent = init_chembrain_agent(llm_config)
 
         super().__init__(
             name=MATMASTER_AGENT_NAME,
@@ -69,7 +75,10 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
                 abacus_calculator_agent,
                 invar_agent,
                 organic_reaction_agent,
-                HEA_assistant_agent
+                HEA_assistant_agent,
+                ssebrain_agent,
+                chembrain_agent
+                
             ],
             global_instruction=GlobalInstruction,
             instruction=AgentInstruction,

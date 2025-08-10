@@ -30,7 +30,6 @@ MODEL_MAPPING = {
 
 DEFAULT_MODEL = "azure/gpt-4o-mini"
 
-
 class LLMConfig(object):
     _instance = None
 
