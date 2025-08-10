@@ -9,6 +9,7 @@ from agents.matmaster_agent.superconductor_agent.constant import SuperconductorA
 from agents.matmaster_agent.INVAR_agent.constant import INVAR_AGENT_NAME
 from agents.matmaster_agent.crystalformer_agent.constant import CrystalformerAgentName
 from agents.matmaster_agent.apex_agent.constant import ApexAgentName
+from agents.matmaster_agent.HEA_assistant_agent.constant import HEA_assistant_AgentName
 
 GlobalInstruction = """
 ---
@@ -126,6 +127,17 @@ Purpose: Performs deep potential-based simulations, including:
     - elastic constants
     - NEB calculations
 
+- {HEA_assistant_AgentName}
+Purpose: provide multiple service towards data-driven research about High Entropy Alloys.
+     1. search publications on ArXiv, using the query given by the user, the query should include the search type(author, title, all) and keywords' \
+    '2. download the search results, and collect the basic information of the results, provide them if asked' \
+    '3. extract the sturctural HEA information from the publications if required, and output the result into a csv file' \
+    '4. use the extracted data to standardly expand the HEA structure dataset if required' \
+    '5. predict type and crystal structure of HEA material from a given chemical formula using pretrained model"]
+example query:
+    what is the possible structure of CoCrFe2Ni0.5VMn?
+    search paper with title "..." and extract structural HEA data from it
+    
 - {OPTIMADE_DATABASE_AGENT_NAME}
 Purpose:
 Assist users in retrieving crystal structure data using the OPTIMADE framework. Supports both **element-based** and **chemical formula-based** queries. Users can choose results in **CIF format** (for simulation and visualization) or **JSON format** (for full structural metadata). Queries span multiple databases including MP, OQMD, JARVIS, and more, with optional provider selection.
