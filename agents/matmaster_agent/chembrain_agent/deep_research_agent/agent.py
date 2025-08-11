@@ -69,10 +69,12 @@ class GroupPaperAgent(BaseAgent):
 
     async def _run_async_impl(self, ctx):
         paper_list = ctx.session.state.get('paper_list', [])
+        
         print(f"paper_list_raw: {len(paper_list)}")
         if paper_list is None or len(paper_list) == 0:
             ctx._event_actions.escalate = True
             return
+        
         POOL = list(paper_list.keys())
         run_id = secrets.token_hex(2)
 
@@ -118,4 +120,4 @@ def init_deep_research_agent(llm_config):
     return root_agent
 
 
-root_agent = init_deep_research_agent(MatMasterLlmConfig)
+# root_agent = init_deep_research_agent(MatMasterLlmConfig)

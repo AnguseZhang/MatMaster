@@ -31,4 +31,4 @@ def init_smiles_conversion_agent(llm_config):
     return SMILESConversionAgent(llm_config)
 
 
-root_agent = init_smiles_conversion_agent(MatMasterLlmConfig)
+# root_agent = init_smiles_conversion_agent(MatMasterLlmConfig)

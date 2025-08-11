@@ -15,8 +15,8 @@ from agents.matmaster_agent.chembrain_agent.constant import LOADING_STATE_KEY, L
 
 class ReportAgent(LlmAgent):
     def __init__(self, llm_config):
-        selected_model = llm_config.gemini_2_5_pro
-
+        # selected_model = llm_config.gemini_2_5_pro
+        selected_model = llm_config.gpt_4o
         super().__init__(name=ReportAgentName,
                          model=selected_model,
                          instruction=instructions_v4_en,

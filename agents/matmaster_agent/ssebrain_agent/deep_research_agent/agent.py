@@ -32,7 +32,12 @@ def paper_list_before_agent(callback_context: CallbackContext):
     if paper_list is None or len(paper_list) == 0:
         callback_context._event_actions.escalate = True
         return
-    callback_context.state['paper_list'] = {f'paper{i+1}': paper for i, paper in enumerate(paper_list)}
+    
+    # Remove duplicates from paper_list
+    unique_papers = list(set(paper_list))
+    print(f"Original paper count: {len(paper_list)}, After deduplication: {len(unique_papers)}")
+    
+    callback_context.state['paper_list'] = {f'paper{i+1}': paper for i, paper in enumerate(unique_papers)}
     return
 
 # 这是一个组论文代理，它会分配任务并动态创建一个并行代理来处理多个论文阅读任务。

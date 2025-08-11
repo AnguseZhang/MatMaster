@@ -17,9 +17,10 @@ from ...tools.io import save_llm_request
 def save_response(callback_context: CallbackContext, llm_response: LlmResponse) -> None:
     if llm_response.content.parts[0].text:
         original_text = llm_response.content.parts[0].text
-        print(f"response:{original_text}")
-        with open("raw-response.md", "w", encoding="utf-8") as f:
-            f.write(f"response: {original_text}")
+        # print(f"response:{original_text}")
+        # Disabled file output to avoid generating unwanted files
+        # with open("raw-response.md", "w", encoding="utf-8") as f:
+        #     f.write(f"response: {original_text}")
 
 # Create a function to update the invoke message with the agent name
 def create_update_invoke_message_with_agent_name(agent_name: str):
@@ -39,8 +40,25 @@ def create_update_invoke_message_with_agent_name(agent_name: str):
         db_manager = DatabaseManager('solid_electrolyte_db')
         fetch_paper_content = db_manager.init_fetch_paper_content()
         paper_content = fetch_paper_content(paper_url)
+        
+        # Debug: Print paper content fetch result
+        print(f"Fetching content for DOI: {paper_url}")
+        print(f"Paper content result: {type(paper_content)}")
+        if isinstance(paper_content, dict):
+            print(f"Available keys: {paper_content.keys()}")
+            print(f"Has main_txt: {'main_txt' in paper_content}")
+            print(f"Main text length: {len(paper_content.get('main_txt', ''))}")
+        
         message = paper_content.get('main_txt', '')
         picture_mapping = paper_content.get('figures', [])
+        
+        # Check if content was retrieved successfully
+        if not message and 'error' in paper_content:
+            print(f"Error retrieving paper content: {paper_content['error']}")
+            message = f"Paper content not available. Error: {paper_content['error']}"
+        elif not message:
+            print(f"Warning: Empty main_txt for DOI: {paper_url}")
+            message = f"Paper content is empty for DOI: {paper_url}"
 
         contents = []
         try:
@@ -61,7 +79,7 @@ def create_update_invoke_message_with_agent_name(agent_name: str):
 def init_paper_agent(llm_config, name, run_id):
     """Initialize the researcher agent with the given configuration."""
     # Select the model based on the configuration
-    selected_model = llm_config.gpt_4o
+    selected_model = llm_config.gemini_2_5_pro
 
     paper_agent = LlmAgent(
         name=f"paper_agent_{name}",

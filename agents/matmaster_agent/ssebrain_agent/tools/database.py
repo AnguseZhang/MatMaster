@@ -103,7 +103,7 @@ class DatabaseManager:
         url = self.table_url
         headers = self.get_headers
 
-        def get_table_field_info(table_name: str, field_name: str):
+        def get_table_field_info(table_name: str, field_name: str) -> dict:
             """
             Get the info of a field in a table
             Args:
@@ -131,6 +131,14 @@ class DatabaseManager:
                 )
                 response = requests.request("POST", self.query_url, headers=self.query_headers, data=payload)
                 result = json.loads(response.text)
+                
+                # Check if the response is valid
+                if result.get('code') != 0:
+                    return {'error': f"Database query failed: {result.get('message', 'Unknown error')}"}
+                
+                if not result.get('data') or not result['data'].get('list'):
+                    return {'error': f"No field information found for table {table_name}"}
+                
                 fields_info = {}
                 for item in result['data']['list']:
                     fields_info[item['field']] = {'field': item['field'], 'type': item['type'], 'description': item['description'],
@@ -162,7 +170,7 @@ class DatabaseManager:
         headers = self.query_headers
 
         def query_table(table_name: str, filters_json: str, selected_fields: Optional[List[str]] = None,
-                        page: Optional[int] = 1, page_size: Optional[int] = 50):
+                        page: Optional[int] = 1, page_size: Optional[int] = 50) -> dict:
             """
             Query the table
             Args:
@@ -199,6 +207,20 @@ class DatabaseManager:
 
             if selected_fields is None:
                 selected_fields = self.table_schema.get(table_name, {}).get('primary_fields', None)
+            
+            # Ensure DOI is always included in selected_fields if the table has it
+            table_fields = self.table_schema.get(table_name, {}).get('fields', [])
+            if 'doi' in table_fields and selected_fields is not None:
+                if 'doi' not in selected_fields:
+                    selected_fields = selected_fields + ['doi']
+                    print(f"Added 'doi' to selected_fields for table {table_name}")
+            elif 'DOI' in table_fields and selected_fields is not None:
+                if 'DOI' not in selected_fields:
+                    selected_fields = selected_fields + ['DOI']  
+                    print(f"Added 'DOI' to selected_fields for table {table_name}")
+            
+            print(f"Final selected_fields: {selected_fields}")
+            
             payload = json.dumps(
                 {
                     'userId': 14962,
@@ -236,22 +258,43 @@ class DatabaseManager:
         figure_table_name = self.paper_figure_table
         query_table = self.init_query_table()
 
-        def fetch_paper_content(paper_doi):
+        def fetch_paper_content(paper_doi: str) -> dict:
+            """
+            Fetch the full content of a paper by its DOI
+            Args:
+                paper_doi: The DOI of the paper to fetch
+            Returns:
+                A dictionary containing the paper content with keys 'main_txt' and 'figures'
+            """
             print(f"paper_doi:{paper_doi}")
             # get paper text
             if text_table_name is None:
-                return '', None
+                print("Error: text_table_name is None")
+                return {'error': 'No text table configured', 'main_txt': '', 'figures': None}
+            
             fields = tables.get(text_table_name, {}).get('primary_fields', None)
+            print(f"Text table: {text_table_name}, fields: {fields}")
+            
             filters_json = json.dumps({'type': 1, 'field': 'doi', 'operator': 'in', 'value': [paper_doi]})
+            print(f"Query filters: {filters_json}")
+            
             result = query_table(text_table_name, filters_json, fields, page=1, page_size=50)
+            print(f"Text query result: {result}")
+            
             full_text = None
             if result.get('result', None) and len(result['result']) > 0:
                 full_text = result['result'][0].get('main_txt')
                 if full_text is None:
-                    full_text = result['result'][0].get('main-text', '')
+                    full_text = result['result'][0].get('main_text', '')
+                print(f"Retrieved text length: {len(full_text) if full_text else 0}")
+            else:
+                print("No text results found")
+                if 'error' in result:
+                    print(f"Query error: {result['error']}")
 
             # get paper figures
             if figure_table_name is None:
+                print("Warning: figure_table_name is None")
                 return {'main_txt': full_text, 'figures': None}
             fields = tables.get(figure_table_name, {}).get('primary_fields', None)
             filters_json = json.dumps({'type': 1, 'field': 'doi', 'operator': 'in', 'value': [paper_doi]})
@@ -261,7 +304,13 @@ class DatabaseManager:
                 figures = result['result']
 
             if full_text is None and figures is None:
-                return {'error': 'No data found!', 'tool': 'fetch_paper_content'}
-            return {'main_txt': full_text, 'figures': figures}
+                error_msg = 'No text or figure data found!'
+                print(f"Final result: {error_msg}")
+                return {'error': error_msg, 'tool': 'fetch_paper_content', 'main_txt': '', 'figures': None}
+            
+            final_result = {'main_txt': full_text, 'figures': figures}
+            print(f"Final result keys: {final_result.keys()}")
+            print(f"Final text length: {len(full_text) if full_text else 0}")
+            return final_result
 
         return fetch_paper_content

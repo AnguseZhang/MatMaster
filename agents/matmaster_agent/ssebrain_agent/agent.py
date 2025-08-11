@@ -20,13 +20,13 @@ def init_solid_state_electrolyte_research_agent(llm_config):
         name="solid_state_electrolyte_research_agent",
         model=llm_config.gpt_4o,
         description="A solid state electrolyte research agent that can understand user's research questions and delegate research tasks to subagents including database queries, literature research.",
+        # Use either sub_agents OR AgentTool, not both
         sub_agents=[
             database_agent,
             deep_research_agent,
-            # data_analysis_agent,
+             # data_analysis_agent,
         ],
-        tools=[sse_database_tool, sse_deep_research_tool],
-        global_instruction=global_instruction,
+        # tools=[sse_database_tool, sse_deep_research_tool],
         instruction=instruction_en,
         before_agent_callback=prepare_state_before_agent,
     )

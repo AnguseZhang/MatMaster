@@ -9,15 +9,16 @@ def save_response(callback_context: CallbackContext, llm_response: LlmResponse) 
     """save llm response to file"""
     if llm_response.content.parts[0].text:
         original_text = llm_response.content.parts[0].text
-        print(f"response:{original_text}")
-        with open("response.md", "w", encoding="utf-8") as f:
-            f.write(f"response: {original_text}")
+        #print(f"response:{original_text}")
+        # Disabled file output to avoid generating unwanted files
+        # with open("response.md", "w", encoding="utf-8") as f:
+        #     f.write(f"response: {original_text}")
 
 
 def init_report_agent(llm_config):
     """Initialize the researcher agent with the given configuration."""
     # Select the model based on the configuration
-    selected_model = llm_config.gpt_4o
+    selected_model = llm_config.gemini_2_5_pro
 
     root_agent = LlmAgent(
         name="report_agent",

@@ -7,6 +7,7 @@ from google.adk.tools.tool_context import ToolContext
 from .prompt import instructions_v1
 from agents.matmaster_agent.llm_config import MatMasterLlmConfig
 from ..tools.database import DatabaseManager
+from ..callback import init_prepare_state_before_agent
 
 
 def save_query_results(
@@ -32,15 +33,18 @@ def init_database_agent(llm_config):
     db_manager = DatabaseManager('solid_electrolyte_db')
     get_table_field_info = db_manager.init_get_table_field_info()
     query_table = db_manager.init_query_table()
+    fetch_paper_content = db_manager.init_fetch_paper_content()
+    # Get the callback function that prepares the state
+    prepare_state_callback = init_prepare_state_before_agent(llm_config)
 
     database_agent = LlmAgent(
         name="database_agent",
         model=selected_model,
         instruction=instructions_v1,
         description="Construct database queries based on user's question and summarize the results.",
-        tools=[get_table_field_info, query_table],
+        tools=[get_table_field_info, query_table, fetch_paper_content],
         output_key="query_result",
-        # before_model_callback=update_invoke_message,
+        before_agent_callback=prepare_state_callback,
         after_tool_callback=save_query_results,
     )
     return database_agent
