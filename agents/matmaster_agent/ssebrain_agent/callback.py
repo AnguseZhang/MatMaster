@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, Union
+from typing import Optional, Union, Callable
 
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.models import LlmRequest, LlmResponse
@@ -8,19 +8,42 @@ from google.genai import types
 from .tools.database import DatabaseManager
 from ..constant import FRONTEND_STATE_KEY
 
+def combine_after_model_callbacks(*callbacks) -> Callable:
+    """组合多个 after_model_callback 函数为一个回调链
+    
+    与 before_model_callbacks 类似，但用于模型推理后的回调处理。
+    
+    Args:
+        *callbacks: 可变数量的回调函数，每个函数应有签名：
+                   async def callback(CallbackContext, LlmResponse) -> Optional[LlmResponse]
+                   
+    Returns:
+        Callable: 组合后的回调函数，可直接用于 after_model_callback 参数
+    """
+    async def combined_callback(callback_context: CallbackContext, llm_response: LlmResponse) -> Optional[LlmResponse]:
+        """按顺序执行所有回调函数，如果任一返回非None值则停止并返回该值"""
+        for callback in callbacks:
+            if callback is not None:
+                result = await callback(callback_context, llm_response)
+                if result is not None:
+                    return result
+        return None
+    return combined_callback
+
 
 # before_agent_callback
-def init_prepare_state_before_agent(llm_config):
+def init_ssebrain_before_agent(llm_config):
     """prepare state before agent runs"""
 
-    def prepare_state_before_agent(callback_context: CallbackContext) -> Union[types.Content, None]:
+    async def ssebrain_before_agent(callback_context: CallbackContext) -> Union[types.Content, None]:
         callback_context.state[FRONTEND_STATE_KEY] = callback_context.state.get(FRONTEND_STATE_KEY, {})
         callback_context.state[FRONTEND_STATE_KEY]['biz'] = callback_context.state[FRONTEND_STATE_KEY].get('biz', {})
 
-        callback_context.state['target_language'] = "zh"
+        callback_context.state['target_language'] = 'zh'  # 默认语言
         callback_context.state['current_time'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        callback_context.state['db_name'] = 'solid_electrolyte_db'
-        db_manager = DatabaseManager('solid_electrolyte_db')
+        callback_context.state['db_name'] = 'solid_state_electrolyte_db' # 使用默认数据库
+        db_manager = DatabaseManager('solid_state_electrolyte_db')
+        await db_manager.async_init() # Call the async init method
         callback_context.state['available_tables'] = db_manager.table_schema
 
         prompt = ""
@@ -47,16 +70,16 @@ def init_prepare_state_before_agent(llm_config):
                         }
                     )
 
-    return prepare_state_before_agent
+    return ssebrain_before_agent
 
 
 # before_model_callback
-async def before_model(callback_context: CallbackContext, llm_request: LlmRequest) -> Optional[LlmResponse]:
+async def ssebrain_before_model(callback_context: CallbackContext, llm_request: LlmRequest) -> Optional[LlmResponse]:
     return
 
 
 # after_model_callback
-async def after_model(callback_context: CallbackContext, llm_response: LlmResponse) -> Optional[LlmResponse]:
+async def ssebrain_after_model(callback_context: CallbackContext, llm_response: LlmResponse) -> Optional[LlmResponse]:
     return
 
 

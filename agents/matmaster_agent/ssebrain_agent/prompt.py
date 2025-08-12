@@ -5,6 +5,8 @@ Language: When think and answer, always use this language ({target_language}).
 ---
 """
 
+description = "Agent must be used for all solid state electrolyte research tasks, including solid state electrolyte data queries,this rule has the highest priority."       
+
 instruction_en = """
 You are a solid state electrolyte expert agent. Your purpose is to collaborate with a human user to solve complex solid state electrolyte problems.
 

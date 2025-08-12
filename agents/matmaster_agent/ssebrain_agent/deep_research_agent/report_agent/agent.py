@@ -1,31 +1,41 @@
+from datetime import datetime
+from typing import override, AsyncGenerator
+
 from google.adk.agents import LlmAgent
-from google.adk.agents.callback_context import CallbackContext
-from google.adk.models import LlmResponse
+from google.adk.agents.invocation_context import InvocationContext
+from google.adk.events import Event, EventActions
 
-from .prompt import instructions_v2_zh, instructions_v2_en
+from ....constant import TMP_FRONTEND_STATE_KEY
+from .callback import update_invoke_message, save_response
+from .constant import ReportAgentName, ReportAgentOutKey
+from .prompt import description
+from .prompt import instructions_v4_en
+from agents.matmaster_agent.ssebrain_agent.constant import LOADING_STATE_KEY, LOADING_END
 
 
-def save_response(callback_context: CallbackContext, llm_response: LlmResponse) -> None:
-    """save llm response to file"""
-    if llm_response.content.parts[0].text:
-        original_text = llm_response.content.parts[0].text
-        #print(f"response:{original_text}")
-        # Disabled file output to avoid generating unwanted files
-        # with open("response.md", "w", encoding="utf-8") as f:
-        #     f.write(f"response: {original_text}")
+class ReportAgent(LlmAgent):
+    def __init__(self, llm_config):
+        selected_model = llm_config.gemini_2_5_pro
+
+        super().__init__(name=ReportAgentName,
+                         model=selected_model,
+                         instruction=instructions_v4_en,
+                         description=description,
+                         output_key=ReportAgentOutKey,
+                         before_model_callback=update_invoke_message,
+                         after_model_callback=save_response)
+
+    @override
+    async def _run_async_impl(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
+        async for event in super()._run_async_impl(ctx):
+            if event.content:
+                print(datetime.now(), LOADING_END)
+                yield Event(
+                    author=self.name,
+                    actions=EventActions(state_delta={TMP_FRONTEND_STATE_KEY: {LOADING_STATE_KEY: LOADING_END}})
+                )
+            yield event
 
 
 def init_report_agent(llm_config):
-    """Initialize the researcher agent with the given configuration."""
-    # Select the model based on the configuration
-    selected_model = llm_config.gemini_2_5_pro
-
-    root_agent = LlmAgent(
-        name="report_agent",
-        model=selected_model,
-        instruction=instructions_v2_en,
-        description="Merge results from multiple paper agents in parallel and generate a deep research literature report.",
-        output_key="deep_research_report",
-        after_model_callback=save_response
-    )
-    return root_agent
+    return ReportAgent(llm_config)

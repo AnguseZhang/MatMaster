@@ -4,10 +4,9 @@ from google.adk.agents import LlmAgent
 from google.adk.tools.base_tool import BaseTool
 from google.adk.tools.tool_context import ToolContext
 
-from .prompt import instructions_v1
-from agents.matmaster_agent.llm_config import MatMasterLlmConfig
+from .prompt import *
+from ...llm_config import MatMasterLlmConfig
 from ..tools.database import DatabaseManager
-from ..callback import init_prepare_state_before_agent
 
 
 def save_query_results(
@@ -27,24 +26,26 @@ def save_query_results(
     return
 
 
-def init_database_agent(llm_config):
+def init_database_agent(config):
     """Initialize the database agent with the given configuration."""
-    selected_model = llm_config.gpt_4o
-    db_manager = DatabaseManager('solid_electrolyte_db')
+    selected_model = config.gpt_4o
+    db_manager = DatabaseManager('solid_state_electrolyte_db')
     get_table_field_info = db_manager.init_get_table_field_info()
     query_table = db_manager.init_query_table()
-    fetch_paper_content = db_manager.init_fetch_paper_content()
-    # Get the callback function that prepares the state
-    prepare_state_callback = init_prepare_state_before_agent(llm_config)
+    get_table_field = db_manager.init_get_table_fields()
 
     database_agent = LlmAgent(
-        name="database_agent",
+        name="sse_database_agent",
         model=selected_model,
-        instruction=instructions_v1,
-        description="Construct database queries based on user's question and summarize the results.",
-        tools=[get_table_field_info, query_table, fetch_paper_content],
+        # instruction=instructions_v1,
+        instruction=instructions_v1_zh,
+        description="Search the database based on user's needs and briefly summarize the results.",
+        tools=[get_table_field_info, query_table, get_table_field],
         output_key="query_result",
-        before_agent_callback=prepare_state_callback,
+        # before_model_callback=update_invoke_message,
         after_tool_callback=save_query_results,
     )
     return database_agent
+
+
+# root_agent = init_database_agent(MatMasterLlmConfig)

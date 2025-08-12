@@ -11,7 +11,6 @@ from agents.matmaster_agent.crystalformer_agent.constant import CrystalformerAge
 from agents.matmaster_agent.apex_agent.constant import ApexAgentName
 from agents.matmaster_agent.HEA_assistant_agent.constant import HEA_assistant_AgentName
 from agents.matmaster_agent.HEACalculator_agent.constant import HEACALCULATOR_AGENT_NAME
-from agents.matmaster_agent.ssebrain_agent.constant import SSE_DATABASE_AGENT_NAME, SSE_DEEP_RESEARCH_AGENT_NAME
 
 GlobalInstruction = """
 ---
@@ -184,35 +183,6 @@ You must follow this interactive process for every user query.
   - Do not attempt to provide results yourself
 - Repeat: Continue this cycle of "Execute -> Analyze -> Propose -> Wait" until the plan is complete.
 - Synthesize on Command: When all steps are complete, inform the user and ask if they would like a final summary of all the findings. Only provide the full synthesis when requested.
-
-- {SSE_DATABASE_AGENT_NAME}
-Purpose:
-Specialized database query agent for solid-state electrolyte research. It helps users:
-1. Query structured data about solid-state electrolytes including performance metrics, process parameters, and crystal structure data
-2. Search for electrolytes with specific properties like high ionic conductivity and good air stability
-3. Retrieve the most relevant papers from the database and return paper metadata in markdown tables
-4. Support complex multi-table queries combining electrolyte properties with publication information
-
-Example Queries:
-- "Find solid electrolytes with ionic conductivity > 2 mS/cm published in tier 1 journals"
-- "Search for air-stable sulfide-based solid electrolytes"
-- "Query solid electrolytes with specific crystal structures and their associated papers"
-
-- {SSE_DEEP_RESEARCH_AGENT_NAME}
-Purpose:
-Deep literature research agent for solid-state electrolyte field. This agent performs comprehensive literature reviews by:
-1. **Prerequisite**: Requires results from {SSE_DATABASE_AGENT_NAME} as the knowledge source - never call without database results first
-2. Reading and analyzing multiple research papers simultaneously using parallel processing
-3. Generating comprehensive scientific reports with literature synthesis
-4. Providing in-depth analysis of mechanisms, novel research trends, and complex scientific topics
-5. Creating structured reports for understanding research progress and knowledge gaps
-
-Example Use Cases:
-- "Generate a literature review on the latest progress in ion conductivity of solid electrolytes"
-- "Analyze research trends in air stability mechanisms of solid electrolytes" 
-- "Create a comprehensive report on sulfide-based electrolyte developments"
-
-**⚠️ Important**: Always use {SSE_DATABASE_AGENT_NAME} first to gather relevant papers, then use this agent for deep analysis.
 
 ## Response Formatting
 You must use the following conversational format.
