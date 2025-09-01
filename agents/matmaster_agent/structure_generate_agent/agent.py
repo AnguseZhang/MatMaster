@@ -27,7 +27,7 @@ from .constant import StructureGenerateServerUrl
 
 StructureGenerateBohriumExecutor = copy.deepcopy(BohriumExecutor)
 StructureGenerateBohriumStorge = copy.deepcopy(BohriumStorge)
-StructureGenerateBohriumExecutor["machine"]["remote_profile"]["image_address"] = "registry.dp.tech/dptech/dp/native/prod-788025/structure-generate-agent:small"
+StructureGenerateBohriumExecutor["machine"]["remote_profile"]["image_address"] = "registry.dp.tech/dptech/dpa-calculator:fc572408"
 StructureGenerateBohriumExecutor["machine"]["remote_profile"]["machine_type"] = "c8_m31_1 * NVIDIA T4"
 
 sse_params = SseServerParams(url=StructureGenerateServerUrl)
