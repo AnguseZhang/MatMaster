@@ -16,6 +16,12 @@ llm_contents_report.json
 /user_questions.txt
 /traces/
 
-evalate_threads/evaluate.py
-evalate_threads/quick_test.py
-evalate_threads/test_adk_intergration.py
+/evaluate_threads/evaluate.py
+/evaluate_threads/quick_test.py
+/evaluate_threads/test_adk_intergration.py
+
+agents/matmaster_agent/.adk/
+
+agents/matmaster_agent/test_mat.evalset.json
+evaluate_threads/test_adk_integration.py
+tests/

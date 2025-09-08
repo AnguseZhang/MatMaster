@@ -14,6 +14,16 @@ dependencies = [
     "anyio>=4.10.0",
     "pytest-asyncio>=1.1.0",
     "litellm>=1.74.15.post2",
+    "langgraph>=0.6.6",
+    "langchain-azure-ai>=0.1.4",
+    "langchain-litellm>=0.2.2",
+    "loguru>=0.7.3",
+    "mem0ai>=0.1.116",
+    "langsmith>=0.4.20",
+    "langchain[azure-ai,openai]>=0.3.27",
+    "ipykernel>=6.30.1",
+    "pip>=25.2",
+    "langchain-tavily>=0.2.11",
 ]
 
 [tool.setuptools]
