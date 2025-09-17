@@ -7,6 +7,11 @@ on:
       - edited # 注意：增加了 edited 类型，标题编辑时也会触发
       - synchronize
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 jobs:
   label-by-title:
     runs-on: ubuntu-latest
