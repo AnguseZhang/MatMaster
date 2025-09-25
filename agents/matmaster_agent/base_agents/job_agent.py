@@ -592,6 +592,10 @@ class ResultCalculationMCPLlmAgent(CalculationMCPLlmAgent):
                     logger.error(query_res.content[0].text)
                     raise RuntimeError(query_res.content[0].text)
                 status = query_res.content[0].text
+                logger.info(
+                    f'[ResultCalculationMCPLlmAgent] origin_job_id = {origin_job_id}, executor = {Executor}, '
+                    f'status = {status}'
+                )
                 if status != 'Running':
                     ctx.session.state['long_running_jobs'][origin_job_id][
                         'job_status'
