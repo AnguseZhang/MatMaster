@@ -10,6 +10,7 @@ from agents.matmaster_agent.document_parser_agent.constant import (
     DocumentParserAgentName,
 )
 from agents.matmaster_agent.DPACalculator_agent.constant import DPACalulator_AGENT_NAME
+from agents.matmaster_agent.finetune_dpa_agent.constant import FinetuneDPAAgentName
 from agents.matmaster_agent.HEA_assistant_agent.constant import HEA_assistant_AgentName
 from agents.matmaster_agent.HEACalculator_agent.constant import HEACALCULATOR_AGENT_NAME
 from agents.matmaster_agent.INVAR_agent.constant import INVAR_AGENT_NAME
@@ -52,6 +53,7 @@ class JobResult(BaseModel):
 class BohrJobInfo(BaseModel):
     origin_job_id: str
     job_id: Union[int, str]
+    job_detail_url: str
     job_status: JobStatus
     job_name: str
     job_result: Optional[List[JobResult]] = None
@@ -95,6 +97,7 @@ class MatMasterTargetAgentEnum(str, Enum):
     SuperConductorAgent = SuperconductorAgentName
     ThermoElectricAgent = ThermoelectricAgentName
     TrajAnalysisAgent = TrajAnalysisAgentName
+    FinetuneDPAAgent = FinetuneDPAAgentName
 
 
 class UserContent(BaseModel):

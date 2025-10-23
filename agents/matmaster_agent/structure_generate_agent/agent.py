@@ -59,7 +59,6 @@ class StructureGenerateAgent(BaseAsyncJobAgent):
                 'build_molecule_structure_from_g2database',
                 'build_molecule_structures_from_smiles',
                 'add_cell_for_molecules',
-                'build_surface_slab',
                 'build_surface_adsorbate',
                 'build_surface_interface',
                 'get_structure_info',

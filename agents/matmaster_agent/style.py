@@ -40,3 +40,77 @@ def get_job_complete_card(i18n: I18N, job_id):
     ">{i18n.t("ResultRetrieving")}...</div>
 </div>
 """
+
+
+def hallucination_card(i18n: I18N):
+    def _inner_css():
+        return """
+    <style>
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        @keyframes progress {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(250%); }
+        }
+    </style>
+</div>
+"""
+
+    return (
+        f"""
+<div style="
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    color: white;
+    padding: 24px 32px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    max-width: 500px;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    margin: 20px auto;
+">
+    <div style="
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+    ">
+        <div style="
+            font-size: 28px;
+            margin-right: 16px;
+            animation: pulse 2s infinite;
+        ">🔄</div>
+        <div style="flex: 1;">
+            <div style="
+                font-size: 18px;
+                font-weight: 600;
+                margin-bottom: 4px;
+            ">{i18n.t("JobSubmitHallucination")}</div>
+            <div style="
+                font-size: 14px;
+                opacity: 0.9;
+            ">{i18n.t("JobSubmitHallucinationAction")}</div>
+        </div>
+    </div>
+    <div style="
+        height: 4px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 2px;
+        margin-top: 16px;
+        overflow: hidden;
+    ">
+        <div style="
+            height: 100%;
+            width: 60%;
+            background: white;
+            border-radius: 2px;
+            animation: progress 2s ease-in-out infinite;
+        "></div>
+    </div>"""
+        + _inner_css()
+    )

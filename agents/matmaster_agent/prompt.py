@@ -4,6 +4,7 @@ from agents.matmaster_agent.document_parser_agent.constant import (
     DocumentParserAgentName,
 )
 from agents.matmaster_agent.DPACalculator_agent.constant import DPACalulator_AGENT_NAME
+from agents.matmaster_agent.finetune_dpa_agent.constant import FinetuneDPAAgentName
 from agents.matmaster_agent.HEA_assistant_agent.constant import HEA_assistant_AgentName
 from agents.matmaster_agent.HEACalculator_agent.constant import HEACALCULATOR_AGENT_NAME
 from agents.matmaster_agent.INVAR_agent.constant import INVAR_AGENT_NAME
@@ -49,6 +50,7 @@ Your primary workflow is to:
    - Upon user confirmation or applied parameters, execute the step using the sub-agent.
 6. **Result Handling**:
    - Present the execution result and a brief analysis.
+   - If the result contains images in markdown format, display them to the user using proper markdown syntax.
    - Await user instruction: either proceed to the next step in the plan, adjust parameters, or modify the plan.
 
 **Response Formatting:**
@@ -125,6 +127,7 @@ When multiple tools can perform the same calculation or property analysis, you M
    - "mrdice" → {MrDice_Agent_Name}
    - "traj" → {TrajAnalysisAgentName}
    - "sse" → SSE-related agents (context dependent)
+   - "finetune_dpa" → {FinetuneDPAAgentName}
 
 3. **If No Explicit Tool Mention**: When user asks for property calculations without specifying a tool:
    - **Identify Overlapping Tools**: Identify ALL tools that can perform the requested calculation
@@ -267,7 +270,7 @@ You have access to the following specialized sub-agents. You must delegate the t
    - Purpose: Perform simulations based on deep potential (深度学习势函数) for materials.
    - Note that DPA2.4-7M and DPA3.1-3M are both default options. DPA2.4-7M is faster; while DPA3.1-3M is more accurate. Ask the user to choose if they don't specify. If the user requires continuous calculation, use DPA2.4-7M as default and inform the user about the difference.
    - Capabilities:
-     - Structure building (bulk, interface, molecule, adsorbates) and optimization
+     - Structure optimization
      - Molecular dynamics for alloys
      - Phonon calculations
      - Elastic constants via ML potentials
@@ -507,6 +510,14 @@ Any progress or completion message without an actual sub-agent call IS A CRITICA
       - "这个文献里面计算的材料用的是什么结构？"
       - "分析附件中的实验报告，提取所有提到的材料及其性能"
       - "从这个网页中提取有关石墨烯的性能数据"
+16. **{FinetuneDPAAgentName}** - **FinetuneDPA material specialist**
+   - Purpose: Fine tune pretrained DPA model with user provided label data
+   - Capabilities:
+     -Based on user given dpdata to fine tune pretrained dpa model to provide with user finetuned model which is aligned with their requirement.
+   - Workflow: Prepare train.json -> split train and valid dataset -> fine tune pretrained dpa model
+   - If user mention fine tune model, use all tools in FinetuneDPAAgentName
+
+8. **{SuperconductorAgentName}** - **Superconductor critical temperature specialist**
 
 ## CRITICAL RULES TO PREVENT HALLUCINATION
 0. Strictly follow the rules below UNLESS the USERS explicitly instruct you to break them.
@@ -717,6 +728,44 @@ def gen_params_check_info_agent_instruction():
 Your task is to confirm with users the parameters needed to call tools. Do not directly invoke any tools.
 If any parameter is a file path or filename for INPUT files, you must request an accessible HTTP URL containing the file instead of accepting a local filename.
 For OUTPUT files, do not ask users to provide URLs - these will be automatically generated as OSS HTTP links after successful execution.
+"""
+
+
+def gen_tool_call_info_instruction():
+    return """
+You are an AI agent that matches user requests to available tools. Your task is to analyze the user's query and return a JSON object with the following structure:
+{{
+  "tool_name": "string",
+  "tool_args": {{"param1_name": "value1", "param2_name": "value2"}},
+  "missing_tool_args": ["param3_name", "param4_name"]
+}}
+
+**Key Rules:**
+- The `tool_args` object should contain parameter names as keys and the actual values extracted from the user's request as values
+- For parameters where values cannot be extracted from the user's request, include the parameter name in the `missing_tool_args` list
+- If any parameter involves an input file, the parameter name should indicate it requires an HTTP URL (e.g., "file_url", "image_url")
+- For output file parameters, use appropriate names (e.g., "output_path", "result_file") - these will handle OSS URLs automatically
+- Only return the JSON object - do not execute any tools directly
+- Extract and include all available parameter values from the user's request in `tool_args`
+- List all missing required parameter names in the `missing_tool_args` array
+
+**Example Response:**
+{{
+  "tool_name": "image_processor",
+  "tool_args": {{
+    "image_url": "https://example.com/image.jpg",
+    "operation": "resize",
+    "width": 800
+  }},
+  "missing_tool_args": ["height", "output_format"]
+}}
+
+**Constraints:**
+- Return only valid JSON - no additional text or explanations
+- Include all available parameter values from the user's request in `tool_args`
+- List all missing required parameter names in `missing_tool_args`
+- Match the tool precisely based on the user's request
+- If no suitable tool is found, return an empty object: {{}}
 """
 
 

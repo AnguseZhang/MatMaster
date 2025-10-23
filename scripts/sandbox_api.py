@@ -76,10 +76,7 @@ def get_job_list(
 
 if __name__ == '__main__':
     authorization = os.getenv('BEARER_TOKEN')
-    get_job_detail(
-        'a467c59dfc73457b80f160b5700a832f', use_ticket=True, authorization=authorization
-    )
+    job_id = 'da2fc84fdf56443a9b600a3007a502b1'
     # use_ticket_get_job_list(['03b212ee76964c82bc58c1c2314fac79'], 110680, '19c1a7d4-2502-44fc-a58c-f29cce49986f')
-    # kill_job(
-    #     '03b212ee76964c82bc58c1c2314fac79', use_ticket=True, authorization=authorization
-    # )
+    kill_job(job_id, use_ticket=True, authorization=authorization)
+    get_job_detail(job_id, use_ticket=True, authorization=authorization)

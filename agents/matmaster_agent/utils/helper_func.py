@@ -12,6 +12,7 @@ from google.genai.types import Part
 from mcp.types import CallToolResult
 from yaml.scanner import ScannerError
 
+from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
 from agents.matmaster_agent.model import JobResult, JobResultType
 
 logger = logging.getLogger(__name__)
@@ -41,7 +42,9 @@ def update_llm_response(
             for index, part in enumerate(copy.deepcopy(llm_response.content.parts))
             if index in new_indices
         ]
-    logger.info(f"new_indices = {new_indices}")
+    logger.info(
+        f"[{MATMASTER_AGENT_NAME}]:[update_llm_response] new_indices = {new_indices}"
+    )
 
     return llm_response
 

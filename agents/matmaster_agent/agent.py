@@ -11,6 +11,7 @@ from agents.matmaster_agent.apex_agent.agent import init_apex_agent
 from agents.matmaster_agent.base_agents.io_agent import HandleFileUploadLlmAgent
 from agents.matmaster_agent.callback import (
     matmaster_check_job_status,
+    matmaster_hallucination_retry,
     matmaster_prepare_state,
     matmaster_set_lang,
 )
@@ -20,6 +21,7 @@ from agents.matmaster_agent.document_parser_agent.agent import (
     init_document_parser_agent,
 )
 from agents.matmaster_agent.DPACalculator_agent.agent import init_dpa_calculations_agent
+from agents.matmaster_agent.finetune_dpa_agent.agent import init_finetune_dpa_agent
 from agents.matmaster_agent.HEA_assistant_agent.agent import init_HEA_assistant_agent
 from agents.matmaster_agent.HEACalculator_agent.agent import init_hea_calculator_agent
 from agents.matmaster_agent.INVAR_agent.agent import init_invar_agent
@@ -77,6 +79,7 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
         chembrain_agent = init_chembrain_agent(llm_config)
         perovskite_agent = init_perovskite_agent(llm_config)
         document_parser_agent = init_document_parser_agent(llm_config)
+        finetune_dpa_agent = init_finetune_dpa_agent(llm_config)
 
         super().__init__(
             name=MATMASTER_AGENT_NAME,
@@ -99,6 +102,7 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
                 chembrain_agent,
                 perovskite_agent,
                 document_parser_agent,
+                finetune_dpa_agent,
             ],
             global_instruction=GlobalInstruction,
             instruction=AgentInstruction,
@@ -110,6 +114,7 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
                     prompt=MatMasterCheckTransferPrompt,
                     target_agent_enum=MatMasterTargetAgentEnum,
                 ),
+                matmaster_hallucination_retry,
             ],
         )
 

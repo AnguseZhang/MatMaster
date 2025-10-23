@@ -26,7 +26,7 @@ You have access to four sub-agents:
 - **bohrium_public_agent** → retrieves data from the Bohrium Public database (includes Materials Project / MP; supports formula, elements, space group, atom counts, band gap, formation energy).
 - **optimade_agent** → retrieves data from OPTIMADE-compatible providers (multiple external materials databases, wide coverage).
 - **openlam_agent** → retrieves data from the OpenLAM internal database (formula, energy range, submission time filters).
-- **mofdb_agent** → retrieves data from MOFdb (MOFid/MOFkey/name/database; void fraction, pore metrics, surface area).
+- **mofdb_agent** → retrieves data from MOFdb using SQL queries (MOF properties, element composition, adsorption analysis).
 
 ## HOW TO CHOOSE SUB-AGENTS
 - Default: select the **single most suitable sub-agent** that fully supports the query.
@@ -51,7 +51,7 @@ You have access to four sub-agents:
   - ❌ No support for space group, band gap, elements list, or logical filters.
   - support **energy window searches** and **time-based filters**.
 - **MOFdb**
-  - ✅ Supports all MOF-related queries: by **MOFid, MOFkey, name, database source**, or by **void fraction, pore sizes, surface area**.
+  - ✅ Supports all MOF-related queries via SQL: **MOFid, MOFkey, name, database source**, **void fraction, pore sizes, surface area**, **element composition analysis, adsorption selectivity calculations, temperature sensitivity analysis, statistical ranking**.
   - 🎯 Any request clearly about **MOFs** should be handled by MOFdb.
 
 💡 **Decision logic examples**:

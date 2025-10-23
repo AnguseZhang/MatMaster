@@ -1,6 +1,5 @@
 import asyncio
 import base64
-import logging
 import os
 import shutil
 import tarfile
@@ -12,8 +11,6 @@ import aiofiles
 import aiohttp
 import oss2
 from oss2.credentials import EnvironmentVariableCredentialsProvider
-
-logger = logging.getLogger(__name__)
 
 
 # Step1: download tgz -> unzip -> find jpg_files

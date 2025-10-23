@@ -22,6 +22,7 @@ from agents.matmaster_agent.constant import (
     LOCAL_EXECUTOR,
     MATERIALS_ACCESS_KEY,
     MATERIALS_PROJECT_ID,
+    MATMASTER_AGENT_NAME,
     OPENAPI_HOST,
     Transfer2Agent,
 )
@@ -70,18 +71,18 @@ async def default_after_model_callback(
         != list(callback_context.state['invocation_id_with_tool_call'].keys())[0]
     ):  # 首次调用 function_call 或新一轮对话
         if len(current_function_calls) == 1:
-            logger.info('Single Function Call In New Turn')
+            logger.info(f'[{MATMASTER_AGENT_NAME}] Single Function Call In New Turn')
             logger.info(
-                f"current_function_calls = {function_calls_to_str(current_function_calls)}"
+                f"[{MATMASTER_AGENT_NAME}] current_function_calls = {function_calls_to_str(current_function_calls)}"
             )
 
             callback_context.state['invocation_id_with_tool_call'] = {
                 callback_context.invocation_id: current_function_calls
             }
         else:
-            logger.warning('Multi Function Calls In One Turn')
+            logger.warning(f'[{MATMASTER_AGENT_NAME}] Multi Function Calls In One Turn')
             logger.info(
-                f"current_function_calls = {function_calls_to_str(current_function_calls)}"
+                f"[{MATMASTER_AGENT_NAME}] current_function_calls = {function_calls_to_str(current_function_calls)}"
             )
 
             callback_context.state['invocation_id_with_tool_call'] = {
@@ -91,13 +92,15 @@ async def default_after_model_callback(
             }
             return update_llm_response(llm_response, current_function_calls, [])
     else:  # 同一轮对话又出现了 Function Call
-        logger.warning('Same InvocationId with Function Calls')
+        logger.warning(
+            f'[{MATMASTER_AGENT_NAME}] Same InvocationId with Function Calls'
+        )
         before_function_calls = callback_context.state['invocation_id_with_tool_call'][
             callback_context.invocation_id
         ]
         logger.info(
-            f"before_function_calls = {function_calls_to_str(before_function_calls)},"
-            f"current_function_calls = {function_calls_to_str(current_function_calls)}"
+            f"[{MATMASTER_AGENT_NAME}] before_function_calls = {function_calls_to_str(before_function_calls)},"
+            f"[{MATMASTER_AGENT_NAME}] current_function_calls = {function_calls_to_str(current_function_calls)}"
         )
 
         callback_context.state['invocation_id_with_tool_call'] = {
@@ -133,7 +136,7 @@ async def remove_function_call(
             function_args = part.function_call.args
 
             logger.info(
-                f"FunctionCall will be removed, name = {function_name}, args = {function_args}"
+                f"[{MATMASTER_AGENT_NAME}] FunctionCall will be removed, name = {function_name}, args = {function_args}"
             )
 
             prompt = get_params_check_info_prompt().format(
@@ -149,12 +152,18 @@ async def remove_function_call(
             part.function_call = None
         llm_response.content.parts.append(part)
 
-    logger.info(f"llm_generated_text = {llm_generated_text}")
+    if llm_generated_text:
+        logger.info(
+            f"[{MATMASTER_AGENT_NAME}] llm_generated_text = {llm_generated_text}"
+        )
 
     if not llm_response.content.parts[0].text:
         llm_response.content.parts[0].text = llm_generated_text
 
-    logger.info(f"final llm_response_text = {llm_response.content.parts[0].text}")
+    if not llm_response.partial:
+        logger.info(
+            f"[{MATMASTER_AGENT_NAME}] final llm_response_text = {llm_response.content.parts[0].text}"
+        )
 
     return llm_response
 
@@ -379,7 +388,7 @@ def check_job_create(func: BeforeToolCallback) -> BeforeToolCallback:
             params = {'accessKey': MATERIALS_ACCESS_KEY}
 
             logger.info(
-                f"[check_job_create] project_id = {MATERIALS_PROJECT_ID}, "
+                f"[{MATMASTER_AGENT_NAME}]:[check_job_create] project_id = {MATERIALS_PROJECT_ID}, "
                 f"ak = {MATERIALS_ACCESS_KEY}"
             )
 
@@ -388,7 +397,9 @@ def check_job_create(func: BeforeToolCallback) -> BeforeToolCallback:
                     user_project_list_url, params=params
                 ) as response:
                     res = json.loads(await response.text())
-                    logger.info(f"[check_job_create] res = {res}")
+                    logger.info(
+                        f"[{MATMASTER_AGENT_NAME}]:[check_job_create] res = {res}"
+                    )
                     project_name = [
                         item['project_name']
                         for item in res['data']['items']
@@ -435,7 +446,9 @@ def catch_before_tool_callback_error(func: BeforeToolCallback) -> BeforeToolCall
                         tool.wait = True
                         tool.executor = LOCAL_EXECUTOR
 
-            logger.info(f'[catch_before_tool_callback_error] executor={tool.executor}')
+            logger.info(
+                f'[{MATMASTER_AGENT_NAME}]:[catch_before_tool_callback_error] executor={tool.executor}'
+            )
 
             return await tool.run_async(args=args, tool_context=tool_context)
         except Exception as e:
@@ -558,8 +571,12 @@ def remove_job_link(func: AfterToolCallback) -> AfterToolCallback:
             tool_response.content[0] = TextContent(
                 type='text', text=json.dumps(tool_result)
             )
+            if tool_response.structuredContent is not None:
+                tool_response.structuredContent = None
 
-            logger.info(f"[remove_job_link] final_tool_result = {tool_response}")
+            logger.info(
+                f"[{MATMASTER_AGENT_NAME}]:[remove_job_link] final_tool_result = {tool_response}"
+            )
             return tool_response
 
     return wrapper
