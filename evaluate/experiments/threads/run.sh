@@ -15,11 +15,14 @@ source $MATMASTER_DIR/.env # your .env
 set +a
 
 export PYTHONPATH=$MATMASTER_DIR:$PYTHONPATH
-export MAX_JOBS=3
+export MAX_JOBS=5
 
 TOTAL=$($PYTHON -c "
 import os
 import json
+if not os.path.exists(f'$THREADS_DIR/$1/logs'):
+    os.makedirs(f'$THREADS_DIR/$1/logs')
+
 with open('$THREADS_DIR/$1/$1.json') as f:
         dataset_json = json.load(f)
 print(len(dataset_json))
@@ -33,7 +36,7 @@ for ((i=0; i<$TOTAL; i++)); do
     echo "🚀 提交任务: item $i"
     sleep 3
     $PYTHON $THREADS_DIR/$1/$1_bash.py \
-        --item_id $i > item_$i.log 2>&1 &
+        --item_id $i > logs/item_$i.log 2>&1 &
 
     ((running_jobs++))
 

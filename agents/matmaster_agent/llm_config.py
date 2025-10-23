@@ -29,10 +29,10 @@ MODEL_MAPPING = {
     ('litellm_proxy', 'gemini-2.5-flash'): 'litellm_proxy/gemini-2.5-flash',
     ('litellm_proxy', 'gemini-2.5-pro'): 'litellm_proxy/gemini-2.5-pro',
     ('litellm_proxy', 'claude-sonnet-4'): 'litellm_proxy/claude-sonnet-4',
-    ('litellm_proxy', 'gpt-5'): 'litellm_proxy/azure/gpt-5',
+    ('azure', 'gpt-5'): 'azure/gpt-5',
     ('litellm_proxy', 'gpt-5-mini'): 'litellm_proxy/azure/gpt-5-mini',
     ('litellm_proxy', 'gpt-5-nano'): 'litellm_proxy/azure/gpt-5-nano',
-    ('litellm_proxy', 'gpt-5-chat'): 'litellm_proxy/azure/gpt-5-chat',
+    ('azure', 'gpt-5-chat'): 'azure/gpt-5-chat',
     # ("gemini", "gemini1.5-turbo"): "gemini/gemini1.5-turbo",
     # ("gemini", "gemini2.5-pro"): "gemini/gemini-2.5-pro-preview-03-25",
     # ("deepseek", "deepseek-reasoner"): "deepseek/deepseek-reasoner",
@@ -100,10 +100,10 @@ class LLMConfig:
         self.deepseek_chat = _init_model(deepseek_provider, deepseek_chat)
 
         # GPT-5 models
-        self.gpt_5 = _init_model(litellm_provider, gpt_5)
+        self.gpt_5 = _init_model(azure_provider, gpt_5)
         self.gpt_5_nano = _init_model(litellm_provider, gpt_5_nano)
         self.gpt_5_mini = _init_model(litellm_provider, gpt_5_mini)
-        self.gpt_5_chat = _init_model(litellm_provider, gpt_5_chat)
+        self.gpt_5_chat = _init_model(azure_provider, gpt_5_chat)
 
         # tracing
         self.opik_tracer = OpikTracer()

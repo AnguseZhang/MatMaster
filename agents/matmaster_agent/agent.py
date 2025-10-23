@@ -135,7 +135,7 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
 
             error_handel_agent = LlmAgent(
                 name='error_handel_agent',
-                model=LiteLlm(model='litellm_proxy/azure/gpt-5-chat'),
+                model=LiteLlm(model='azure/gpt-5-chat'),
             )
             # 调用错误处理 Agent
             async for error_handel_event in error_handel_agent.run_async(ctx):
