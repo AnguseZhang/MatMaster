@@ -3,7 +3,6 @@ from google.adk.agents import BaseAgent
 from google.adk.tools.mcp_tool.mcp_session_manager import SseServerParams
 
 from agents.matmaster_agent.base_agents.job_agent import BaseAsyncJobAgent
-from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
 from agents.matmaster_agent.CompDART_agent.constant import (
     COMPDART_AGENT_NAME,
     COMPDART_BOHRIUM_EXECUTOR,
@@ -14,6 +13,7 @@ from agents.matmaster_agent.CompDART_agent.prompt import (
     CompDARTAgentDescription,
     CompDARTAgentInstruction,
 )
+from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
 from agents.matmaster_agent.logger import matmodeler_logging_handler
 
 mcp_tools_compdrt = CalculationMCPToolset(

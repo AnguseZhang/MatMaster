@@ -16,6 +16,7 @@ from agents.matmaster_agent.callback import (
     matmaster_set_lang,
 )
 from agents.matmaster_agent.chembrain_agent.agent import init_chembrain_agent
+from agents.matmaster_agent.CompDART_agent.agent import init_compdrt_agent
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME, ModelRole
 from agents.matmaster_agent.document_parser_agent.agent import (
     init_document_parser_agent,
@@ -24,7 +25,6 @@ from agents.matmaster_agent.DPACalculator_agent.agent import init_dpa_calculatio
 from agents.matmaster_agent.finetune_dpa_agent.agent import init_finetune_dpa_agent
 from agents.matmaster_agent.HEA_assistant_agent.agent import init_HEA_assistant_agent
 from agents.matmaster_agent.HEACalculator_agent.agent import init_hea_calculator_agent
-from agents.matmaster_agent.CompDART_agent.agent import init_compdrt_agent
 from agents.matmaster_agent.llm_config import MatMasterLlmConfig
 from agents.matmaster_agent.model import MatMasterTargetAgentEnum
 from agents.matmaster_agent.MrDice_agent.agent import init_MrDice_agent
@@ -107,7 +107,7 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
                 perovskite_agent,
                 document_parser_agent,
                 finetune_dpa_agent,
-                task_orchestrator_agent
+                task_orchestrator_agent,
             ],
             global_instruction=GlobalInstruction,
             instruction=AgentInstruction,
