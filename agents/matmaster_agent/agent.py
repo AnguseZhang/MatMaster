@@ -24,7 +24,7 @@ from agents.matmaster_agent.DPACalculator_agent.agent import init_dpa_calculatio
 from agents.matmaster_agent.finetune_dpa_agent.agent import init_finetune_dpa_agent
 from agents.matmaster_agent.HEA_assistant_agent.agent import init_HEA_assistant_agent
 from agents.matmaster_agent.HEACalculator_agent.agent import init_hea_calculator_agent
-from agents.matmaster_agent.INVAR_agent.agent import init_invar_agent
+from agents.matmaster_agent.CompDART_agent.agent import init_compdrt_agent
 from agents.matmaster_agent.llm_config import MatMasterLlmConfig
 from agents.matmaster_agent.model import MatMasterTargetAgentEnum
 from agents.matmaster_agent.MrDice_agent.agent import init_MrDice_agent
@@ -71,7 +71,7 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
         dpa_calculator_agent = init_dpa_calculations_agent(llm_config)
         thermoelectric_agent = init_thermoelectric_agent(llm_config)
         superconductor_agent = init_superconductor_agent(llm_config)
-        invar_agent = init_invar_agent(llm_config)
+        compdart_agent = init_compdrt_agent(llm_config)
         structure_generate_agent = init_structure_generate_agent(llm_config)
         apex_agent = init_apex_agent(llm_config)
         abacus_calculator_agent = init_abacus_calculation_agent(llm_config)
@@ -98,7 +98,7 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
                 apex_agent,
                 structure_generate_agent,
                 abacus_calculator_agent,
-                invar_agent,
+                compdart_agent,
                 organic_reaction_agent,
                 HEA_assistant_agent,
                 hea_calculator_agent,
@@ -107,7 +107,7 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
                 perovskite_agent,
                 document_parser_agent,
                 finetune_dpa_agent,
-                task_orchestrator_agent,
+                task_orchestrator_agent
             ],
             global_instruction=GlobalInstruction,
             instruction=AgentInstruction,

@@ -13,7 +13,7 @@ from agents.matmaster_agent.DPACalculator_agent.constant import DPACalulator_AGE
 from agents.matmaster_agent.finetune_dpa_agent.constant import FinetuneDPAAgentName
 from agents.matmaster_agent.HEA_assistant_agent.constant import HEA_assistant_AgentName
 from agents.matmaster_agent.HEACalculator_agent.constant import HEACALCULATOR_AGENT_NAME
-from agents.matmaster_agent.INVAR_agent.constant import INVAR_AGENT_NAME
+from agents.matmaster_agent.CompDART_agent.constant import COMPDART_AGENT_NAME
 from agents.matmaster_agent.MrDice_agent.constant import MrDice_Agent_Name
 from agents.matmaster_agent.organic_reaction_agent.constant import (
     ORGANIC_REACTION_AGENT_NAME,
@@ -87,7 +87,7 @@ class MatMasterTargetAgentEnum(str, Enum):
     DPACalculatorAgent = DPACalulator_AGENT_NAME
     HEAAssistantAgent = HEA_assistant_AgentName
     HEACalculatorAgent = HEACALCULATOR_AGENT_NAME
-    INVARAgent = INVAR_AGENT_NAME
+    CompDARTAgent = COMPDART_AGENT_NAME
     MrDiceAgent = MrDice_Agent_Name
     OrganicReactionAgent = ORGANIC_REACTION_AGENT_NAME
     PerovskiteAgent = PerovskiteAgentName

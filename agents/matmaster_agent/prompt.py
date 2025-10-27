@@ -7,7 +7,7 @@ from agents.matmaster_agent.DPACalculator_agent.constant import DPACalulator_AGE
 from agents.matmaster_agent.finetune_dpa_agent.constant import FinetuneDPAAgentName
 from agents.matmaster_agent.HEA_assistant_agent.constant import HEA_assistant_AgentName
 from agents.matmaster_agent.HEACalculator_agent.constant import HEACALCULATOR_AGENT_NAME
-from agents.matmaster_agent.INVAR_agent.constant import INVAR_AGENT_NAME
+from agents.matmaster_agent.CompDART_agent.constant import COMPDART_AGENT_NAME
 from agents.matmaster_agent.MrDice_agent.constant import MrDice_Agent_Name
 from agents.matmaster_agent.organic_reaction_agent.constant import (
     ORGANIC_REACTION_AGENT_NAME,
@@ -135,7 +135,7 @@ When multiple tools can perform the same calculation or property analysis, you M
    - "dpa" → {DPACalulator_AGENT_NAME}
    - "abacus" → {ABACUS_AGENT_NAME}
    - "hea" → {HEACALCULATOR_AGENT_NAME} or {HEA_assistant_AgentName} (context dependent)
-   - "invar" → {INVAR_AGENT_NAME}
+   - "invar" → {COMPDART_AGENT_NAME}
    - "perovskite" → {PerovskiteAgentName}
    - "thermoelectric" → {ThermoelectricAgentName}
    - "superconductor" → {SuperconductorAgentName}
@@ -168,7 +168,7 @@ When multiple tools can perform the same calculation or property analysis, you M
 - Always enumerate ALL tools capable of the requested property first, THEN ask the user to choose
 
 **Property → Tool Enumeration (MUST use verbatim)**, if users have mentioned a specific tool, you MUST NOT list other tools, JUST transform to the specific agent for the tool:
-**IMPORTANT**: If user explicitly mentions a specific tool (e.g., "用ABACUS", "使用Apex", "用DPACalulator", "用HEA", "用INVAR", "用PEROVSKITE", "用THERMOELECTRIC", "用SUPERCONDUCTOR", "用PILOTEYE", "用ORGANIC", "用STRUCTURE", "用OPTIMADE", "用SSE", etc.), ONLY use that tool and do NOT list alternatives.
+**IMPORTANT**: If user explicitly mentions a specific tool (e.g., "用ABACUS", "使用Apex", "用DPACalulator", "用HEA", "用PEROVSKITE", "用THERMOELECTRIC", "用SUPERCONDUCTOR", "用PILOTEYE", "用ORGANIC", "用STRUCTURE", "用OPTIMADE", "用SSE", etc.), ONLY use that tool and do NOT list alternatives.
 **Default tool order** (only when user hasn't specified a tool):
 - Elastic constants (弹性常数):
   1) {ApexAgentName}
@@ -276,15 +276,18 @@ You have access to the following specialized sub-agents. You must delegate the t
      - "用 deepmd3.1.0_dpa3_Alloy_tongqi 数据库计算 TiZrNb 的形成能"
      - "生成 Fe-Ni 的凸包数据"
 
-4. **{INVAR_AGENT_NAME}** - **Thermal expansion optimization specialist**
-   - Purpose: Optimize compositions via genetic algorithms (GA) to find low thermal expansion coefficients (TEC) with low density
+4. **{COMPDART_AGENT_NAME}** - **Compositional optimization specialist**
+   - Purpose: Optimize compositions via genetic algorithms (GA) to find target properties with desired characteristics
    - Capabilities:
-     - Low thermal expansion coefficient alloys
-     - Density optimization via genetic algorithms
+     - Compositional optimization for arbitrary materials systems
+     - Multi-objective optimization with surrogate models or linear mixture rules
+     - Support for various properties beyond thermal expansion (e.g., density, band gap, etc.)
      - Recommend compositions for experimental scientists
      - Surrogate models trained via finetuning DPA pretrained models
    - Example Queries:
      - "设计一个TEC < 5的INVAR合金，要求包含Fe、Ni、Co、Cr元素, 其中Fe的比例大于0.35"
+     - "寻找一种具有低密度和特定热膨胀系数的合金"
+     - "优化一种材料的成分以获得目标属性"
 
 5. **{DPACalulator_AGENT_NAME}** - **Deep potential simulations**
    - Purpose: Perform simulations based on deep potential (深度学习势函数) for materials.
