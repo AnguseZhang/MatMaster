@@ -16,7 +16,10 @@ llm_contents_report.json
 /extract_user_question.py
 /user_questions.txt
 /traces/
-
+**temp**
+new**
+**log**
+**.ipynb
 evalate_threads/evaluate.py
 evalate_threads/quick_test.py
 evalate_threads/test_adk_intergration.py

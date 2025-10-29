@@ -102,11 +102,7 @@ class LLMConfig:
         self.gpt_5 = _init_model(azure_provider, gpt_5)
         self.gpt_5_nano = _init_model(litellm_provider, gpt_5_nano)
         self.gpt_5_mini = _init_model(litellm_provider, gpt_5_mini)
-<<<<<<< HEAD
         self.gpt_5_chat = _init_model(azure_provider, gpt_5_chat)
-=======
-        self.gpt_5_chat = _init_model(litellm_provider, gpt_5_chat, **llm_kwargs)
->>>>>>> b4dcfd9216abab39183adac6477a3762bf6314d0
 
         # tracing
         self.opik_tracer = OpikTracer()

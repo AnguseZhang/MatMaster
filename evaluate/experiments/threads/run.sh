@@ -36,7 +36,7 @@ for ((i=0; i<$TOTAL; i++)); do
     echo "🚀 提交任务: item $i"
     sleep 3
     $PYTHON $THREADS_DIR/$1/$1_bash.py \
-        --item_id $i > logs/item_$i.log 2>&1 &
+        --item_id $i > $THREADS_DIR/$1/logs/item_$i.log 2>&1 &
 
     ((running_jobs++))
 
