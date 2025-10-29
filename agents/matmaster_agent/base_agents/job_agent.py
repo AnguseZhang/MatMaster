@@ -26,6 +26,7 @@ from agents.matmaster_agent.constant import (
     JOB_RESULT_KEY,
     MATERIALS_ACCESS_KEY,
     MATERIALS_PROJECT_ID,
+    MATERIALS_TOOL_CALL_INFO,
     MATMASTER_AGENT_NAME,
     SANDBOX_JOB_DETAIL_URL,
     ModelRole,
@@ -268,23 +269,22 @@ class ToolCallInfoAgent(ErrorHandleLlmAgent):
                     if not event.partial:
                         try:
                             tool_call_info = json.loads(part.text)
+                            for system_job_result_event in context_function_event(
+                                ctx,
+                                self.name,
+                                MATERIALS_TOOL_CALL_INFO,
+                                tool_call_info,
+                                ModelRole,
+                            ):
+                                yield system_job_result_event
                         except BaseException:
                             logger.info(
                                 f'[{MATMASTER_AGENT_NAME}]:[{self.name}] raw_text = {part.text}'
                             )
-                            raise
-
-                        for system_job_result_event in context_function_event(
-                            ctx,
-                            self.name,
-                            'matmaster_tool_call_info',
-                            tool_call_info,
-                            ModelRole,
-                        ):
-                            yield system_job_result_event
                     # 置空 text 消息
                     part.text = None
-            yield event
+            if is_function_call(event) and is_function_response(event):
+                yield event
 
 
 class SubmitCoreMCPAgent(MCPAgent):

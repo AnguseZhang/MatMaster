@@ -31,6 +31,8 @@ LOADING_TITLE = 'loading_title'
 JOB_RESULT_KEY = 'job_result'
 JOB_LIST_KEY = 'job_list'
 
+MATERIALS_TOOL_CALL_INFO = 'materials_tool_call_info'
+
 # DB
 DBUrl = os.getenv('SESSION_API_URL')
 
