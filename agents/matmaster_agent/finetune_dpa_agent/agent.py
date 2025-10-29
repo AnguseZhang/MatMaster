@@ -4,7 +4,6 @@ from dp.agent.adapter.adk import CalculationMCPToolset
 from google.adk.agents import BaseAgent
 from google.adk.tools.mcp_tool.mcp_session_manager import SseServerParams
 
-from agents.matmaster_agent.base_agents.job_agent import BaseAsyncJobAgent
 from agents.matmaster_agent.constant import (
     MATMASTER_AGENT_NAME,
     BohriumExecutor,
@@ -15,8 +14,10 @@ from agents.matmaster_agent.finetune_dpa_agent.prompt import (
     FinetuneDPAAgentInstruction,
     FinetuneDPAAgentName,
 )
+from agents.matmaster_agent.llm_config import LLMConfig
 from agents.matmaster_agent.logger import matmodeler_logging_handler
 
+from ..base_agents.public_agent import BaseAsyncJobAgent
 from .constant import FinetuneDPAServerUrl
 
 FinetuneDPABohriumExecutor = copy.deepcopy(BohriumExecutor)
@@ -41,12 +42,12 @@ toolset = CalculationMCPToolset(
 
 
 class FinetuneDPAAgent(BaseAsyncJobAgent):
-    def __init__(self, llm_config):
+    def __init__(self, llm_config: LLMConfig):
         super().__init__(
-            model=llm_config.gpt_5_chat,
+            model=llm_config.default_litellm_model,
             mcp_tools=[toolset],
-            agent_name=FinetuneDPAAgentName,
-            agent_description=FinetuneDPAAgentDescription,
+            name=FinetuneDPAAgentName,
+            description=FinetuneDPAAgentDescription,
             agent_instruction=FinetuneDPAAgentInstruction,
             dflow_flag=False,
             supervisor_agent=MATMASTER_AGENT_NAME,

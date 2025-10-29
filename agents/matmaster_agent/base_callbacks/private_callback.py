@@ -6,7 +6,6 @@ import traceback
 from functools import wraps
 from typing import Optional, Union
 
-import aiohttp
 import litellm
 from dp.agent.adapter.adk import CalculationMCPTool
 from google.adk.agents.callback_context import CallbackContext
@@ -21,13 +20,14 @@ from agents.matmaster_agent.constant import (
     FRONTEND_STATE_KEY,
     LOCAL_EXECUTOR,
     MATERIALS_ACCESS_KEY,
-    MATERIALS_PROJECT_ID,
     MATMASTER_AGENT_NAME,
-    OPENAPI_HOST,
+    SKU_MAPPING,
     Transfer2Agent,
 )
+from agents.matmaster_agent.model import CostFuncType
 from agents.matmaster_agent.prompt import get_params_check_info_prompt
 from agents.matmaster_agent.utils.auth import ak_to_ticket, ak_to_username
+from agents.matmaster_agent.utils.finance import get_user_photon_balance
 from agents.matmaster_agent.utils.helper_func import (
     check_None_wrapper,
     function_calls_to_str,
@@ -36,6 +36,7 @@ from agents.matmaster_agent.utils.helper_func import (
     update_llm_response,
 )
 from agents.matmaster_agent.utils.io_oss import update_tgz_dict
+from agents.matmaster_agent.utils.job_utils import check_job_create_service
 from agents.matmaster_agent.utils.tool_response_utils import check_valid_tool_response
 
 logger = logging.getLogger(__name__)
@@ -135,21 +136,26 @@ async def remove_function_call(
             function_name = part.function_call.name
             function_args = part.function_call.args
 
-            logger.info(
-                f"[{MATMASTER_AGENT_NAME}] FunctionCall will be removed, name = {function_name}, args = {function_args}"
-            )
+            if function_name == 'set_model_response':
+                logger.warning(
+                    f'[{MATMASTER_AGENT_NAME}] Detected adk-function: `{function_name}`, continue'
+                )
+            else:
+                logger.info(
+                    f"[{MATMASTER_AGENT_NAME}] FunctionCall will be removed, name = {function_name}, args = {function_args}"
+                )
 
-            prompt = get_params_check_info_prompt().format(
-                target_language=callback_context.state['target_language'],
-                function_name=function_name,
-                function_args=function_args,
-            )
-            response = litellm.completion(
-                model='azure/gpt-4o', messages=[{'role': 'user', 'content': prompt}]
-            )
-            llm_generated_text += response.choices[0].message.content
+                prompt = get_params_check_info_prompt().format(
+                    target_language=callback_context.state['target_language'],
+                    function_name=function_name,
+                    function_args=function_args,
+                )
+                response = litellm.completion(
+                    model='azure/gpt-4o', messages=[{'role': 'user', 'content': prompt}]
+                )
+                llm_generated_text += response.choices[0].message.content
 
-            part.function_call = None
+                part.function_call = None
         llm_response.content.parts.append(part)
 
     if llm_generated_text:
@@ -171,6 +177,54 @@ async def remove_function_call(
 # before_tool_callback
 async def default_before_tool_callback(tool, args, tool_context):
     return
+
+
+def default_cost_func(tool: BaseTool) -> tuple[int, int]:
+    return 0, SKU_MAPPING['matmaster']
+
+
+def check_user_phonon_balance(
+    func: BeforeToolCallback, cost_func: CostFuncType
+) -> BeforeToolCallback:
+    @wraps(func)
+    async def wrapper(
+        tool: BaseTool, args: dict, tool_context: ToolContext
+    ) -> Optional[dict]:
+        # 两步操作：
+        # 1. 调用被装饰的 before_tool_callback；
+        # 2. 如果调用的 before_tool_callback 有返回值，以这个为准
+        if (before_tool_result := await func(tool, args, tool_context)) is not None:
+            return before_tool_result
+
+        logger.info(
+            f'[{MATMASTER_AGENT_NAME}] {tool.name}:{tool_context.function_call_id}'
+        )
+
+        if cost_func is None:
+            return
+
+        # 如果 tool 不是 CalculationMCPTool，不应该调用这个 callback
+        if not isinstance(tool, CalculationMCPTool):
+            raise TypeError(
+                "Not CalculationMCPTool type, current tool can't create job!"
+            )
+
+        user_id = _get_userId(tool_context)
+        cost, sku_id = cost_func(tool)
+        tool_context.state['cost'][tool_context.function_call_id] = {
+            'value': cost,
+            'sku_id': sku_id,
+            'status': 'evaluate',
+        }
+        balance = await get_user_photon_balance(user_id)
+
+        logger.info(
+            f"[{MATMASTER_AGENT_NAME}] user_id={user_id}, sku_id={sku_id}, cost={cost}, balance={balance}"
+        )
+        if balance < cost:
+            raise RuntimeError('Phonon is not enough, Please recharge.')
+
+    return wrapper
 
 
 @check_None_wrapper
@@ -379,44 +433,7 @@ def check_job_create(func: BeforeToolCallback) -> BeforeToolCallback:
             )
 
         if tool.executor is not None:
-            job_create_url = f"{OPENAPI_HOST}/openapi/v1/job/create"
-            user_project_list_url = f"{OPENAPI_HOST}/openapi/v1/open/user/project/list"
-            payload = {
-                'projectId': MATERIALS_PROJECT_ID,
-                'name': 'check_job_create',
-            }
-            params = {'accessKey': MATERIALS_ACCESS_KEY}
-
-            logger.info(
-                f"[{MATMASTER_AGENT_NAME}]:[check_job_create] project_id = {MATERIALS_PROJECT_ID}, "
-                f"ak = {MATERIALS_ACCESS_KEY}"
-            )
-
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    user_project_list_url, params=params
-                ) as response:
-                    res = json.loads(await response.text())
-                    logger.info(
-                        f"[{MATMASTER_AGENT_NAME}]:[check_job_create] res = {res}"
-                    )
-                    project_name = [
-                        item['project_name']
-                        for item in res['data']['items']
-                        if item['project_id'] == MATERIALS_PROJECT_ID
-                    ][0]
-
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    job_create_url, json=payload, params=params
-                ) as response:
-                    res = json.loads(await response.text())
-                    if res['code'] != 0:
-                        if res['code'] == 2000:
-                            res['error'][
-                                'msg'
-                            ] = f"您所用项目为 `{project_name}`，该项目余额不足，请充值或更换项目后重试。"
-                        return res
+            return await check_job_create_service()
 
     return wrapper
 
@@ -571,7 +588,10 @@ def remove_job_link(func: AfterToolCallback) -> AfterToolCallback:
             tool_response.content[0] = TextContent(
                 type='text', text=json.dumps(tool_result)
             )
-            if tool_response.structuredContent is not None:
+            if (
+                getattr(tool_response, 'structuredContent', None) is not None
+                and tool_response.structuredContent is not None
+            ):
                 tool_response.structuredContent = None
 
             logger.info(

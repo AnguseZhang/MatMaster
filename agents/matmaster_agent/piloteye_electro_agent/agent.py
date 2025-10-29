@@ -2,8 +2,9 @@ from dp.agent.adapter.adk import CalculationMCPToolset
 from google.adk.agents import BaseAgent
 from google.adk.tools.mcp_tool.mcp_session_manager import SseServerParams
 
-from agents.matmaster_agent.base_agents.job_agent import BaseAsyncJobAgent
+from agents.matmaster_agent.base_agents.public_agent import BaseAsyncJobAgent
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
+from agents.matmaster_agent.llm_config import LLMConfig
 from agents.matmaster_agent.logger import matmodeler_logging_handler
 from agents.matmaster_agent.piloteye_electro_agent.constant import (
     PILOTEYE_BOHRIUM_EXECUTOR,
@@ -44,12 +45,12 @@ piloteye_electro_tool = CalculationMCPToolset(
 
 
 class PiloteyeElectroAgent(BaseAsyncJobAgent):
-    def __init__(self, llm_config):
+    def __init__(self, llm_config: LLMConfig):
         super().__init__(
-            model=llm_config.gpt_5_chat,
+            model=llm_config.default_litellm_model,
             mcp_tools=[piloteye_electro_tool],
-            agent_name=PiloteyeElectroAgentName,
-            agent_description=PiloteyeElectroAgentDescription,
+            name=PiloteyeElectroAgentName,
+            description=PiloteyeElectroAgentDescription,
             agent_instruction=PiloteyeElectroAgentInstruction,
             dflow_flag=False,
             supervisor_agent=MATMASTER_AGENT_NAME,

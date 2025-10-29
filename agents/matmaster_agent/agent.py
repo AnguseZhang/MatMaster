@@ -9,6 +9,7 @@ from opik.integrations.adk import track_adk_agent_recursive
 from agents.matmaster_agent.ABACUS_agent.agent import init_abacus_calculation_agent
 from agents.matmaster_agent.apex_agent.agent import init_apex_agent
 from agents.matmaster_agent.base_agents.io_agent import HandleFileUploadLlmAgent
+from agents.matmaster_agent.base_callbacks.public_callback import check_transfer
 from agents.matmaster_agent.callback import (
     matmaster_check_job_status,
     matmaster_hallucination_retry,
@@ -16,6 +17,7 @@ from agents.matmaster_agent.callback import (
     matmaster_set_lang,
 )
 from agents.matmaster_agent.chembrain_agent.agent import init_chembrain_agent
+from agents.matmaster_agent.CompDART_agent.agent import init_compdrt_agent
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME, ModelRole
 from agents.matmaster_agent.document_parser_agent.agent import (
     init_document_parser_agent,
@@ -24,8 +26,11 @@ from agents.matmaster_agent.DPACalculator_agent.agent import init_dpa_calculatio
 from agents.matmaster_agent.finetune_dpa_agent.agent import init_finetune_dpa_agent
 from agents.matmaster_agent.HEA_assistant_agent.agent import init_HEA_assistant_agent
 from agents.matmaster_agent.HEACalculator_agent.agent import init_hea_calculator_agent
-from agents.matmaster_agent.INVAR_agent.agent import init_invar_agent
-from agents.matmaster_agent.llm_config import MatMasterLlmConfig
+from agents.matmaster_agent.llm_config import (
+    DEFAULT_MODEL,
+    LLMConfig,
+    MatMasterLlmConfig,
+)
 from agents.matmaster_agent.model import MatMasterTargetAgentEnum
 from agents.matmaster_agent.MrDice_agent.agent import init_MrDice_agent
 from agents.matmaster_agent.organic_reaction_agent.agent import (
@@ -41,12 +46,14 @@ from agents.matmaster_agent.prompt import (
     GlobalInstruction,
     MatMasterCheckTransferPrompt,
 )
-from agents.matmaster_agent.public.callback import check_transfer
 from agents.matmaster_agent.ssebrain_agent.agent import init_ssebrain_agent
 from agents.matmaster_agent.structure_generate_agent.agent import (
     init_structure_generate_agent,
 )
 from agents.matmaster_agent.superconductor_agent.agent import init_superconductor_agent
+from agents.matmaster_agent.task_orchestrator_agent.agent import (
+    init_task_orchestrator_agent,
+)
 from agents.matmaster_agent.thermoelectric_agent.agent import init_thermoelectric_agent
 from agents.matmaster_agent.traj_analysis_agent.agent import init_traj_analysis_agent
 from agents.matmaster_agent.utils.event_utils import (
@@ -61,14 +68,14 @@ logging.getLogger('google_adk.google.adk.tools.base_authenticated_tool').setLeve
 
 
 class MatMasterAgent(HandleFileUploadLlmAgent):
-    def __init__(self, llm_config):
+    def __init__(self, llm_config: LLMConfig):
         piloteye_electro_agent = init_piloteye_electro_agent(llm_config)
         traj_analysis_agent = init_traj_analysis_agent(llm_config)
         mrdice_agent = init_MrDice_agent(llm_config)
         dpa_calculator_agent = init_dpa_calculations_agent(llm_config)
         thermoelectric_agent = init_thermoelectric_agent(llm_config)
         superconductor_agent = init_superconductor_agent(llm_config)
-        invar_agent = init_invar_agent(llm_config)
+        compdart_agent = init_compdrt_agent(llm_config)
         structure_generate_agent = init_structure_generate_agent(llm_config)
         apex_agent = init_apex_agent(llm_config)
         abacus_calculator_agent = init_abacus_calculation_agent(llm_config)
@@ -80,10 +87,11 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
         perovskite_agent = init_perovskite_agent(llm_config)
         document_parser_agent = init_document_parser_agent(llm_config)
         finetune_dpa_agent = init_finetune_dpa_agent(llm_config)
+        task_orchestrator_agent = init_task_orchestrator_agent(llm_config)
 
         super().__init__(
             name=MATMASTER_AGENT_NAME,
-            model=llm_config.gpt_5_chat,
+            model=llm_config.default_litellm_model,
             sub_agents=[
                 piloteye_electro_agent,
                 traj_analysis_agent,
@@ -94,7 +102,7 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
                 apex_agent,
                 structure_generate_agent,
                 abacus_calculator_agent,
-                invar_agent,
+                compdart_agent,
                 organic_reaction_agent,
                 HEA_assistant_agent,
                 hea_calculator_agent,
@@ -103,6 +111,7 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
                 perovskite_agent,
                 document_parser_agent,
                 finetune_dpa_agent,
+                task_orchestrator_agent,
             ],
             global_instruction=GlobalInstruction,
             instruction=AgentInstruction,

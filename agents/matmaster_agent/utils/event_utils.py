@@ -7,9 +7,19 @@ from typing import Iterable, Optional
 
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events import Event, EventActions
+from google.adk.tools import BaseTool
 from google.genai.types import Content, FunctionCall, FunctionResponse, Part
 
-from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME, ModelRole
+from agents.matmaster_agent.base_callbacks.private_callback import _get_userId
+from agents.matmaster_agent.constant import CURRENT_ENV, MATMASTER_AGENT_NAME, ModelRole
+from agents.matmaster_agent.locales import i18n
+from agents.matmaster_agent.style import (
+    photon_consume_free_card,
+    photon_consume_notify_card,
+    photon_consume_success_card,
+    tool_response_failed_card,
+)
+from agents.matmaster_agent.utils.finance import photon_consume
 
 logger = logging.getLogger(__name__)
 
@@ -272,3 +282,61 @@ async def send_error_event(err, ctx: InvocationContext, author):
         ctx, author, 'system_detail_error', {'msg': detailed_error}, ModelRole
     ):
         yield event
+
+
+async def photon_consume_event(ctx, event, author):
+    user_id = _get_userId(ctx)
+    current_cost = ctx.session.state['cost'].get(
+        event.content.parts[0].function_response.id, None
+    )
+    if current_cost is not None:
+        if current_cost['value']:
+            photon_value = current_cost['value'] if CURRENT_ENV != 'test' else 1
+            res = await photon_consume(
+                user_id, sku_id=current_cost['sku_id'], event_value=photon_value
+            )
+            if res['code'] == 0:
+                for consume_event in all_text_event(
+                    ctx,
+                    author,
+                    f"{photon_consume_success_card(photon_value)}",
+                    ModelRole,
+                ):
+                    yield consume_event
+        else:
+            yield Event(author=author)
+
+
+async def display_future_consume_event(event, cost_func, ctx, author):
+    for index in get_function_call_indexes(event):
+        function_call_name = event.content.parts[index].function_call.name
+        invocated_tool = BaseTool(name=function_call_name, description='')
+        tool_cost, _ = cost_func(invocated_tool)
+
+        if tool_cost:
+            future_consume_msg = f"{photon_consume_notify_card(tool_cost)}"
+        else:
+            future_consume_msg = f"{photon_consume_free_card()}"
+
+        for photon_consume_notify_event in all_text_event(
+            ctx,
+            author,
+            future_consume_msg,
+            ModelRole,
+        ):
+            yield photon_consume_notify_event
+
+
+async def display_failed_result_or_consume(dict_result, ctx, author, event):
+    if dict_result.get('code', None) is not None and dict_result['code'] != 0:
+        # Tool Failed
+        for tool_response_failed_event in all_text_event(
+            ctx,
+            author,
+            f"{tool_response_failed_card(i18n=i18n)}",
+            ModelRole,
+        ):
+            yield tool_response_failed_event
+    else:
+        async for consume_event in photon_consume_event(ctx, event, author):
+            yield consume_event

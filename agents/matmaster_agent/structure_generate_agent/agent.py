@@ -4,12 +4,12 @@ from dp.agent.adapter.adk import CalculationMCPToolset
 from google.adk.agents import BaseAgent
 from google.adk.tools.mcp_tool.mcp_session_manager import SseServerParams
 
-from agents.matmaster_agent.base_agents.job_agent import BaseAsyncJobAgent
 from agents.matmaster_agent.constant import (
     MATMASTER_AGENT_NAME,
     BohriumExecutor,
     BohriumStorge,
 )
+from agents.matmaster_agent.llm_config import LLMConfig
 from agents.matmaster_agent.logger import matmodeler_logging_handler
 from agents.matmaster_agent.structure_generate_agent.prompt import (
     StructureGenerateAgentDescription,
@@ -17,7 +17,9 @@ from agents.matmaster_agent.structure_generate_agent.prompt import (
     StructureGenerateAgentName,
 )
 
+from ..base_agents.public_agent import BaseAsyncJobAgent
 from .constant import StructureGenerateServerUrl
+from .finance import cost_func
 
 StructureGenerateBohriumExecutor = copy.deepcopy(BohriumExecutor)
 StructureGenerateBohriumStorge = copy.deepcopy(BohriumStorge)
@@ -41,12 +43,12 @@ toolset = CalculationMCPToolset(
 
 
 class StructureGenerateAgent(BaseAsyncJobAgent):
-    def __init__(self, llm_config):
+    def __init__(self, llm_config: LLMConfig):
         super().__init__(
-            model=llm_config.gpt_5_chat,
+            model=llm_config.default_litellm_model,
             mcp_tools=[toolset],
-            agent_name=StructureGenerateAgentName,
-            agent_description=StructureGenerateAgentDescription,
+            name=StructureGenerateAgentName,
+            description=StructureGenerateAgentDescription,
             agent_instruction=StructureGenerateAgentInstruction,
             dflow_flag=False,
             supervisor_agent=MATMASTER_AGENT_NAME,
@@ -63,6 +65,7 @@ class StructureGenerateAgent(BaseAsyncJobAgent):
                 'build_surface_interface',
                 'get_structure_info',
             ],
+            cost_func=cost_func,
         )
 
 

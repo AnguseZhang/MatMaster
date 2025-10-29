@@ -1,10 +1,14 @@
+import logging
 import os
 
 from dotenv import load_dotenv
 from google.adk.models.lite_llm import LiteLlm
 from opik.integrations.adk import OpikTracer
 
+from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
+
 load_dotenv()
+logger = logging.getLogger(__name__)
 
 MODEL_MAPPING = {
     ('openai', 'gpt-4o-mini'): 'openai/gpt-4o-mini',
@@ -44,8 +48,7 @@ MODEL_MAPPING = {
     ('volcengine', 'Doubao-Seed-1.6-thinking'): 'volcengine/ep-20250627141021-h4wch',
 }
 
-# DEFAULT_MODEL = "azure/gpt-4o-mini"
-DEFAULT_MODEL = os.getenv('DEFAULT_MODEL', 'azure/gpt-4o-mini')
+DEFAULT_MODEL = os.getenv('DEFAULT_MODEL', 'litellm_proxy/azure/gpt-5-chat')
 
 
 class LLMConfig:
@@ -78,25 +81,33 @@ class LLMConfig:
         gpt_5_chat = 'gpt-5-chat'
 
         # Helper to init any provider model
-        def _init_model(
-            provider_key: str,
-            model_name: str,
-            **kwargs,
-        ):
-            return LiteLlm(
-                model=MODEL_MAPPING.get((provider_key, model_name), DEFAULT_MODEL),
-                **kwargs,
+        def _init_model(model: str):
+            llm_kwargs = {}
+            if model.endswith(gpt_5_chat):
+                llm_kwargs = {'stream_options': {'include_usage': True}}
+            logger.info(
+                f'[{MATMASTER_AGENT_NAME}] model = {model}, llm_kwargs = {llm_kwargs}'
             )
 
-        llm_kwargs = {'stream_options': {'include_usage': True}}
+            return LiteLlm(model=model, **llm_kwargs)
 
-        self.gpt_4o_mini = _init_model(azure_provider, gpt_4o_mini)
-        self.gpt_4o = _init_model(azure_provider, gpt_4o)
-        self.gemini_2_0_flash = _init_model(litellm_provider, gemini_2_0_flash)
-        self.gemini_2_5_flash = _init_model(litellm_provider, gemini_2_5_flash)
-        self.gemini_2_5_pro = _init_model(litellm_provider, gemini_2_5_pro)
-        self.claude_sonnet_4 = _init_model(litellm_provider, claude_sonnet_4)
-        self.deepseek_chat = _init_model(deepseek_provider, deepseek_chat)
+        self.gpt_4o_mini = _init_model(MODEL_MAPPING.get((azure_provider, gpt_4o_mini)))
+        self.gpt_4o = _init_model(MODEL_MAPPING.get((azure_provider, gpt_4o)))
+        self.gemini_2_0_flash = _init_model(
+            MODEL_MAPPING.get((litellm_provider, gemini_2_0_flash))
+        )
+        self.gemini_2_5_flash = _init_model(
+            MODEL_MAPPING.get((litellm_provider, gemini_2_5_flash))
+        )
+        self.gemini_2_5_pro = _init_model(
+            MODEL_MAPPING.get((litellm_provider, gemini_2_5_pro))
+        )
+        self.claude_sonnet_4 = _init_model(
+            MODEL_MAPPING.get((litellm_provider, claude_sonnet_4))
+        )
+        self.deepseek_chat = _init_model(
+            MODEL_MAPPING.get((deepseek_provider, deepseek_chat))
+        )
 
         # GPT-5 models
         self.gpt_5 = _init_model(azure_provider, gpt_5)

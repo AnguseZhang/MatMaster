@@ -1,7 +1,18 @@
+import json
+import logging
+
 import aiohttp
 
-from agents.matmaster_agent.constant import OpenAPIJobAPI
+from agents.matmaster_agent.constant import (
+    MATERIALS_ACCESS_KEY,
+    MATERIALS_PROJECT_ID,
+    MATMASTER_AGENT_NAME,
+    OPENAPI_HOST,
+    OpenAPIJobAPI,
+)
 from agents.matmaster_agent.model import BohrJobInfo, JobStatus
+
+logger = logging.getLogger(__name__)
 
 
 def mapping_status(status):
@@ -26,6 +37,7 @@ async def get_job_status(job_id, access_key):
         async with session.get(
             f'{OpenAPIJobAPI}/{job_id}', headers={'accessKey': access_key}
         ) as response:
+            logger.info(f'[{MATMASTER_AGENT_NAME}] response = {response.text()}')
             data = await response.json()
             return mapping_status(data['data']['status'])
 
@@ -41,3 +53,40 @@ def get_running_jobs_detail(jobs_dict: BohrJobInfo):
         for job in jobs_dict.values()
         if job['job_status'] == JobStatus.Running
     ]
+
+
+async def check_job_create_service():
+    job_create_url = f"{OPENAPI_HOST}/openapi/v1/job/create"
+    user_project_list_url = f"{OPENAPI_HOST}/openapi/v1/open/user/project/list"
+    payload = {
+        'projectId': MATERIALS_PROJECT_ID,
+        'name': 'check_job_create',
+    }
+    params = {'accessKey': MATERIALS_ACCESS_KEY}
+
+    logger.info(
+        f"[{MATMASTER_AGENT_NAME}] project_id = {MATERIALS_PROJECT_ID}, "
+        f"ak = {MATERIALS_ACCESS_KEY}"
+    )
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(user_project_list_url, params=params) as response:
+            res = json.loads(await response.text())
+            logger.info(f"[{MATMASTER_AGENT_NAME}] res = {res}")
+            project_name = [
+                item['project_name']
+                for item in res['data']['items']
+                if item['project_id'] == MATERIALS_PROJECT_ID
+            ][0]
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(
+            job_create_url, json=payload, params=params
+        ) as response:
+            res = json.loads(await response.text())
+            if res['code'] != 0:
+                if res['code'] == 2000:
+                    res['error'][
+                        'msg'
+                    ] = f"您所用项目为 `{project_name}`，该项目余额不足，请充值或更换项目后重试。"
+                return res

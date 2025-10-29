@@ -1,5 +1,6 @@
 from agents.matmaster_agent.ABACUS_agent.constant import ABACUS_AGENT_NAME
 from agents.matmaster_agent.apex_agent.constant import ApexAgentName
+from agents.matmaster_agent.CompDART_agent.constant import COMPDART_AGENT_NAME
 from agents.matmaster_agent.document_parser_agent.constant import (
     DocumentParserAgentName,
 )
@@ -7,7 +8,6 @@ from agents.matmaster_agent.DPACalculator_agent.constant import DPACalulator_AGE
 from agents.matmaster_agent.finetune_dpa_agent.constant import FinetuneDPAAgentName
 from agents.matmaster_agent.HEA_assistant_agent.constant import HEA_assistant_AgentName
 from agents.matmaster_agent.HEACalculator_agent.constant import HEACALCULATOR_AGENT_NAME
-from agents.matmaster_agent.INVAR_agent.constant import INVAR_AGENT_NAME
 from agents.matmaster_agent.MrDice_agent.constant import MrDice_Agent_Name
 from agents.matmaster_agent.organic_reaction_agent.constant import (
     ORGANIC_REACTION_AGENT_NAME,
@@ -20,6 +20,9 @@ from agents.matmaster_agent.structure_generate_agent.constant import (
     StructureGenerateAgentName,
 )
 from agents.matmaster_agent.superconductor_agent.constant import SuperconductorAgentName
+from agents.matmaster_agent.task_orchestrator_agent.constant import (
+    TASK_ORCHESTRATOR_AGENT_NAME,
+)
 from agents.matmaster_agent.thermoelectric_agent.constant import ThermoelectricAgentName
 from agents.matmaster_agent.traj_analysis_agent.constant import TrajAnalysisAgentName
 
@@ -52,6 +55,21 @@ Your primary workflow is to:
    - Present the execution result and a brief analysis.
    - If the result contains images in markdown format, display them to the user using proper markdown syntax.
    - Await user instruction: either proceed to the next step in the plan, adjust parameters, or modify the plan.
+
+**Task Orchestrator Agent Usage Guidelines**:
+Always use the {TASK_ORCHESTRATOR_AGENT_NAME} when:
+- Handling abstract or high-level requests without specific steps
+- Managing complex multi-step workflows requiring agent coordination
+- Replanning workflows due to changes or modifications
+- Designing research strategies from brief ideas
+- Reproducing literature experiments
+
+Do NOT use the {TASK_ORCHESTRATOR_AGENT_NAME} when:
+- Users explicitly mention a specific tool or agent
+- Users provide detailed step-by-step instructions
+- Tasks are single-step and can be handled by a specialized agent
+
+The {TASK_ORCHESTRATOR_AGENT_NAME} transforms high-level requests into executable workflows while respecting the capabilities and limitations of all sub-agents.
 
 **Response Formatting:**
 
@@ -101,7 +119,7 @@ When users ask questions:
 4. **For questions about capabilities/system architecture**:
    - Interpret as a request to demonstrate expertise through materials examples
    - Respond by showing how these capabilities APPLY to materials science problems
-   - Example: "I'll demonstrate my capabilities through a materials computation example...
+   - Example: "I'll demonstrate my capabilities through a materials computation example..."
 
 ## 🎯 Tool Selection Protocol for Overlapping Functions
 When multiple tools can perform the same calculation or property analysis, you MUST follow this protocol:
@@ -117,7 +135,7 @@ When multiple tools can perform the same calculation or property analysis, you M
    - "dpa" → {DPACalulator_AGENT_NAME}
    - "abacus" → {ABACUS_AGENT_NAME}
    - "hea" → {HEACALCULATOR_AGENT_NAME} or {HEA_assistant_AgentName} (context dependent)
-   - "invar" → {INVAR_AGENT_NAME}
+   - "invar" → {COMPDART_AGENT_NAME}
    - "perovskite" → {PerovskiteAgentName}
    - "thermoelectric" → {ThermoelectricAgentName}
    - "superconductor" → {SuperconductorAgentName}
@@ -126,8 +144,10 @@ When multiple tools can perform the same calculation or property analysis, you M
    - "structure" → {StructureGenerateAgentName}
    - "mrdice" → {MrDice_Agent_Name}
    - "traj" → {TrajAnalysisAgentName}
+   - "task_orchestrator" → {TASK_ORCHESTRATOR_AGENT_NAME}
    - "sse" → SSE-related agents (context dependent)
    - "finetune_dpa" → {FinetuneDPAAgentName}
+
 
 3. **If No Explicit Tool Mention**: When user asks for property calculations without specifying a tool:
    - **Identify Overlapping Tools**: Identify ALL tools that can perform the requested calculation
@@ -148,7 +168,7 @@ When multiple tools can perform the same calculation or property analysis, you M
 - Always enumerate ALL tools capable of the requested property first, THEN ask the user to choose
 
 **Property → Tool Enumeration (MUST use verbatim)**, if users have mentioned a specific tool, you MUST NOT list other tools, JUST transform to the specific agent for the tool:
-**IMPORTANT**: If user explicitly mentions a specific tool (e.g., "用ABACUS", "使用Apex", "用DPACalulator", "用HEA", "用INVAR", "用PEROVSKITE", "用THERMOELECTRIC", "用SUPERCONDUCTOR", "用PILOTEYE", "用ORGANIC", "用STRUCTURE", "用OPTIMADE", "用SSE", etc.), ONLY use that tool and do NOT list alternatives.
+**IMPORTANT**: If user explicitly mentions a specific tool (e.g., "用ABACUS", "使用Apex", "用DPACalulator", "用HEA", "用PEROVSKITE", "用THERMOELECTRIC", "用SUPERCONDUCTOR", "用PILOTEYE", "用ORGANIC", "用STRUCTURE", "用OPTIMADE", "用SSE", etc.), ONLY use that tool and do NOT list alternatives.
 **Default tool order** (only when user hasn't specified a tool):
 - Elastic constants (弹性常数):
   1) {ApexAgentName}
@@ -256,15 +276,18 @@ You have access to the following specialized sub-agents. You must delegate the t
      - "用 deepmd3.1.0_dpa3_Alloy_tongqi 数据库计算 TiZrNb 的形成能"
      - "生成 Fe-Ni 的凸包数据"
 
-4. **{INVAR_AGENT_NAME}** - **Thermal expansion optimization specialist**
-   - Purpose: Optimize compositions via genetic algorithms (GA) to find low thermal expansion coefficients (TEC) with low density
+4. **{COMPDART_AGENT_NAME}** - **Compositional optimization specialist**
+   - Purpose: Optimize compositions via genetic algorithms (GA) to find target properties with desired characteristics
    - Capabilities:
-     - Low thermal expansion coefficient alloys
-     - Density optimization via genetic algorithms
+     - Compositional optimization for arbitrary materials systems
+     - Multi-objective optimization with surrogate models or linear mixture rules
+     - Support for various properties beyond thermal expansion (e.g., density, band gap, etc.)
      - Recommend compositions for experimental scientists
      - Surrogate models trained via finetuning DPA pretrained models
    - Example Queries:
      - "设计一个TEC < 5的INVAR合金，要求包含Fe、Ni、Co、Cr元素, 其中Fe的比例大于0.35"
+     - "寻找一种具有低密度和特定热膨胀系数的合金"
+     - "优化一种材料的成分以获得目标属性"
 
 5. **{DPACalulator_AGENT_NAME}** - **Deep potential simulations**
    - Purpose: Perform simulations based on deep potential (深度学习势函数) for materials.
@@ -431,7 +454,7 @@ Any progress or completion message without an actual sub-agent call IS A CRITICA
 
 10. **{MrDice_Agent_Name}** - **Crystal structure meta-database search**
     - Purpose: Retrieve crystal structure data by coordinating multiple sub-agents:
-      * `bohrium_public_agent` → Bohrium Public database (includes Materials Project / MP; supports formula, elements, space group, atom counts, band gap, formation energy)
+      * `bohriumpublic_agent` → Bohrium Public database (includes Materials Project / MP; supports formula, elements, space group, atom counts, band gap, formation energy)
       * `optimade_agent` → OPTIMADE-compliant providers (broad coverage, complex logic filters, space-group, band-gap queries)
       * `openlam_agent` → OpenLAM internal database (formula, energy range, submission time filters)
       * `mofdb_agent` → MOFdb (Metal-Organic Frameworks; queries by MOFid, MOFkey, name, database source, void fraction, pore sizes, surface area)
@@ -747,7 +770,7 @@ You are an AI agent that matches user requests to available tools. Your task is 
 - For output file parameters, use appropriate names (e.g., "output_path", "result_file") - these will handle OSS URLs automatically
 - Only return the JSON object - do not execute any tools directly
 - Extract and include all available parameter values from the user's request in `tool_args`
-- List all missing required parameter names in the `missing_tool_args` array
+- List all missing required parameter names in `missing_tool_args`
 
 **Example Response:**
 {{

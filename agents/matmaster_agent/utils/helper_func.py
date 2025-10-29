@@ -138,6 +138,9 @@ def load_tool_response(event: Event):
     else:
         dict_result = tool_response
 
+    if dict_result.get('status', None) == 'error':
+        raise eval(dict_result['error_type'])(dict_result['error'])
+
     return dict_result
 
 

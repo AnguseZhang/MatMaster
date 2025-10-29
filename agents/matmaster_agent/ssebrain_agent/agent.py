@@ -5,6 +5,8 @@ from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events import Event
 from google.genai import types
 
+from agents.matmaster_agent.llm_config import LLMConfig
+
 from .callback import (
     enforce_single_tool_call,
     init_ssebrain_before_agent,
@@ -17,14 +19,14 @@ from .prompt import description, global_instruction, instruction_en
 
 
 class SSEBrainAgent(LlmAgent):
-    def __init__(self, llm_config):
+    def __init__(self, llm_config: LLMConfig):
         prepare_state_before_agent = init_ssebrain_before_agent(llm_config)
         database_agent = init_database_agent(llm_config)
         deep_research_agent = init_deep_research_agent(llm_config)
 
         super().__init__(
             name='ssebrain_agent',
-            model=llm_config.gpt_5_chat,
+            model=llm_config.default_litellm_model,
             description=description,
             sub_agents=[
                 database_agent,
