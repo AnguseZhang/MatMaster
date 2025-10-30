@@ -179,7 +179,7 @@ async def default_before_tool_callback(tool, args, tool_context):
     return
 
 
-def default_cost_func(tool: BaseTool) -> tuple[int, int]:
+async def default_cost_func(tool: BaseTool, args: dict) -> tuple[int, int]:
     return 0, SKU_MAPPING['matmaster']
 
 
@@ -210,7 +210,7 @@ def check_user_phonon_balance(
             )
 
         user_id = _get_userId(tool_context)
-        cost, sku_id = cost_func(tool)
+        cost, sku_id = await cost_func(tool, args)
         tool_context.state['cost'][tool_context.function_call_id] = {
             'value': cost,
             'sku_id': sku_id,

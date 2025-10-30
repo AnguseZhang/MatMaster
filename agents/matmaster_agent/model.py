@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Callable, List, Optional, TypeAlias, Union
+from typing import Awaitable, Callable, List, Optional, TypeAlias, Union
 
 from google.adk.tools import BaseTool
 from pydantic import BaseModel
@@ -31,7 +31,7 @@ from agents.matmaster_agent.superconductor_agent.constant import SuperconductorA
 from agents.matmaster_agent.thermoelectric_agent.constant import ThermoelectricAgentName
 from agents.matmaster_agent.traj_analysis_agent.constant import TrajAnalysisAgentName
 
-CostFuncType: TypeAlias = Callable[[BaseTool], tuple[int, int]]
+CostFuncType: TypeAlias = Callable[[BaseTool, dict], Awaitable[tuple[int, int]]]
 
 
 class JobStatus(str, Enum):

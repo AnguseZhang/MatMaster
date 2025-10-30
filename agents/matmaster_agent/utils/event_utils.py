@@ -310,8 +310,9 @@ async def photon_consume_event(ctx, event, author):
 async def display_future_consume_event(event, cost_func, ctx, author):
     for index in get_function_call_indexes(event):
         function_call_name = event.content.parts[index].function_call.name
+        function_call_args = event.content.parts[index].function_call.args
         invocated_tool = BaseTool(name=function_call_name, description='')
-        tool_cost, _ = cost_func(invocated_tool)
+        tool_cost, _ = await cost_func(invocated_tool, function_call_args)
 
         if tool_cost:
             future_consume_msg = f"{photon_consume_notify_card(tool_cost)}"

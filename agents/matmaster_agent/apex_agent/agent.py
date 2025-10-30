@@ -13,6 +13,7 @@ from .constant import (
     ApexBohriumStorage,
     ApexServerUrl,
 )
+from .finance import apex_cost_func
 from .prompt import ApexAgentDescription, ApexAgentInstruction
 
 # 配置SSE参数
@@ -51,6 +52,7 @@ class ApexAgent(BaseAsyncJobAgent):
             mcp_tools=[toolset],
             dflow_flag=False,
             supervisor_agent=MATMASTER_AGENT_NAME,
+            cost_func=apex_cost_func,
         )
 
 
