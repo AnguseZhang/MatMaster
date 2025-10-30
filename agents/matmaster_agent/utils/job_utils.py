@@ -55,20 +55,9 @@ def get_running_jobs_detail(jobs_dict: BohrJobInfo):
     ]
 
 
-async def check_job_create_service():
-    job_create_url = f"{OPENAPI_HOST}/openapi/v1/job/create"
+async def get_project_name():
     user_project_list_url = f"{OPENAPI_HOST}/openapi/v1/open/user/project/list"
-    payload = {
-        'projectId': MATERIALS_PROJECT_ID,
-        'name': 'check_job_create',
-    }
     params = {'accessKey': MATERIALS_ACCESS_KEY}
-
-    logger.info(
-        f"[{MATMASTER_AGENT_NAME}] project_id = {MATERIALS_PROJECT_ID}, "
-        f"ak = {MATERIALS_ACCESS_KEY}"
-    )
-
     async with aiohttp.ClientSession() as session:
         async with session.get(user_project_list_url, params=params) as response:
             res = json.loads(await response.text())
@@ -79,14 +68,31 @@ async def check_job_create_service():
                 if item['project_id'] == MATERIALS_PROJECT_ID
             ][0]
 
+    return project_name
+
+
+async def check_job_create_service():
+    job_create_url = f"{OPENAPI_HOST}/openapi/v1/sandbox/job/create"
+    payload = {
+        'projectId': MATERIALS_PROJECT_ID,
+        'name': 'check_job_create',
+    }
+    params = {'accessKey': MATERIALS_ACCESS_KEY}
+    logger.info(
+        f"[{MATMASTER_AGENT_NAME}] project_id = {MATERIALS_PROJECT_ID}, "
+        f"ak = {MATERIALS_ACCESS_KEY}"
+    )
+
     async with aiohttp.ClientSession() as session:
         async with session.post(
             job_create_url, json=payload, params=params
         ) as response:
             res = json.loads(await response.text())
+            print(job_create_url, payload, params)
             if res['code'] != 0:
-                if res['code'] == 2000:
+                if res['code'] == 140202:
                     res['error'][
                         'msg'
-                    ] = f"您所用项目为 `{project_name}`，该项目余额不足，请充值或更换项目后重试。"
+                    ] = 'Agent 开发者账户余额不足，需开发者充值，请稍后重试。'
+                print(res)
                 return res

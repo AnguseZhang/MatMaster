@@ -5,4 +5,5 @@ StructureGenerateAgentName = 'structure_generate_agent'
 if CURRENT_ENV in ['test', 'uat']:
     StructureGenerateServerUrl = 'http://qpus1389933.bohrium.tech:50003/sse'
 else:
-    StructureGenerateServerUrl = 'https://cystalformer-uuid1754551471.app-space.dplink.cc/sse?token=1750cd294e6c4270946ae37107a725ff'
+    StructureGenerateServerUrl = 'http://pfmx1355864.bohrium.tech:50003/sse'
+    # StructureGenerateServerUrl = 'https://cystalformer-uuid1754551471.app-space.dplink.cc/sse?token=1750cd294e6c4270946ae37107a725ff'

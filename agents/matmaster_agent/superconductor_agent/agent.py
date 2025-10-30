@@ -24,7 +24,7 @@ SuperconductorBohriumExecutor = copy.deepcopy(BohriumExecutor)
 SuperconductorBohriumStorge = copy.deepcopy(BohriumStorge)
 SuperconductorBohriumExecutor['machine']['remote_profile'][
     'image_address'
-] = 'registry.dp.tech/dptech/dp/native/prod-435364/dpa-thermo-superconductor:9'
+] = 'registry.dp.tech/dptech/dp/native/prod-435364/dpa-thermo-superconductor:13'
 SuperconductorBohriumExecutor['machine']['remote_profile'][
     'machine_type'
 ] = 'c16_m64_1 * NVIDIA 4090'

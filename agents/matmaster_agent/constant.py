@@ -6,9 +6,11 @@ Other ENV: MATERIALS_USER_ID, MATERIALS_ORG_ID, SESSION_API_URL
 
 import os
 
-from dotenv import load_dotenv
+from dotenv import find_dotenv, load_dotenv
 
 load_dotenv()
+CURRENT_ENV = os.getenv('OPIK_PROJECT_NAME', 'prod')
+load_dotenv(find_dotenv(f'.env.{CURRENT_ENV}'))
 
 # Constant-VAR
 MATMASTER_AGENT_NAME = 'matmaster_agent'
@@ -37,7 +39,6 @@ DFLOW_HOST = ''
 DFLOW_K8S_API_SERVER = ''
 MATMASTER_SKU_ID = -1
 
-CURRENT_ENV = os.getenv('OPIK_PROJECT_NAME', 'prod')
 URL_PART = f'.{CURRENT_ENV}' if CURRENT_ENV != 'prod' else ''
 OPENAPI_HOST = f'https://openapi{URL_PART}.dp.tech'
 BOHRIUM_API_URL = f'https://bohrium-api{URL_PART}.dp.tech'

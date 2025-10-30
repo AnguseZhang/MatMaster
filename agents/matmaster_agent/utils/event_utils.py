@@ -285,12 +285,12 @@ async def send_error_event(err, ctx: InvocationContext, author):
 
 
 async def photon_consume_event(ctx, event, author):
-    user_id = _get_userId(ctx)
     current_cost = ctx.session.state['cost'].get(
         event.content.parts[0].function_response.id, None
     )
     if current_cost is not None:
         if current_cost['value']:
+            user_id = _get_userId(ctx)
             photon_value = current_cost['value'] if CURRENT_ENV != 'test' else 1
             res = await photon_consume(
                 user_id, sku_id=current_cost['sku_id'], event_value=photon_value
@@ -327,8 +327,14 @@ async def display_future_consume_event(event, cost_func, ctx, author):
             yield photon_consume_notify_event
 
 
-async def display_failed_result_or_consume(dict_result, ctx, author, event):
-    if dict_result.get('code', None) is not None and dict_result['code'] != 0:
+async def display_failed_result_or_consume(
+    dict_result: dict, ctx, author: str, event: Event
+):
+    runtime_error = event.content.parts[0].function_response.response['result'].isError
+    algorithm_error = dict_result.get('code') is not None and dict_result['code'] != 0
+    is_tool_error = runtime_error or algorithm_error
+
+    if is_tool_error:
         # Tool Failed
         for tool_response_failed_event in all_text_event(
             ctx,
@@ -337,6 +343,7 @@ async def display_failed_result_or_consume(dict_result, ctx, author, event):
             ModelRole,
         ):
             yield tool_response_failed_event
+        raise RuntimeError('Tool Execution Error')
     else:
         async for consume_event in photon_consume_event(ctx, event, author):
             yield consume_event

@@ -33,7 +33,6 @@ from agents.matmaster_agent.constant import (
     get_BohriumStorage,
     get_DFlowExecutor,
 )
-from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.model import (
     BohrJobInfo,
     DFlowJobInfo,
@@ -42,7 +41,6 @@ from agents.matmaster_agent.prompt import (
     ResultCoreAgentDescription,
     SubmitRenderAgentDescription,
 )
-from agents.matmaster_agent.style import tool_response_failed_card
 from agents.matmaster_agent.utils.event_utils import (
     all_text_event,
     context_function_event,
@@ -55,7 +53,6 @@ from agents.matmaster_agent.utils.event_utils import (
     is_function_call,
     is_function_response,
     is_text,
-    photon_consume_event,
     update_state_event,
 )
 from agents.matmaster_agent.utils.frontend import get_frontend_job_result_data
@@ -273,7 +270,7 @@ class ToolCallInfoAgent(ErrorHandleLlmAgent):
                             tool_call_info = json.loads(part.text)
                         except BaseException:
                             logger.info(
-                                f'[{MATMASTER_AGENT_NAME}]:[{self.name}] raw_text = {event.content.parts[0].text}'
+                                f'[{MATMASTER_AGENT_NAME}]:[{self.name}] raw_text = {part.text}'
                             )
                             raise
 
@@ -329,27 +326,13 @@ class SubmitCoreMCPAgent(MCPAgent):
                 in ctx.session.state['sync_tools']
             ):
                 try:
-                    if (
-                        not event.content.parts[0]
-                        .function_response.response['result']
-                        .isError
-                    ):  # Submit Success
-                        dict_result = load_tool_response(event)
-                        async for (
-                            display_or_consume_event
-                        ) in display_failed_result_or_consume(
-                            dict_result, ctx, self.name, event
-                        ):
-                            yield display_or_consume_event
-                    else:
-                        for tool_response_failed_event in all_text_event(
-                            ctx,
-                            self.name,
-                            f"{tool_response_failed_card(i18n=i18n)}",
-                            ModelRole,
-                        ):
-                            yield tool_response_failed_event
-                        raise RuntimeError('Tool Execute Failed')
+                    dict_result = load_tool_response(event.content.parts[0])
+                    async for (
+                        display_or_consume_event
+                    ) in display_failed_result_or_consume(
+                        dict_result, ctx, self.name, event
+                    ):
+                        yield display_or_consume_event
                 except BaseException:
                     yield event
                     raise
@@ -381,7 +364,7 @@ class SubmitCoreMCPAgent(MCPAgent):
             # END
 
             # Only for Long Running Tools Call
-            if event.long_running_tool_ids:
+            if event.long_running_tool_ids and is_function_call(event):
                 yield update_state_event(
                     ctx,
                     state_delta={
@@ -389,12 +372,13 @@ class SubmitCoreMCPAgent(MCPAgent):
                         + list(event.long_running_tool_ids)
                     },
                 )
-                if is_function_call(event):
-                    cost_func = self.cost_func
-                    async for future_consume_event in display_future_consume_event(
-                        event, cost_func, ctx, self.name
-                    ):
-                        yield future_consume_event
+
+                # prompt user tool-call cost
+                cost_func = self.cost_func
+                async for future_consume_event in display_future_consume_event(
+                    event, cost_func, ctx, self.name
+                ):
+                    yield future_consume_event
 
             if event.content and event.content.parts:
                 for part in event.content.parts:
@@ -405,92 +389,76 @@ class SubmitCoreMCPAgent(MCPAgent):
                         in ctx.session.state['long_running_ids']
                         and 'result' in part.function_response.response
                     ):
-                        if not part.function_response.response[
-                            'result'
-                        ].isError:  # Submit Success
-                            raw_result = part.function_response.response['result']
-                            results = json.loads(raw_result.content[0].text)
-                            logger.info(
-                                f"[{MATMASTER_AGENT_NAME}]:[{self.name}] results = {results}"
-                            )
-                            origin_job_id = results['job_id']
-                            job_name = part.function_response.name
-                            job_status = results['status']
-                            if not ctx.session.state['dflow']:  # Non-Dflow Job
-                                bohr_job_id = results['extra_info']['bohr_job_id']
-                                job_detail_url = (
-                                    f'{SANDBOX_JOB_DETAIL_URL}/{bohr_job_id}'
-                                )
-                                frontend_result = BohrJobInfo(
-                                    origin_job_id=origin_job_id,
-                                    job_name=job_name,
-                                    job_status=job_status,
-                                    job_id=bohr_job_id,
-                                    job_detail_url=job_detail_url,
-                                    agent_name=ctx.agent.name.replace(
-                                        '_submit_core', ''
-                                    ),
-                                ).model_dump(mode='json')
-                            else:  # Dflow Job (Deprecated)
-                                workflow_id = results['extra_info']['workflow_id']
-                                workflow_uid = results['extra_info']['workflow_uid']
-                                workflow_url = results['extra_info']['workflow_link']
-                                frontend_result = DFlowJobInfo(
-                                    origin_job_id=origin_job_id,
-                                    job_name=job_name,
-                                    job_status=job_status,
-                                    workflow_id=workflow_id,
-                                    workflow_uid=workflow_uid,
-                                    workflow_url=workflow_url,
-                                ).model_dump(mode='json')
-
-                            update_long_running_jobs = copy.deepcopy(
-                                ctx.session.state['long_running_jobs']
-                            )
-                            update_long_running_jobs[origin_job_id] = frontend_result
-                            yield update_state_event(
-                                ctx,
-                                state_delta={
-                                    'long_running_jobs': update_long_running_jobs,
-                                    'render_job_list': True,
-                                    'render_job_id': ctx.session.state['render_job_id']
-                                    + [origin_job_id],
-                                    'long_running_jobs_count': ctx.session.state[
-                                        'long_running_jobs_count'
-                                    ]
-                                    + 1,
-                                },
-                            )
+                        # exist tool-call, long_running_jobs_count+1
+                        yield update_state_event(
+                            ctx,
+                            state_delta={
+                                'long_running_jobs_count': ctx.session.state[
+                                    'long_running_jobs_count'
+                                ]
+                                + 1,
+                            },
+                        )
+                        try:
+                            dict_result = load_tool_response(part)
                             # Photon Consume Event
-                            async for consume_event in photon_consume_event(
-                                ctx, event, self.name
+                            async for (
+                                display_or_consume_event
+                            ) in display_failed_result_or_consume(
+                                dict_result, ctx, self.name, event
                             ):
-                                yield consume_event
-                        else:  # Submit Failed
-                            for tool_response_failed_event in all_text_event(
-                                ctx,
-                                self.name,
-                                f"{tool_response_failed_card(i18n=i18n)}",
-                                ModelRole,
-                            ):
-                                yield tool_response_failed_event
-                            # 提交报错同样+1，避免幻觉 card
-                            yield update_state_event(
-                                ctx,
-                                state_delta={
-                                    'long_running_jobs_count': ctx.session.state[
-                                        'long_running_jobs_count'
-                                    ]
-                                    + 1,
-                                },
-                            )
+                                yield display_or_consume_event
+                        except BaseException:
+                            yield event
+                            raise
+
+                        origin_job_id = dict_result['job_id']
+                        job_name = part.function_response.name
+                        job_status = dict_result['status']
+                        if not ctx.session.state['dflow']:  # Non-Dflow Job
+                            bohr_job_id = dict_result['extra_info']['bohr_job_id']
+                            job_detail_url = f'{SANDBOX_JOB_DETAIL_URL}/{bohr_job_id}'
+                            frontend_result = BohrJobInfo(
+                                origin_job_id=origin_job_id,
+                                job_name=job_name,
+                                job_status=job_status,
+                                job_id=bohr_job_id,
+                                job_detail_url=job_detail_url,
+                                agent_name=ctx.agent.name.replace('_submit_core', ''),
+                            ).model_dump(mode='json')
+                        else:  # Dflow Job (Deprecated)
+                            workflow_id = dict_result['extra_info']['workflow_id']
+                            workflow_uid = dict_result['extra_info']['workflow_uid']
+                            workflow_url = dict_result['extra_info']['workflow_link']
+                            frontend_result = DFlowJobInfo(
+                                origin_job_id=origin_job_id,
+                                job_name=job_name,
+                                job_status=job_status,
+                                workflow_id=workflow_id,
+                                workflow_uid=workflow_uid,
+                                workflow_url=workflow_url,
+                            ).model_dump(mode='json')
+
+                        update_long_running_jobs = copy.deepcopy(
+                            ctx.session.state['long_running_jobs']
+                        )
+                        update_long_running_jobs[origin_job_id] = frontend_result
+                        yield update_state_event(
+                            ctx,
+                            state_delta={
+                                'long_running_jobs': update_long_running_jobs,
+                                'render_job_list': True,
+                                'render_job_id': ctx.session.state['render_job_id']
+                                + [origin_job_id],
+                            },
+                        )
             # END
 
             # Send Normal LlmResponse to Frontend, function_call -> function_response -> Llm_response
             if is_text(event):
                 if not event.partial:
                     for multi_part_event in context_multipart2function_event(
-                        ctx, self.name, event, 'system_submit_core_info'
+                        ctx, self.name, event, 'matmaster_submit_core_info'
                     ):
                         yield multi_part_event
             else:
