@@ -48,7 +48,7 @@ MODEL_MAPPING = {
     ('volcengine', 'Doubao-Seed-1.6-thinking'): 'volcengine/ep-20250627141021-h4wch',
 }
 
-DEFAULT_MODEL = os.getenv('DEFAULT_MODEL', 'litellm_proxy/azure/gpt-5-chat')
+DEFAULT_MODEL = os.getenv('DEFAULT_MODEL', 'azure/gpt-5-chat')
 
 
 class LLMConfig:
@@ -110,10 +110,12 @@ class LLMConfig:
         )
 
         # GPT-5 models
-        self.gpt_5 = _init_model(azure_provider, gpt_5)
-        self.gpt_5_nano = _init_model(litellm_provider, gpt_5_nano)
-        self.gpt_5_mini = _init_model(litellm_provider, gpt_5_mini)
-        self.gpt_5_chat = _init_model(azure_provider, gpt_5_chat)
+        self.gpt_5 = _init_model(MODEL_MAPPING.get(azure_provider, gpt_5))
+        self.gpt_5_nano = _init_model(MODEL_MAPPING.get(litellm_provider, gpt_5_nano))
+        self.gpt_5_mini = _init_model(MODEL_MAPPING.get(litellm_provider, gpt_5_mini))
+        self.gpt_5_chat = _init_model(MODEL_MAPPING.get(azure_provider, gpt_5_chat))
+
+        self.default_litellm_model = _init_model(DEFAULT_MODEL)
 
         # tracing
         self.opik_tracer = OpikTracer()
