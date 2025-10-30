@@ -160,7 +160,7 @@ class MCPRunEventsMixin(BaseMixin):
 
                     # Parse Tool Response
                     try:
-                        dict_result = load_tool_response(event)
+                        dict_result = load_tool_response(event.content.parts[0])
                         async for (
                             display_or_consume_event
                         ) in display_failed_result_or_consume(

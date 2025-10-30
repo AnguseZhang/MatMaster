@@ -17,6 +17,7 @@ from agents.matmaster_agent.callback import (
     matmaster_set_lang,
 )
 from agents.matmaster_agent.chembrain_agent.agent import init_chembrain_agent
+from agents.matmaster_agent.CompDART_agent.agent import init_compdrt_agent
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME, ModelRole
 from agents.matmaster_agent.document_parser_agent.agent import (
     init_document_parser_agent,
@@ -25,7 +26,6 @@ from agents.matmaster_agent.DPACalculator_agent.agent import init_dpa_calculatio
 from agents.matmaster_agent.finetune_dpa_agent.agent import init_finetune_dpa_agent
 from agents.matmaster_agent.HEA_assistant_agent.agent import init_HEA_assistant_agent
 from agents.matmaster_agent.HEACalculator_agent.agent import init_hea_calculator_agent
-from agents.matmaster_agent.INVAR_agent.agent import init_invar_agent
 from agents.matmaster_agent.llm_config import (
     DEFAULT_MODEL,
     LLMConfig,
@@ -75,7 +75,7 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
         dpa_calculator_agent = init_dpa_calculations_agent(llm_config)
         thermoelectric_agent = init_thermoelectric_agent(llm_config)
         superconductor_agent = init_superconductor_agent(llm_config)
-        invar_agent = init_invar_agent(llm_config)
+        compdart_agent = init_compdrt_agent(llm_config)
         structure_generate_agent = init_structure_generate_agent(llm_config)
         apex_agent = init_apex_agent(llm_config)
         abacus_calculator_agent = init_abacus_calculation_agent(llm_config)
@@ -102,7 +102,7 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
                 apex_agent,
                 structure_generate_agent,
                 abacus_calculator_agent,
-                invar_agent,
+                compdart_agent,
                 organic_reaction_agent,
                 HEA_assistant_agent,
                 hea_calculator_agent,

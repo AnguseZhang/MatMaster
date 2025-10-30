@@ -5,7 +5,6 @@ from typing import List, Union
 
 import jsonpickle
 from google.adk.agents.invocation_context import InvocationContext
-from google.adk.events import Event
 from google.adk.models import LlmResponse
 from google.adk.tools import ToolContext
 from google.genai.types import Part
@@ -123,14 +122,12 @@ def flatten_dict(d, parent_key='', sep='_'):
     return dict(items)
 
 
-def load_tool_response(event: Event):
-    tool_response = event.content.parts[0].function_response.response
+def load_tool_response(part: Part):
+    tool_response = part.function_response.response
     if tool_response.get('result', None) is not None and isinstance(
         tool_response['result'], CallToolResult
     ):
-        raw_result = (
-            event.content.parts[0].function_response.response['result'].content[0].text
-        )
+        raw_result = part.function_response.response['result'].content[0].text
         try:
             dict_result = jsonpickle.loads(raw_result)
         except ScannerError as err:
