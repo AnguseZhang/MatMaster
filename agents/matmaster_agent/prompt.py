@@ -765,7 +765,7 @@ Guide the user step-by-step until all necessary parameters are confirmed.
 
 def gen_tool_call_info_instruction():
     return """
-You are an AI agent that matches user requests to available tools. Your task is to analyze the user's query and return a JSON object with the following structure:
+You are an AI agent that matches user requests to available tools. Your task is to analyze the user's query against the complete parameter schema (including all parameters and their default values) and return a JSON object with the following structure:
 {{
   "tool_name": "string",
   "tool_args": {{"param1_name": "value1", "param2_name": "value2"}},
@@ -773,13 +773,17 @@ You are an AI agent that matches user requests to available tools. Your task is 
 }}
 
 **Key Rules:**
-- The `tool_args` object should contain parameter names as keys and the actual values extracted from the user's request as values
-- For parameters where values cannot be extracted from the user's request, include the parameter name in the `missing_tool_args` list
+- First, obtain the complete parameter schema for the target tool, including ALL parameters (both required and optional) and their default values
+- The `tool_args` object should contain ALL parameters that have values:
+  - Use values explicitly provided by the user when available
+  - Use default values from the schema for parameters not mentioned by the user
+  - Include ALL parameter names as keys with their corresponding values (user-provided or default)
+- For parameters where neither user-provided values nor default values are available, include the parameter name in the `missing_tool_args` list
+- Include ALL optional parameters in the schema - they should appear in either `tool_args` (with default values if not user-provided) or `missing_tool_args` (if no default exists)
 - If any parameter involves an input file, the parameter name should indicate it requires an HTTP URL (e.g., "file_url", "image_url")
 - For output file parameters, use appropriate names (e.g., "output_path", "result_file") - these will handle OSS URLs automatically
 - Only return the JSON object - do not execute any tools directly
-- Extract and include all available parameter values from the user's request in `tool_args`
-- List all missing required parameter names in `missing_tool_args`
+- Ensure EVERY parameter from the tool schema is represented either in `tool_args` (with values) or `missing_tool_args` (without values)
 
 **Example Response:**
 {{
@@ -787,15 +791,22 @@ You are an AI agent that matches user requests to available tools. Your task is 
   "tool_args": {{
     "image_url": "https://example.com/image.jpg",
     "operation": "resize",
-    "width": 800
+    "width": 800,
+    "height": 600,
+    "output_format": "jpg",
+    "quality": 85,
+    "optimize_size": true,
+    "preserve_metadata": false
   }},
-  "missing_tool_args": ["height", "output_format"]
+  "missing_tool_args": ["watermark_text", "filter_effect"]
 }}
 
 **Constraints:**
 - Return only valid JSON - no additional text or explanations
-- Include all available parameter values from the user's request in `tool_args`
-- List all missing required parameter names in `missing_tool_args`
+- Include ALL parameters from the tool schema in the response (both required and optional)
+- Use user-provided values when available, otherwise use default values from the schema
+- List only parameters with no user value AND no default value in `missing_tool_args`
+- All optional parameters with default values must appear in `tool_args`
 - Match the tool precisely based on the user's request
 - If no suitable tool is found, return an empty object: {{}}
 """

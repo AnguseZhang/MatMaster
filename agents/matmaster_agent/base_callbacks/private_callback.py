@@ -4,15 +4,17 @@ import logging
 import os
 import traceback
 from functools import wraps
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import litellm
+from deepdiff import DeepDiff
 from dp.agent.adapter.adk import CalculationMCPTool
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.agents.llm_agent import AfterToolCallback, BeforeToolCallback
-from google.adk.models import LlmResponse
+from google.adk.models import LlmRequest, LlmResponse
 from google.adk.tools import BaseTool, ToolContext
+from google.genai.types import FunctionDeclaration, Part
 from mcp.types import CallToolResult, TextContent
 
 from agents.matmaster_agent.constant import (
@@ -40,6 +42,12 @@ from agents.matmaster_agent.utils.job_utils import check_job_create_service
 from agents.matmaster_agent.utils.tool_response_utils import check_valid_tool_response
 
 logger = logging.getLogger(__name__)
+
+
+async def catch_tools_schema(
+    callback_context: CallbackContext, llm_request: LlmRequest
+) -> Optional[LlmResponse]:
+    _: List[FunctionDeclaration] = llm_request.config.tools[0].function_declarations
 
 
 # after_model_callback
@@ -157,7 +165,9 @@ async def remove_function_call(
 
                 part.function_call = None
 
-        if part.text or part.function_call:
+        if (
+            part.text or part.function_call
+        ):  # 如果原本只有一个 part，且 part.function_call 被移除了，该 if 不会走
             llm_response.content.parts.append(part)
 
     if llm_generated_text:
@@ -165,8 +175,11 @@ async def remove_function_call(
             f"[{MATMASTER_AGENT_NAME}] llm_generated_text = {llm_generated_text}"
         )
 
-    if not llm_response.content.parts[0].text and llm_generated_text:
-        llm_response.content.parts[0].text = llm_generated_text
+    if llm_generated_text:
+        if not llm_response.content.parts:
+            llm_response.content.parts.append(Part(text=llm_generated_text))
+        elif not llm_response.content.parts[0].text:
+            llm_response.content.parts[0].text = llm_generated_text
 
     if not llm_response.partial:
         logger.info(
@@ -436,6 +449,51 @@ def check_job_create(func: BeforeToolCallback) -> BeforeToolCallback:
 
         if tool.executor is not None:
             return await check_job_create_service()
+
+    return wrapper
+
+
+def update_tool_args(func: BeforeToolCallback) -> BeforeToolCallback:
+    @wraps(func)
+    async def wrapper(
+        tool: BaseTool, args: dict, tool_context: ToolContext
+    ) -> Optional[dict]:
+        # 两步操作：
+        # 1. 调用被装饰的 before_tool_callback；
+        # 2. 如果调用的 before_tool_callback 有返回值，以这个为准
+        if (before_tool_result := await func(tool, args, tool_context)) is not None:
+            return before_tool_result
+
+        # 如果 tool 不是 CalculationMCPTool，不应该调用这个 callback
+        if not isinstance(tool, CalculationMCPTool):
+            raise TypeError(
+                "Not CalculationMCPTool type, current tool can't create job!"
+            )
+
+        tool_call_info = tool_context.state['tool_call_info']
+        if not tool_call_info:
+            logger.warning(
+                f'[{MATMASTER_AGENT_NAME}] empty, tool_call_info = {tool_call_info}'
+            )
+            return
+
+        last_tool_call_info = tool_call_info[-1]
+        if last_tool_call_info['tool_name'] != tool.name:
+            logger.warning(
+                f'[{MATMASTER_AGENT_NAME}] not match, tool_call_info = {tool_call_info}, tool.name = {tool.name}'
+            )
+            return
+
+        logger.info(f'[{MATMASTER_AGENT_NAME}] before args = {args}')
+        diff = DeepDiff(args, last_tool_call_info['tool_args'])
+        if diff:
+            args = last_tool_call_info['tool_args']
+            logger.info(
+                f'[{MATMASTER_AGENT_NAME}] args updated with differences: {diff}'
+            )
+            logger.info(f'[{MATMASTER_AGENT_NAME}] after args = {args}')
+        else:
+            logger.info(f'[{MATMASTER_AGENT_NAME}] args unchanged')
 
     return wrapper
 

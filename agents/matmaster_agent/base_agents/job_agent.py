@@ -277,13 +277,24 @@ class ToolCallInfoAgent(ErrorHandleLlmAgent):
                                 ModelRole,
                             ):
                                 yield system_job_result_event
+                            update_tool_call_info = copy.deepcopy(
+                                ctx.session.state['tool_call_info']
+                            )
+                            update_tool_call_info.append(tool_call_info)
+                            yield update_state_event(
+                                ctx,
+                                state_delta={'tool_call_info': update_tool_call_info},
+                            )
+                            logger.info(
+                                f'[{MATMASTER_AGENT_NAME}] update_tool_call_info = {update_tool_call_info}'
+                            )
                         except BaseException:
                             logger.info(
                                 f'[{MATMASTER_AGENT_NAME}]:[{self.name}] raw_text = {part.text}'
                             )
                     # 置空 text 消息
                     part.text = None
-            if is_function_call(event) and is_function_response(event):
+            if is_function_call(event) or is_function_response(event):
                 yield event
 
 

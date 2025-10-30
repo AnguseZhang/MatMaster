@@ -26,6 +26,7 @@ from agents.matmaster_agent.base_agents.sync_agent import (
     ToolValidatorAgent,
 )
 from agents.matmaster_agent.base_callbacks.private_callback import (
+    catch_tools_schema,
     remove_function_call,
 )
 from agents.matmaster_agent.constant import (
@@ -201,6 +202,7 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
             tools=self.mcp_tools,
             disallow_transfer_to_parent=True,
             disallow_transfer_to_peers=True,
+            before_model_callback=catch_tools_schema,
             after_model_callback=remove_function_call,
             output_schema=ToolCallInfo,
         )
