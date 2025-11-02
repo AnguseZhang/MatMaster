@@ -1,9 +1,7 @@
 import copy
-import json
 import logging
 from typing import AsyncGenerator, Optional, Union, override
 
-import litellm
 from google.adk.agents import InvocationContext, SequentialAgent
 from google.adk.events import Event
 from google.adk.models import BaseLlm
@@ -28,16 +26,17 @@ from agents.matmaster_agent.base_agents.sync_agent import (
     SyncMCPAgent,
     ToolValidatorAgent,
 )
-from agents.matmaster_agent.base_callbacks.private_callback import remove_function_call
+from agents.matmaster_agent.base_callbacks.private_callback import (
+    remove_function_call,
+)
 from agents.matmaster_agent.constant import (
     FRONTEND_STATE_KEY,
     MATMASTER_AGENT_NAME,
     ModelRole,
 )
 from agents.matmaster_agent.llm_config import MatMasterLlmConfig
-from agents.matmaster_agent.model import ParamsCheckComplete, ToolCallInfo
+from agents.matmaster_agent.model import ToolCallInfo
 from agents.matmaster_agent.prompt import (
-    gen_params_check_completed_agent_instruction,
     gen_params_check_info_agent_instruction,
     gen_result_agent_description,
     gen_result_core_agent_instruction,
@@ -47,8 +46,8 @@ from agents.matmaster_agent.prompt import (
     gen_tool_call_info_instruction,
 )
 from agents.matmaster_agent.utils.event_utils import (
-    cherry_pick_events,
     context_function_event,
+    is_function_response,
     update_state_event,
 )
 from agents.matmaster_agent.utils.helper_func import (
@@ -263,60 +262,44 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
         ):  # Only Query Job Result
             pass
         else:
-            cherry_pick_parts = cherry_pick_events(ctx)[-5:]
-            context_messages = '\n'.join(
-                [
-                    f'<{item[0].title()}> said: \n{item[1]}\n'
-                    for item in cherry_pick_parts
-                ]
-            )
-            logger.info(
-                f"[{MATMASTER_AGENT_NAME}]:[{self.name}] context_messages = {context_messages}"
-            )
-
-            prompt = gen_params_check_completed_agent_instruction().format(
-                context_messages=context_messages
-            )
-            response = litellm.completion(
-                model='azure/gpt-4o',
-                messages=[{'role': 'user', 'content': prompt}],
-                response_format=ParamsCheckComplete,
-            )
-            params_check_completed_json: dict = json.loads(
-                response.choices[0].message.content
-            )
-            logger.info(
-                f"[{MATMASTER_AGENT_NAME}]:[{self.name}] params_check_completed_json = {params_check_completed_json}"
-            )
-            params_check_completed = params_check_completed_json['flag']
-            params_check_reason = params_check_completed_json['reason']
-            params_check_msg = params_check_completed_json['analyzed_messages']
-
-            # 包装成function_call，来避免在历史记录中展示；同时模型可以在上下文中感知
-            for params_check_reason_event in context_function_event(
+            # 根据计划来
+            for materials_plan_function_call_event in context_function_event(
                 ctx,
                 self.name,
-                'system_params_check_result',
+                'materials_plan_function_call',
                 {
-                    'complete': params_check_completed,
-                    'reason': params_check_reason,
-                    'analyzed_messages': params_check_msg,
+                    'msg': f'According to the plan, I will call the `{update_plan['steps'][session_state['plan_index']]['tool_name']}`'
                 },
                 ModelRole,
             ):
-                yield params_check_reason_event
+                yield materials_plan_function_call_event
 
-            if not params_check_completed:
-                # Call ParamsCheckInfoAgent to generate params needing check
+            tool_call_info = {}
+            async for tool_call_info_event in self.tool_call_info_agent.run_async(ctx):
+                if (
+                    is_function_response(tool_call_info_event)
+                    and tool_call_info_event.content.parts[0].function_response.name
+                    == 'materials_schema'
+                ):
+                    tool_call_info = tool_call_info_event.content.parts[
+                        0
+                    ].function_response.response
+                    logger.info(
+                        f'[{MATMASTER_AGENT_NAME}] tool_call_info = {tool_call_info}'
+                    )
+                yield tool_call_info_event
+
+            if not tool_call_info:
+                return
+
+            missing_tool_args = tool_call_info.get('missing_tool_args', None)
+
+            if missing_tool_args:
                 async for (
                     params_check_info_event
                 ) in self.params_check_info_agent.run_async(ctx):
                     yield params_check_info_event
             else:
-                async for tool_call_info_event in self.tool_call_info_agent.run_async(
-                    ctx
-                ):
-                    yield tool_call_info_event
                 yield update_state_event(ctx, state_delta={'tool_hallucination': False})
                 for _ in range(2):
                     async for submit_event in self.submit_agent.run_async(ctx):
@@ -324,3 +307,60 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
 
                     if not ctx.session.state['tool_hallucination']:
                         break
+
+            # cherry_pick_parts = cherry_pick_events(ctx)[-5:]
+            # context_messages = '\n'.join(
+            #     [
+            #         f'<{item[0].title()}> said: \n{item[1]}\n'
+            #         for item in cherry_pick_parts
+            #     ]
+            # )
+            # logger.info(
+            #     f"[{MATMASTER_AGENT_NAME}]:[{self.name}] context_messages = {context_messages}"
+            # )
+            #
+            # prompt = gen_params_check_completed_agent_instruction().format(
+            #     context_messages=context_messages
+            # )
+            # response = litellm.completion(
+            #     model='azure/gpt-4o',
+            #     messages=[{'role': 'user', 'content': prompt}],
+            #     response_format=ParamsCheckComplete,
+            # )
+            # params_check_completed_json: dict = json.loads(
+            #     response.choices[0].message.content
+            # )
+            # logger.info(
+            #     f"[{MATMASTER_AGENT_NAME}]:[{self.name}] params_check_completed_json = {params_check_completed_json}"
+            # )
+            # params_check_completed = params_check_completed_json['flag']
+            # params_check_reason = params_check_completed_json['reason']
+            # params_check_msg = params_check_completed_json['analyzed_messages']
+            #
+            # # 包装成function_call，来避免在历史记录中展示；同时模型可以在上下文中感知
+            # for params_check_reason_event in context_function_event(
+            #     ctx,
+            #     self.name,
+            #     'system_params_check_result',
+            #     {
+            #         'complete': params_check_completed,
+            #         'reason': params_check_reason,
+            #         'analyzed_messages': params_check_msg,
+            #     },
+            #     ModelRole,
+            # ):
+            #     yield params_check_reason_event
+            #
+            # if not params_check_completed:
+            #     # Call ParamsCheckInfoAgent to generate params needing check
+            #     async for (
+            #         params_check_info_event
+            #     ) in self.params_check_info_agent.run_async(ctx):
+            #         yield params_check_info_event
+            # else:
+            #     async for tool_call_info_event in self.tool_call_info_agent.run_async(
+            #         ctx
+            #     ):
+            #         yield tool_call_info_event
+            #     async for submit_event in self.submit_agent.run_async(ctx):
+            #         yield submit_event
