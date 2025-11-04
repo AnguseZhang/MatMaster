@@ -117,7 +117,7 @@ class BaseSyncAgentWithToolValidator(
                 break
 
 
-class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseAgent):
+class BaseAsyncJobAgent(MCPInitMixin, ErrorHandleBaseAgent):
     """
     Base agent class for handling asynchronous job submissions.
 
@@ -308,5 +308,10 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
                     ctx
                 ):
                     yield tool_call_info_event
-                async for submit_event in self.submit_agent.run_async(ctx):
-                    yield submit_event
+                yield update_state_event(ctx, state_delta={'tool_hallucination': False})
+                for _ in range(2):
+                    async for submit_event in self.submit_agent.run_async(ctx):
+                        yield submit_event
+
+                    if not ctx.session.state['tool_hallucination']:
+                        break

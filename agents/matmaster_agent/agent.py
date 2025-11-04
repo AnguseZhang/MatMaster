@@ -1,12 +1,16 @@
 import logging
 from typing import AsyncGenerator, override
 
-from google.adk.agents import InvocationContext, LlmAgent
+from google.adk.agents import BaseAgent, InvocationContext, LlmAgent
 from google.adk.events import Event
 from google.adk.models.lite_llm import LiteLlm
 from opik.integrations.adk import track_adk_agent_recursive
+from pydantic import computed_field, model_validator
 
+from agents.matmaster_agent.base_agents.error_agent import ErrorHandleLlmAgent
 from agents.matmaster_agent.base_agents.io_agent import HandleFileUploadLlmAgent
+from agents.matmaster_agent.base_agents.schema_agent import SchemaAgent
+from agents.matmaster_agent.base_callbacks.private_callback import remove_function_call
 from agents.matmaster_agent.base_callbacks.public_callback import check_transfer
 from agents.matmaster_agent.callback import (
     matmaster_check_job_status,
@@ -15,12 +19,22 @@ from agents.matmaster_agent.callback import (
     matmaster_set_lang,
 )
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME, ModelRole
+from agents.matmaster_agent.flow_agents.analysis_agent.prompt import (
+    ANALYSIS_INTRODUCTION,
+)
+from agents.matmaster_agent.flow_agents.planner_agent import (
+    PLAN_MAKE_INSTRUCTION,
+    PLAN_SUMMARY_INSTRUCTION,
+)
 from agents.matmaster_agent.llm_config import (
     DEFAULT_MODEL,
     LLMConfig,
     MatMasterLlmConfig,
 )
-from agents.matmaster_agent.model import MatMasterTargetAgentEnum
+from agents.matmaster_agent.model import (
+    MatMasterTargetAgentEnum,
+    PlanSchema,
+)
 from agents.matmaster_agent.prompt import (
     AgentDescription,
     AgentInstruction,
@@ -49,6 +63,18 @@ from agents.matmaster_agent.sub_agents.HEACalculator_agent.agent import (
     init_hea_calculator_agent,
 )
 from agents.matmaster_agent.sub_agents.MrDice_agent.agent import init_MrDice_agent
+from agents.matmaster_agent.sub_agents.MrDice_agent.bohriumpublic_agent.agent import (
+    bohriumpublic_toolset,
+)
+from agents.matmaster_agent.sub_agents.MrDice_agent.mofdb_agent.agent import (
+    mofdb_toolset,
+)
+from agents.matmaster_agent.sub_agents.MrDice_agent.openlam_agent.agent import (
+    openlam_toolset,
+)
+from agents.matmaster_agent.sub_agents.MrDice_agent.optimade_agent.agent import (
+    optimade_toolset,
+)
 from agents.matmaster_agent.sub_agents.organic_reaction_agent.agent import (
     init_organic_reaction_agent,
 )
@@ -61,6 +87,7 @@ from agents.matmaster_agent.sub_agents.piloteye_electro_agent.agent import (
 from agents.matmaster_agent.sub_agents.ssebrain_agent.agent import init_ssebrain_agent
 from agents.matmaster_agent.sub_agents.structure_generate_agent.agent import (
     init_structure_generate_agent,
+    structure_generate_toolset,
 )
 from agents.matmaster_agent.sub_agents.superconductor_agent.agent import (
     init_superconductor_agent,
@@ -81,6 +108,7 @@ from agents.matmaster_agent.utils.event_utils import (
     send_error_event,
     update_state_event,
 )
+from agents.matmaster_agent.utils.helper_func import get_target_agent
 
 logging.getLogger('google_adk.google.adk.tools.base_authenticated_tool').setLevel(
     logging.ERROR
@@ -90,7 +118,170 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
+class MatMasterSupervisorDemoAgent(ErrorHandleLlmAgent):
+    @model_validator(mode='after')
+    def after_init(self):
+        self._structure_generate_agent = init_structure_generate_agent(
+            MatMasterLlmConfig
+        )
+
+        self.name = MATMASTER_AGENT_NAME
+        self.model = MatMasterLlmConfig.default_litellm_model
+        self.sub_agents = [self.structure_generate_agent]
+        self.global_instruction = 'GlobalInstruction'
+        self.instruction = 'AgentInstruction'
+        self.description = 'AgentDescription'
+        self.after_model_callback = [
+            # matmaster_check_job_status,
+            check_transfer(
+                prompt=MatMasterCheckTransferPrompt,
+                target_agent_enum=MatMasterTargetAgentEnum,
+            ),
+            # matmaster_hallucination_retry,
+        ]
+
+        return self
+
+    @computed_field
+    @property
+    def structure_generate_agent(self) -> BaseAgent:
+        return self._structure_generate_agent
+
+    @override
+    async def _run_events(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
+        plan = ctx.session.state['plan']
+        logger.info(f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} plan = {plan}')
+        for step in plan['steps']:
+            target_agent: BaseAgent = get_target_agent(
+                step['tool_name'], self.sub_agents
+            )
+            async for event in target_agent.run_async(ctx):
+                yield event
+
+
 class MatMasterAgent(HandleFileUploadLlmAgent):
+    @model_validator(mode='after')
+    def after_init(self):
+        self._plan_make_agent = SchemaAgent(
+            name='plan_make_agent',
+            model=MatMasterLlmConfig.tool_schema_model,
+            description='根据用户的问题依据现有工具执行计划，如果没有工具可用，告知用户，不要自己制造工具或幻想',
+            instruction=PLAN_MAKE_INSTRUCTION,
+            tools=[
+                structure_generate_toolset,
+                optimade_toolset,
+                bohriumpublic_toolset,
+                openlam_toolset,
+                mofdb_toolset,
+            ],
+            disallow_transfer_to_parent=True,
+            disallow_transfer_to_peers=True,
+            before_agent_callback=[
+                matmaster_prepare_state,
+                matmaster_set_lang,
+            ],
+            after_model_callback=remove_function_call,
+            output_schema=PlanSchema,
+            state_key='plan',
+        )
+
+        self._plan_summary_agent = LlmAgent(
+            name='plan_summary_agent',
+            model=MatMasterLlmConfig.default_litellm_model,
+            description='根据 materials_plan 返回的计划进行总结',
+            instruction=PLAN_SUMMARY_INSTRUCTION,
+            disallow_transfer_to_parent=True,
+            disallow_transfer_to_peers=True,
+        )
+
+        self._execution_agent = MatMasterSupervisorDemoAgent(
+            name='execution_agent',
+            model=MatMasterLlmConfig.default_litellm_model,
+            description='根据 materials_plan 返回的计划进行总结',
+            instruction='',
+            disallow_transfer_to_parent=True,
+            disallow_transfer_to_peers=True,
+        )
+
+        self._analysis_agent = ErrorHandleLlmAgent(
+            name='post_execution_agent',
+            model=MatMasterLlmConfig.default_litellm_model,
+            description='总结本轮的计划执行情况',
+            instruction=ANALYSIS_INTRODUCTION,
+            disallow_transfer_to_parent=True,
+            disallow_transfer_to_peers=True,
+        )
+
+        self.sub_agents = [
+            self.plan_make_agent,
+            self.plan_summary_agent,
+            self.execution_agent,
+            self.analysis_agent,
+        ]
+
+        return self
+
+    @computed_field
+    @property
+    def plan_make_agent(self) -> LlmAgent:
+        return self._plan_make_agent
+
+    @computed_field
+    @property
+    def plan_summary_agent(self) -> LlmAgent:
+        return self._plan_summary_agent
+
+    @computed_field
+    @property
+    def execution_agent(self) -> LlmAgent:
+        return self._execution_agent
+
+    @computed_field
+    @property
+    def analysis_agent(self) -> LlmAgent:
+        return self._analysis_agent
+
+    async def _run_async_impl(
+        self, ctx: InvocationContext
+    ) -> AsyncGenerator[Event, None]:
+        try:
+            # 判断要不要制定计划
+
+            # 制定计划
+            async for plan_event in self.plan_make_agent.run_async(ctx):
+                yield plan_event
+
+            # 总结计划
+            async for plan_summary_event in self.plan_summary_agent.run_async(ctx):
+                yield plan_summary_event
+
+            if ctx.session.state['error_occurred']:
+                return
+
+            # 执行计划
+            # feasibility = 'full'
+            if ctx.session.state['plan']['feasibility'] == 'full':
+                async for execution_event in self.execution_agent.run_async(ctx):
+                    yield execution_event
+
+            # 总结执行情况
+            async for analysis_event in self.analysis_agent.run_async(ctx):
+                yield analysis_event
+
+        except BaseException as err:
+            async for error_event in send_error_event(err, ctx, self.name):
+                yield error_event
+
+            error_handel_agent = LlmAgent(
+                name='error_handel_agent',
+                model=LiteLlm(model=DEFAULT_MODEL),
+            )
+            # 调用错误处理 Agent
+            async for error_handel_event in error_handel_agent.run_async(ctx):
+                yield error_handel_event
+
+
+class MatMasterSupervisorAgent(HandleFileUploadLlmAgent):
     def __init__(self, llm_config: LLMConfig):
         piloteye_electro_agent = init_piloteye_electro_agent(llm_config)
         traj_analysis_agent = init_traj_analysis_agent(llm_config)
@@ -215,7 +406,11 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
 
 
 def init_matmaster_agent() -> LlmAgent:
-    matmaster_agent = MatMasterAgent(MatMasterLlmConfig)
+    matmaster_agent = MatMasterAgent(
+        name=MATMASTER_AGENT_NAME,
+        model=MatMasterLlmConfig.default_litellm_model,
+        after_model_callback=remove_function_call,
+    )
     track_adk_agent_recursive(matmaster_agent, MatMasterLlmConfig.opik_tracer)
 
     return matmaster_agent

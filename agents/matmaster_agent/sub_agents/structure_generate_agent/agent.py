@@ -6,7 +6,6 @@ from google.adk.tools.mcp_tool.mcp_session_manager import SseServerParams
 
 from agents.matmaster_agent.base_agents.public_agent import BaseAsyncJobAgent
 from agents.matmaster_agent.constant import (
-    MATMASTER_AGENT_NAME,
     BohriumExecutor,
     BohriumStorge,
 )
@@ -51,7 +50,6 @@ class StructureGenerateAgent(BaseAsyncJobAgent):
             description=StructureGenerateAgentDescription,
             agent_instruction=StructureGenerateAgentInstruction,
             dflow_flag=False,
-            supervisor_agent=MATMASTER_AGENT_NAME,
             sync_tools=[
                 'build_bulk_structure_by_template',
                 'build_bulk_structure_by_wyckoff',

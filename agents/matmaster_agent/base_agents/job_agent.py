@@ -42,7 +42,11 @@ from agents.matmaster_agent.prompt import (
     ResultCoreAgentDescription,
     SubmitRenderAgentDescription,
 )
-from agents.matmaster_agent.style import tool_response_failed_card
+from agents.matmaster_agent.style import (
+    tool_hallucination_card,
+    tool_response_failed_card,
+    tool_retry_failed_card,
+)
 from agents.matmaster_agent.utils.event_utils import (
     all_text_event,
     context_function_event,
@@ -526,50 +530,36 @@ class SubmitValidatorAgent(ErrorHandleBaseAgent):
             ctx.session.state['long_running_jobs_count']
             > ctx.session.state['long_running_jobs_count_ori']
         ):
-            submit_validator_msg = 'The Job has indeed been submitted.'
             yield update_state_event(
                 ctx,
                 state_delta={
                     'long_running_jobs_count_ori': ctx.session.state[
                         'long_running_jobs_count'
-                    ]
+                    ],
+                    'tool_hallucination': False,
                 },
             )
+            yield Event(author=self.name)
         else:
-            submit_validator_msg = (
-                'System is experiencing task submission hallucination; '
-                'I recommend retrying with the original parameters.'
-            )
+            if not ctx.session.state['tool_hallucination']:  # 第一次重试
+                message = tool_hallucination_card(i18n=i18n)
+                yield update_state_event(
+                    ctx,
+                    state_delta={
+                        'tool_hallucination': True,
+                    },
+                )
+            else:  # 第二次重试
+                message = tool_retry_failed_card(i18n=i18n)
 
-            logger.info(f'[{MATMASTER_AGENT_NAME}] ctx.agent.name = {ctx.agent.name}')
-            logger.info(
-                f'[{MATMASTER_AGENT_NAME}] ctx.agent.parent_agent.parent_agent = {ctx.agent.parent_agent.parent_agent}'
-            )
-            current_agent = ctx.agent.name.replace('_submit_validator', '')
-            if ctx.session.state['hallucination_agent'] != current_agent:
-                yield update_state_event(
-                    ctx,
-                    state_delta={
-                        'hallucination': True,
-                        'hallucination_agent': current_agent,
-                    },
-                )
-            else:
-                yield update_state_event(
-                    ctx,
-                    state_delta={
-                        'hallucination_agent': None,
-                    },
-                )
+            for tool_hallucination_event in all_text_event(
+                ctx,
+                self.name,
+                message,
+                ModelRole,
+            ):
+                yield tool_hallucination_event
+
         logger.info(
-            f'[{MATMASTER_AGENT_NAME}]:[{self.name}] state = {ctx.session.state}'
+            f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} state = {ctx.session.state}'
         )
-
-        for function_event in context_function_event(
-            ctx,
-            self.name,
-            'system_submit_validator',
-            {'msg': submit_validator_msg},
-            ModelRole,
-        ):
-            yield function_event
