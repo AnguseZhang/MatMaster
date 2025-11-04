@@ -15,6 +15,7 @@ from agents.matmaster_agent.prompt import MatMasterCheckTransferPrompt
 from agents.matmaster_agent.sub_agents.structure_generate_agent.agent import (
     init_structure_generate_agent,
 )
+from agents.matmaster_agent.utils.event_utils import update_state_event
 from agents.matmaster_agent.utils.helper_func import get_target_agent
 
 logger = logging.getLogger(__name__)
@@ -54,10 +55,11 @@ class MatMasterSupervisorDemoAgent(ErrorHandleLlmAgent):
     async def _run_events(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
         plan = ctx.session.state['plan']
         logger.info(f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} plan = {plan}')
-        for step in plan['steps']:
+        for index, step in enumerate(plan['steps']):
             target_agent: BaseAgent = get_target_agent(
                 step['tool_name'], self.sub_agents
             )
             if step['status'] == 'plan':
+                yield update_state_event(ctx, state_delta={'plan_index': index})
                 async for event in target_agent.run_async(ctx):
                     yield event

@@ -20,7 +20,7 @@ from agents.matmaster_agent.callback import (
 )
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME, ModelRole
 from agents.matmaster_agent.flow_agents.analysis_agent.prompt import (
-    ANALYSIS_INTRODUCTION,
+    get_analysis_instruction,
 )
 from agents.matmaster_agent.flow_agents.execution_agent.agent import (
     MatMasterSupervisorDemoAgent,
@@ -167,8 +167,9 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
         self._analysis_agent = ErrorHandleLlmAgent(
             name='post_execution_agent',
             model=MatMasterLlmConfig.default_litellm_model,
+            global_instruction='使用 {target_language} 回答',
             description='总结本轮的计划执行情况',
-            instruction=ANALYSIS_INTRODUCTION,
+            instruction='',
             disallow_transfer_to_parent=True,
             disallow_transfer_to_peers=True,
         )
@@ -212,6 +213,8 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
             async for plan_event in self.plan_make_agent.run_async(ctx):
                 yield plan_event
 
+            # 检查计划的合理性，TODO: tool_name 伪造, target_agent 为 None
+
             # 总结计划
             async for plan_summary_event in self.plan_summary_agent.run_async(ctx):
                 yield plan_summary_event
@@ -226,6 +229,9 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
                     yield execution_event
 
             # 总结执行情况
+            self._analysis_agent.instruction = get_analysis_instruction(
+                ctx.session.state['plan']
+            )
             async for analysis_event in self.analysis_agent.run_async(ctx):
                 yield analysis_event
         except BaseException as err:
