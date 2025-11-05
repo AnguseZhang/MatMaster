@@ -161,6 +161,7 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
             ):
                 return
 
+            logger.info(f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} {check_plan(ctx)}')
             if check_plan(ctx) not in [FlowStatusEnum.NO_PLAN, FlowStatusEnum.NEW_PLAN]:
                 # 检查之前的计划执行情况，老计划才执行
                 async for (

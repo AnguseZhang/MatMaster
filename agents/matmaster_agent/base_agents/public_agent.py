@@ -117,7 +117,7 @@ class BaseSyncAgentWithToolValidator(
                 break
 
 
-class BaseAsyncJobAgent(MCPInitMixin, ErrorHandleBaseAgent):
+class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseAgent):
     """
     Base agent class for handling asynchronous job submissions.
 
