@@ -19,7 +19,7 @@ from agents.matmaster_agent.sub_agents.chembrain_agent.smiles_conversion_agent.p
 from ..base import CalculationLlmAgent
 
 # Configure SSE params
-toolset = CalculationMCPToolset(
+smiles_conversion_toolset = CalculationMCPToolset(
     connection_params=SseServerParams(url=SMILESConversionServerUrl),
     storage=BohriumStorge,
 )
@@ -34,7 +34,7 @@ class SMILESConversionAgent(CalculationLlmAgent):
             name=SMILESConversionAgentName,
             description=description,
             instruction=instruction_en,
-            tools=[toolset],
+            tools=[smiles_conversion_toolset],
             before_tool_callback=smiles_conversion_before_tool,
             after_tool_callback=smiles_conversion_after_tool,
         )

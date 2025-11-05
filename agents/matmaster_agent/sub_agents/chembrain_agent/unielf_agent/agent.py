@@ -10,7 +10,9 @@ from .prompt import description, instruction_en
 
 # Configure SSE params
 sse_params = SseServerParams(url=UniELFServerUrl)
-toolset = CalculationMCPToolset(connection_params=sse_params, storage=BohriumStorge)
+uni_elf_toolset = CalculationMCPToolset(
+    connection_params=sse_params, storage=BohriumStorge
+)
 
 
 # Create agent
@@ -21,7 +23,7 @@ def init_unielf_agent(llm_config):
         model=selected_model,
         instruction=instruction_en,
         description=description,
-        tools=[toolset],
+        tools=[uni_elf_toolset],
     )
     return unielf_agent
 

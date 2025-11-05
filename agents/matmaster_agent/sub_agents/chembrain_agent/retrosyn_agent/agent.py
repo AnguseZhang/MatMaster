@@ -10,7 +10,7 @@ from .constant import RetrosynAgentName, RetrosynServerUrl
 from .prompt import description, instruction_en
 
 # Initialize MCP tools and agent with proper error handling
-mcp_tools = CalculationMCPToolset(
+retrosyn_toolset = CalculationMCPToolset(
     connection_params=SseConnectionParams(url=RetrosynServerUrl), storage=BohriumStorge
 )
 
@@ -23,7 +23,7 @@ def init_retrosyn_agent(llm_config):
         name=RetrosynAgentName,
         description=description,
         instruction=instruction_en,
-        tools=[mcp_tools],
+        tools=[retrosyn_toolset],
         after_tool_callback=[retrosyn_after_tool_transform_tgz],
     )
     return retrosyn_agent
