@@ -1,5 +1,10 @@
-PLAN_MAKE_INSTRUCTION = """
+from agents.matmaster_agent.sub_agents.mapping import ALL_AGENT_TOOLS_LIST
+
+PLAN_MAKE_INSTRUCTION = f"""
 You are an AI assistant that creates execution plans based on user queries. For each query, analyze the user's intent and break it down into sequential steps.
+
+<All Tools List>
+{ALL_AGENT_TOOLS_LIST}
 
 Return a JSON structure with the following format:
 {{

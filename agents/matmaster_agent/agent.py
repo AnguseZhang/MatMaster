@@ -30,7 +30,7 @@ from agents.matmaster_agent.flow_agents.planner_agent.prompt import (
     PLAN_MAKE_INSTRUCTION,
     PLAN_SUMMARY_INSTRUCTION,
 )
-from agents.matmaster_agent.flow_agents.utils import check_plan, get_health_toolset
+from agents.matmaster_agent.flow_agents.utils import check_plan
 from agents.matmaster_agent.llm_config import (
     DEFAULT_MODEL,
     MatMasterLlmConfig,
@@ -55,7 +55,7 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
             model=MatMasterLlmConfig.tool_schema_model,
             description='根据用户的问题依据现有工具执行计划，如果没有工具可用，告知用户，不要自己制造工具或幻想',
             instruction=PLAN_MAKE_INSTRUCTION,
-            tools=get_health_toolset(),
+            # tools=get_health_toolset(),
             disallow_transfer_to_parent=True,
             disallow_transfer_to_peers=True,
             before_agent_callback=[
