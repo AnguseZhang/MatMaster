@@ -30,66 +30,10 @@ from agents.matmaster_agent.flow_agents.planner_agent.prompt import (
     PLAN_MAKE_INSTRUCTION,
     PLAN_SUMMARY_INSTRUCTION,
 )
-from agents.matmaster_agent.flow_agents.utils import check_plan
+from agents.matmaster_agent.flow_agents.utils import check_plan, get_health_toolset
 from agents.matmaster_agent.llm_config import (
     DEFAULT_MODEL,
     MatMasterLlmConfig,
-)
-from agents.matmaster_agent.sub_agents.ABACUS_agent.agent import abacus_toolset
-from agents.matmaster_agent.sub_agents.apex_agent.agent import apex_toolset
-from agents.matmaster_agent.sub_agents.chembrain_agent.retrosyn_agent.agent import (
-    retrosyn_toolset,
-)
-from agents.matmaster_agent.sub_agents.chembrain_agent.smiles_conversion_agent.agent import (
-    smiles_conversion_toolset,
-)
-from agents.matmaster_agent.sub_agents.chembrain_agent.unielf_agent.agent import (
-    uni_elf_toolset,
-)
-from agents.matmaster_agent.sub_agents.CompDART_agent.agent import compdart_toolset
-from agents.matmaster_agent.sub_agents.document_parser_agent.agent import (
-    document_parser_toolset,
-)
-from agents.matmaster_agent.sub_agents.DPACalculator_agent.agent import dpa_toolset
-from agents.matmaster_agent.sub_agents.finetune_dpa_agent.agent import (
-    finetune_dpa_toolset,
-)
-from agents.matmaster_agent.sub_agents.HEA_assistant_agent.agent import (
-    hea_assistant_toolset,
-)
-from agents.matmaster_agent.sub_agents.HEACalculator_agent.agent import (
-    hea_calculator_toolset,
-)
-from agents.matmaster_agent.sub_agents.MrDice_agent.bohriumpublic_agent.agent import (
-    bohriumpublic_toolset,
-)
-from agents.matmaster_agent.sub_agents.MrDice_agent.mofdb_agent.agent import (
-    mofdb_toolset,
-)
-from agents.matmaster_agent.sub_agents.MrDice_agent.openlam_agent.agent import (
-    openlam_toolset,
-)
-from agents.matmaster_agent.sub_agents.MrDice_agent.optimade_agent.agent import (
-    optimade_toolset,
-)
-from agents.matmaster_agent.sub_agents.organic_reaction_agent.agent import (
-    organic_reaction_toolset,
-)
-from agents.matmaster_agent.sub_agents.perovskite_agent.agent import perovskite_toolset
-from agents.matmaster_agent.sub_agents.piloteye_electro_agent.agent import (
-    piloteye_electro_toolset,
-)
-from agents.matmaster_agent.sub_agents.structure_generate_agent.agent import (
-    structure_generate_toolset,
-)
-from agents.matmaster_agent.sub_agents.superconductor_agent.agent import (
-    superconductor_toolset,
-)
-from agents.matmaster_agent.sub_agents.thermoelectric_agent.agent import (
-    thermoelectric_toolset,
-)
-from agents.matmaster_agent.sub_agents.traj_analysis_agent.agent import (
-    traj_analysis_toolset,
 )
 from agents.matmaster_agent.utils.event_utils import (
     send_error_event,
@@ -111,30 +55,7 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
             model=MatMasterLlmConfig.tool_schema_model,
             description='根据用户的问题依据现有工具执行计划，如果没有工具可用，告知用户，不要自己制造工具或幻想',
             instruction=PLAN_MAKE_INSTRUCTION,
-            tools=[
-                abacus_toolset,
-                apex_toolset,
-                smiles_conversion_toolset,
-                retrosyn_toolset,
-                uni_elf_toolset,
-                compdart_toolset,
-                document_parser_toolset,
-                dpa_toolset,
-                finetune_dpa_toolset,
-                hea_assistant_toolset,
-                hea_calculator_toolset,
-                optimade_toolset,
-                bohriumpublic_toolset,
-                openlam_toolset,
-                mofdb_toolset,
-                organic_reaction_toolset,
-                perovskite_toolset,
-                piloteye_electro_toolset,
-                structure_generate_toolset,
-                superconductor_toolset,
-                thermoelectric_toolset,
-                traj_analysis_toolset,
-            ],
+            tools=get_health_toolset(),
             disallow_transfer_to_parent=True,
             disallow_transfer_to_peers=True,
             before_agent_callback=[
