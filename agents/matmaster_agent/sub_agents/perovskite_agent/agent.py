@@ -12,6 +12,7 @@ from agents.matmaster_agent.constant import (
     BohriumStorge,
 )
 
+from ...llm_config import LLMConfig
 from .constant import PEROVSKITE_PLOT_URL, PerovskiteAgentName
 from .prompt import PerovskiteAgentDescription, PerovskiteAgentInstruction
 
@@ -25,10 +26,10 @@ perovskite_toolset = CalculationMCPToolset(
 )
 
 
-class Perovskite_Agent(BaseSyncAgentWithToolValidator):
+class PerovskiteAgent(BaseSyncAgentWithToolValidator):
     def __init__(self, llm_config):
         super().__init__(
-            model=llm_config.gpt_5_chat,
+            model=llm_config.default_litellm_model,
             name=PerovskiteAgentName,
             description=PerovskiteAgentDescription,
             instruction=PerovskiteAgentInstruction,
@@ -38,5 +39,5 @@ class Perovskite_Agent(BaseSyncAgentWithToolValidator):
         )
 
 
-def init_perovskite_agent(llm_config) -> BaseAgent:
-    return Perovskite_Agent(llm_config)
+def init_perovskite_agent(llm_config: LLMConfig) -> BaseAgent:
+    return PerovskiteAgent(llm_config)
