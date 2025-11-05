@@ -48,18 +48,19 @@ class MatMasterSupervisorAgent(ErrorHandleLlmAgent):
         plan = ctx.session.state['plan']
         logger.info(f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} plan = {plan}')
         for index, step in enumerate(plan['steps']):
-            target_agent_name, target_agent_class = get_agent_class_and_name(
-                step['tool_name']
-            )
-            target_agent = target_agent_class(
-                MatMasterLlmConfig, name_suffix=f"_{index}"
-            )
-            if step['status'] == 'plan':
-                yield update_state_event(
-                    ctx, state_delta={'plan_index': index}
-                )  # TODO: One Agent Many Tools Call
-                logger.info(
-                    f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} plan_index = {ctx.session.state["plan_index"]}'
+            if step.get('tool_name'):
+                target_agent_name, target_agent_class = get_agent_class_and_name(
+                    step['tool_name']
                 )
-                async for event in target_agent.run_async(ctx):
-                    yield event
+                target_agent = target_agent_class(
+                    MatMasterLlmConfig, name_suffix=f"_{index}"
+                )
+                if step['status'] == 'plan':
+                    yield update_state_event(
+                        ctx, state_delta={'plan_index': index}
+                    )  # TODO: One Agent Many Tools Call
+                    logger.info(
+                        f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} plan_index = {ctx.session.state["plan_index"]}'
+                    )
+                    async for event in target_agent.run_async(ctx):
+                        yield event

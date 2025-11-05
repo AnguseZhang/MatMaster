@@ -22,11 +22,15 @@ from agents.matmaster_agent.flow_agents.analysis_agent.prompt import (
 from agents.matmaster_agent.flow_agents.execution_agent.agent import (
     MatMasterSupervisorAgent,
 )
-from agents.matmaster_agent.flow_agents.model import PlanSchema
+from agents.matmaster_agent.flow_agents.model import FlowStatusEnum, PlanSchema
+from agents.matmaster_agent.flow_agents.plan_execution_check_agent.prompt import (
+    PLAN_EXECUTION_CHECK_INSTRUCTION,
+)
 from agents.matmaster_agent.flow_agents.planner_agent.prompt import (
     PLAN_MAKE_INSTRUCTION,
     PLAN_SUMMARY_INSTRUCTION,
 )
+from agents.matmaster_agent.flow_agents.utils import check_plan
 from agents.matmaster_agent.llm_config import (
     DEFAULT_MODEL,
     MatMasterLlmConfig,
@@ -93,6 +97,15 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
             disallow_transfer_to_peers=True,
         )
 
+        self._plan_execution_check_agent = ErrorHandleLlmAgent(
+            name='plan_execution_check_agent',
+            model=MatMasterLlmConfig.default_litellm_model,
+            description='汇总计划的执行情况，并根据计划提示下一步的动作',
+            instruction=PLAN_EXECUTION_CHECK_INSTRUCTION,
+            disallow_transfer_to_parent=True,
+            disallow_transfer_to_peers=True,
+        )
+
         self._execution_agent = MatMasterSupervisorAgent(
             name='execution_agent',
             model=MatMasterLlmConfig.default_litellm_model,
@@ -133,6 +146,11 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
 
     @computed_field
     @property
+    def plan_execution_check_agent(self) -> LlmAgent:
+        return self._plan_execution_check_agent
+
+    @computed_field
+    @property
     def execution_agent(self) -> LlmAgent:
         return self._execution_agent
 
@@ -146,22 +164,32 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
     ) -> AsyncGenerator[Event, None]:
         try:
             # 判断要不要制定计划
+            if check_plan(ctx) == FlowStatusEnum.NO_PLAN:
+                # 制定计划
+                async for plan_event in self.plan_make_agent.run_async(ctx):
+                    yield plan_event
 
-            # 制定计划
-            async for plan_event in self.plan_make_agent.run_async(ctx):
-                yield plan_event
+                # 检查计划的合理性，TODO: tool_name 伪造, target_agent 为 None
 
-            # 检查计划的合理性，TODO: tool_name 伪造, target_agent 为 None
+                # 总结计划
+                async for plan_summary_event in self.plan_summary_agent.run_async(ctx):
+                    yield plan_summary_event
 
-            # 总结计划
-            async for plan_summary_event in self.plan_summary_agent.run_async(ctx):
-                yield plan_summary_event
-
-            if ctx.session.state['error_occurred']:
+            # 计划出错或者无可调用工具，直接返回
+            if (
+                ctx.session.state['error_occurred']
+                or not ctx.session.state['plan']['feasibility']
+            ):
                 return
 
+            if check_plan(ctx) not in [FlowStatusEnum.NO_PLAN, FlowStatusEnum.NEW_PLAN]:
+                # 检查之前的计划执行情况，老计划才执行
+                async for (
+                    plan_execution_check_event
+                ) in self.plan_execution_check_agent.run_async(ctx):
+                    yield plan_execution_check_event
+
             # 执行计划
-            # feasibility = 'full'
             if ctx.session.state['plan']['feasibility'] in ['full', 'part']:
                 async for execution_event in self.execution_agent.run_async(ctx):
                     yield execution_event

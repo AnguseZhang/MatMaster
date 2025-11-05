@@ -7,12 +7,12 @@ PLAN_MAKE_INSTRUCTION = """
   steps: # 根据用户意图拆解出来需要执行的步骤，列表中的一个元素代表一步；如果对应步骤没有可用工具，也需要有对应元素
     [
       {{
-        tool_name: <string>, # 返回的工具名称不需要含有 functions 前缀，如果没有可以调用的工具，返回为 null
+        tool_name: <string>, # 返回的工具名称不需要含有 functions 前缀，如果没有可以调用的工具，返回 null
         description: <string>, # 调用该工具的说明
         "status": "plan" // 始终返回 plan 即可
       }}
     ]
-  feasibility: <string> # 如果计划涉及的所有细分步骤都有对应工具，返回 "full"; 部分有工具，返回 "part"；一个工具也没有，返回 “null”
+  feasibility: Optional[str] # 如果计划涉及的所有细分步骤都有对应工具，返回 "full"; 部分有工具，返回 "part"；一个工具也没有，返回 null
 }}
 """
 
