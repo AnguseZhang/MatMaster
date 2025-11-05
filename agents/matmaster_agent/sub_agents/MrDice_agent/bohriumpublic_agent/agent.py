@@ -31,11 +31,11 @@ bohriumpublic_toolset = CalculationMCPToolset(
 
 
 class Bohriumpublic_AgentBase(BaseSyncAgentWithToolValidator):
-    def __init__(self, llm_config):
+    def __init__(self, llm_config, name_suffix=''):
         super().__init__(
             # model=llm_config.deepseek_chat,
             model=llm_config.gpt_5_chat,
-            name=BohriumPublicAgentName,
+            name=BohriumPublicAgentName + name_suffix,
             description=BohriumPublicAgentDescription,
             instruction=BohriumPublicAgentInstruction,
             tools=[bohriumpublic_toolset],
@@ -45,5 +45,5 @@ class Bohriumpublic_AgentBase(BaseSyncAgentWithToolValidator):
         )
 
 
-def init_bohriumpublic_database_agent(llm_config) -> BaseAgent:
-    return Bohriumpublic_AgentBase(llm_config)
+def init_bohriumpublic_database_agent(llm_config, name_suffix='') -> BaseAgent:
+    return Bohriumpublic_AgentBase(llm_config, name_suffix=name_suffix)

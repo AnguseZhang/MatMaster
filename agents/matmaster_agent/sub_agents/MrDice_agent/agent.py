@@ -28,14 +28,18 @@ from agents.matmaster_agent.sub_agents.MrDice_agent.prompt import (
 
 
 class MrDice_Agent(SubordinateLlmAgent):
-    def __init__(self, llm_config: LLMConfig):
-        optimade_agent = init_optimade_database_agent(llm_config)
-        openlam_agent = init_openlam_database_agent(llm_config)
-        bohriumpublic_agent = init_bohriumpublic_database_agent(llm_config)
-        mofdb_agent = init_mofdb_database_agent(llm_config)
+    def __init__(self, llm_config: LLMConfig, name_suffix=''):
+        optimade_agent = init_optimade_database_agent(
+            llm_config, name_suffix=name_suffix
+        )
+        openlam_agent = init_openlam_database_agent(llm_config, name_suffix=name_suffix)
+        bohriumpublic_agent = init_bohriumpublic_database_agent(
+            llm_config, name_suffix=name_suffix
+        )
+        mofdb_agent = init_mofdb_database_agent(llm_config, name_suffix=name_suffix)
         super().__init__(
             model=llm_config.default_litellm_model,
-            name=MrDiceAgentName,
+            name=MrDiceAgentName + name_suffix,
             description=MrDiceAgentDescription,
             instruction=MrDiceAgentInstruction,
             sub_agents=[

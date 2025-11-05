@@ -26,11 +26,11 @@ mofdb_toolset = CalculationMCPToolset(
 
 
 class Mofdb_AgentBase(BaseSyncAgent):
-    def __init__(self, llm_config):
+    def __init__(self, llm_config, name_suffix=''):
         super().__init__(
             # model=llm_config.deepseek_chat,
             model=llm_config.gpt_5_chat,
-            name=MofdbAgentName,
+            name=MofdbAgentName + name_suffix,
             description=MofdbAgentDescription,
             instruction=MofdbAgentInstruction,
             tools=[mofdb_toolset],
@@ -39,5 +39,5 @@ class Mofdb_AgentBase(BaseSyncAgent):
         )
 
 
-def init_mofdb_database_agent(llm_config) -> BaseAgent:
-    return Mofdb_AgentBase(llm_config)
+def init_mofdb_database_agent(llm_config, name_suffix='') -> BaseAgent:
+    return Mofdb_AgentBase(llm_config, name_suffix)

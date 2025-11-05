@@ -42,11 +42,11 @@ structure_generate_toolset = CalculationMCPToolset(
 
 
 class StructureGenerateAgent(BaseAsyncJobAgent):
-    def __init__(self, llm_config: LLMConfig):
+    def __init__(self, llm_config: LLMConfig, name_suffix=''):
         super().__init__(
             model=llm_config.default_litellm_model,
             mcp_tools=[structure_generate_toolset],
-            name=StructureGenerateAgentName,
+            name=StructureGenerateAgentName + name_suffix,
             description=StructureGenerateAgentDescription,
             agent_instruction=StructureGenerateAgentInstruction,
             dflow_flag=False,

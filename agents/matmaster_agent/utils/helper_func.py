@@ -4,7 +4,6 @@ import logging
 from typing import Any, List, Optional, Union
 
 import jsonpickle
-from google.adk.agents import BaseAgent
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.models import LlmResponse
 from google.adk.tools import ToolContext
@@ -13,7 +12,7 @@ from mcp.types import CallToolResult
 from yaml.scanner import ScannerError
 
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
-from agents.matmaster_agent.model import AGENT_TOOLS_MAPPING, JobResult, JobResultType
+from agents.matmaster_agent.model import JobResult, JobResultType
 
 logger = logging.getLogger(__name__)
 
@@ -345,15 +344,3 @@ def check_None_wrapper(func):
         return result  # 通常装饰器应该返回原函数的结果
 
     return wrapper
-
-
-def get_target_agent(tool_name, sub_agents: List[BaseAgent]):
-    target_agent = ''
-    for key, value in AGENT_TOOLS_MAPPING.items():
-        if tool_name in value:
-            target_agent = key
-            break
-
-    for sub_agent in sub_agents:
-        if sub_agent.name == target_agent:
-            return sub_agent

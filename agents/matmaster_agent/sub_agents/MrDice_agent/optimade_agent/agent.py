@@ -26,11 +26,11 @@ optimade_toolset = CalculationMCPToolset(
 
 
 class Optimade_AgentBase(BaseSyncAgent):
-    def __init__(self, llm_config):
+    def __init__(self, llm_config, name_suffix=''):
         super().__init__(
             # model=llm_config.deepseek_chat,
             model=llm_config.gpt_5_chat,
-            name=OptimadeAgentName,
+            name=OptimadeAgentName + name_suffix,
             description=OptimadeAgentDescription,
             instruction=OptimadeAgentInstruction,
             tools=[optimade_toolset],
@@ -39,5 +39,5 @@ class Optimade_AgentBase(BaseSyncAgent):
         )
 
 
-def init_optimade_database_agent(llm_config) -> BaseAgent:
-    return Optimade_AgentBase(llm_config)
+def init_optimade_database_agent(llm_config, name_suffix='') -> BaseAgent:
+    return Optimade_AgentBase(llm_config, name_suffix=name_suffix)
