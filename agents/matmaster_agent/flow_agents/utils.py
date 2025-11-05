@@ -1,9 +1,7 @@
-import asyncio
 import logging
 
+import requests
 from google.adk.agents import InvocationContext
-from mcp import ClientSession
-from mcp.client.sse import sse_client
 
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
 from agents.matmaster_agent.flow_agents.model import FlowStatusEnum, PlanStepStatusEnum
@@ -43,29 +41,16 @@ def check_plan(ctx: InvocationContext):
 
 
 def get_health_toolset():
-    """同步版本的 get_health_toolset"""
+    health_results = []
+    for name, toolset in ALL_TOOLSET_DICT.items():
+        server_url = toolset._connection_params.url
+        try:
+            requests.get(server_url, stream=True, timeout=1)
+            health_results.append(toolset)
+        except BaseException:
+            logger.error(
+                f'[{MATMASTER_AGENT_NAME}] Error Connect: name = {name}, server_url = {server_url}'
+            )
+            continue
 
-    async def _async_get_health_toolset():
-        health_results = []  # 存储结果，每个元素是 (variable_name, toolset) 元组
-
-        for name, toolset in ALL_TOOLSET_DICT.items():
-            server_url = toolset._connection_params.url
-            try:
-                async with sse_client(server_url) as (read, write):
-                    async with ClientSession(read, write) as session:
-                        # 初始化
-                        await session.initialize()
-                        # 调用 tools/list 方法（对应 get_tools）
-                        await session.list_tools()
-
-                health_results.append(toolset)
-            except BaseException:
-                logger.error(
-                    f'[{MATMASTER_AGENT_NAME}] Error Connect: name = {name}, server_url = {server_url}'
-                )
-                continue
-
-        return health_results
-
-    # 运行异步函数并返回结果
-    return asyncio.run(_async_get_health_toolset())
+    return health_results

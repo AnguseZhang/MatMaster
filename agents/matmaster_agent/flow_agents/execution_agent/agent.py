@@ -52,9 +52,7 @@ class MatMasterSupervisorAgent(ErrorHandleLlmAgent):
                 target_agent_name, target_agent_class = get_agent_class_and_name(
                     step['tool_name']
                 )
-                target_agent = target_agent_class(
-                    MatMasterLlmConfig, name_suffix=f"_{index}"
-                )
+                target_agent = target_agent_class(MatMasterLlmConfig)
                 if step['status'] == 'plan':
                     yield update_state_event(
                         ctx, state_delta={'plan_index': index}
