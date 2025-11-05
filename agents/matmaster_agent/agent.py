@@ -1,7 +1,7 @@
 import logging
 from typing import AsyncGenerator, override
 
-from google.adk.agents import BaseAgent, InvocationContext, LlmAgent
+from google.adk.agents import InvocationContext, LlmAgent
 from google.adk.events import Event
 from google.adk.models.lite_llm import LiteLlm
 from opik.integrations.adk import track_adk_agent_recursive
@@ -22,7 +22,11 @@ from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME, ModelRole
 from agents.matmaster_agent.flow_agents.analysis_agent.prompt import (
     ANALYSIS_INTRODUCTION,
 )
-from agents.matmaster_agent.flow_agents.planner_agent import (
+from agents.matmaster_agent.flow_agents.execution_agent.agent import (
+    MatMasterSupervisorDemoAgent,
+)
+from agents.matmaster_agent.flow_agents.model import PlanSchema
+from agents.matmaster_agent.flow_agents.planner_agent.prompt import (
     PLAN_MAKE_INSTRUCTION,
     PLAN_SUMMARY_INSTRUCTION,
 )
@@ -33,7 +37,6 @@ from agents.matmaster_agent.llm_config import (
 )
 from agents.matmaster_agent.model import (
     MatMasterTargetAgentEnum,
-    PlanSchema,
 )
 from agents.matmaster_agent.prompt import (
     AgentDescription,
@@ -108,7 +111,6 @@ from agents.matmaster_agent.utils.event_utils import (
     send_error_event,
     update_state_event,
 )
-from agents.matmaster_agent.utils.helper_func import get_target_agent
 
 logging.getLogger('google_adk.google.adk.tools.base_authenticated_tool').setLevel(
     logging.ERROR
@@ -116,47 +118,6 @@ logging.getLogger('google_adk.google.adk.tools.base_authenticated_tool').setLeve
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-
-
-class MatMasterSupervisorDemoAgent(ErrorHandleLlmAgent):
-    @model_validator(mode='after')
-    def after_init(self):
-        self._structure_generate_agent = init_structure_generate_agent(
-            MatMasterLlmConfig
-        )
-
-        self.name = MATMASTER_AGENT_NAME
-        self.model = MatMasterLlmConfig.default_litellm_model
-        self.sub_agents = [self.structure_generate_agent]
-        self.global_instruction = 'GlobalInstruction'
-        self.instruction = 'AgentInstruction'
-        self.description = 'AgentDescription'
-        self.after_model_callback = [
-            # matmaster_check_job_status,
-            check_transfer(
-                prompt=MatMasterCheckTransferPrompt,
-                target_agent_enum=MatMasterTargetAgentEnum,
-            ),
-            # matmaster_hallucination_retry,
-        ]
-
-        return self
-
-    @computed_field
-    @property
-    def structure_generate_agent(self) -> BaseAgent:
-        return self._structure_generate_agent
-
-    @override
-    async def _run_events(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
-        plan = ctx.session.state['plan']
-        logger.info(f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} plan = {plan}')
-        for step in plan['steps']:
-            target_agent: BaseAgent = get_target_agent(
-                step['tool_name'], self.sub_agents
-            )
-            async for event in target_agent.run_async(ctx):
-                yield event
 
 
 class MatMasterAgent(HandleFileUploadLlmAgent):
@@ -185,7 +146,7 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
             state_key='plan',
         )
 
-        self._plan_summary_agent = LlmAgent(
+        self._plan_summary_agent = ErrorHandleLlmAgent(
             name='plan_summary_agent',
             model=MatMasterLlmConfig.default_litellm_model,
             description='根据 materials_plan 返回的计划进行总结',
@@ -267,7 +228,6 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
             # 总结执行情况
             async for analysis_event in self.analysis_agent.run_async(ctx):
                 yield analysis_event
-
         except BaseException as err:
             async for error_event in send_error_event(err, ctx, self.name):
                 yield error_event
