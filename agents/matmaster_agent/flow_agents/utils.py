@@ -4,7 +4,6 @@ from google.adk.agents import InvocationContext
 
 from agents.matmaster_agent.flow_agents.model import FlowStatusEnum, PlanStepStatusEnum
 from agents.matmaster_agent.sub_agents.mapping import (
-    AGENT_CLASS_MAPPING,
     ALL_AGENT_TOOLS_DICT,
 )
 
@@ -12,7 +11,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def get_agent_class_and_name(tool_name):
+def get_agent_name(tool_name, sub_agents):
     target_agent_name = ''
     for key, value in ALL_AGENT_TOOLS_DICT.items():
         if tool_name in value:
@@ -22,7 +21,9 @@ def get_agent_class_and_name(tool_name):
     if not target_agent_name:
         raise RuntimeError(f"ToolName Error: {tool_name}")
 
-    return target_agent_name, AGENT_CLASS_MAPPING[f'{target_agent_name}']
+    for sub_agent in sub_agents:
+        if sub_agent.name == target_agent_name:
+            return sub_agent
 
 
 def check_plan(ctx: InvocationContext):

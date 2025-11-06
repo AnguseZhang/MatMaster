@@ -23,6 +23,9 @@ from agents.matmaster_agent.flow_agents.execution_agent.agent import (
     MatMasterSupervisorAgent,
 )
 from agents.matmaster_agent.flow_agents.model import FlowStatusEnum, PlanSchema
+from agents.matmaster_agent.flow_agents.plan_execution_check_agent.prompt import (
+    PLAN_EXECUTION_CHECK_INSTRUCTION,
+)
 from agents.matmaster_agent.flow_agents.planner_agent.prompt import (
     PLAN_MAKE_INSTRUCTION,
     PLAN_SUMMARY_INSTRUCTION,
@@ -32,6 +35,7 @@ from agents.matmaster_agent.llm_config import (
     DEFAULT_MODEL,
     MatMasterLlmConfig,
 )
+from agents.matmaster_agent.sub_agents.mapping import AGENT_CLASS_MAPPING
 from agents.matmaster_agent.utils.event_utils import (
     send_error_event,
 )
@@ -72,6 +76,15 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
             disallow_transfer_to_peers=True,
         )
 
+        plan_execution_check_agent = ErrorHandleLlmAgent(
+            name='plan_execution_check_agent',
+            model=MatMasterLlmConfig.default_litellm_model,
+            description='汇总计划的执行情况，并根据计划提示下一步的动作',
+            instruction=PLAN_EXECUTION_CHECK_INSTRUCTION,
+            disallow_transfer_to_parent=True,
+            disallow_transfer_to_peers=True,
+        )
+
         self._execution_agent = MatMasterSupervisorAgent(
             name='execution_agent',
             model=MatMasterLlmConfig.default_litellm_model,
@@ -79,6 +92,11 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
             instruction='',
             disallow_transfer_to_parent=True,
             disallow_transfer_to_peers=True,
+            sub_agents=[
+                sub_agent(MatMasterLlmConfig)
+                for sub_agent in AGENT_CLASS_MAPPING.values()
+            ]
+            + [plan_execution_check_agent],
         )
 
         self._analysis_agent = ErrorHandleLlmAgent(
