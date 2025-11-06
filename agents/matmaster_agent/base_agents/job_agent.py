@@ -137,13 +137,25 @@ class ResultMCPAgent(MCPAgent):
                 f'status = {status}'
             )
             if status != 'Running':
+                update_plan = copy.deepcopy(ctx.session.state['plan'])
+                if status == 'Succeeded':
+                    plan_status = 'success'
+                else:
+                    plan_status = 'failed'
+                update_plan['steps'][ctx.session.state['plan_index']][
+                    'status'
+                ] = plan_status
+
                 update_long_running_jobs = copy.deepcopy(
                     ctx.session.state['long_running_jobs']
                 )
                 update_long_running_jobs[origin_job_id]['job_status'] = status
                 yield update_state_event(
                     ctx,
-                    state_delta={'long_running_jobs': update_long_running_jobs},
+                    state_delta={
+                        'long_running_jobs': update_long_running_jobs,
+                        'plan': update_plan,
+                    },
                 )
                 results_res = await self.tools[0].results_tool.run_async(
                     args={
