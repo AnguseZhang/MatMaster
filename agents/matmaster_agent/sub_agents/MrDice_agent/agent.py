@@ -1,8 +1,7 @@
 from google.adk.agents import BaseAgent
 
-from agents.matmaster_agent.base_agents.subordinate_agent import SubordinateLlmAgent
+from agents.matmaster_agent.base_agents.error_agent import ErrorHandleLlmAgent
 from agents.matmaster_agent.base_callbacks.public_callback import check_transfer
-from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
 from agents.matmaster_agent.llm_config import LLMConfig
 from agents.matmaster_agent.sub_agents.MrDice_agent.bohriumpublic_agent.agent import (
     init_bohriumpublic_database_agent,
@@ -27,7 +26,7 @@ from agents.matmaster_agent.sub_agents.MrDice_agent.prompt import (
 )
 
 
-class MrDice_Agent(SubordinateLlmAgent):
+class MrDice_Agent(ErrorHandleLlmAgent):
     def __init__(self, llm_config: LLMConfig, name_suffix=''):
         optimade_agent = init_optimade_database_agent(
             llm_config, name_suffix=name_suffix
@@ -48,7 +47,6 @@ class MrDice_Agent(SubordinateLlmAgent):
                 bohriumpublic_agent,
                 mofdb_agent,
             ],
-            supervisor_agent=MATMASTER_AGENT_NAME,
             after_model_callback=[
                 check_transfer(
                     prompt=MrDiceCheckTransferPrompt,
