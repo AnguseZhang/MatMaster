@@ -186,7 +186,6 @@ AGENT_CLASS_MAPPING = {
 
 
 class ABACUSAgentToolEnum(str, Enum):
-    Prepare = 'abacus_prepare'
     ModifyInput = 'abacus_modify_input'
     ModifyStructure = 'abacus_modify_stru'
     CollectData = 'abacus_collect_data'
@@ -203,6 +202,7 @@ class ABACUSAgentToolEnum(str, Enum):
     DoRelax = 'abacus_do_relax'
     VibrationAnalysis = 'abacus_vibration_analysis'
     RunMD = 'abacus_run_md'
+    RunABACUSCalculation = 'run_abacus_calculation'
 
 
 class APEXAgentToolEnum(str, Enum):

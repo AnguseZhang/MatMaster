@@ -52,7 +52,6 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
             model=MatMasterLlmConfig.tool_schema_model,
             description='根据用户的问题依据现有工具执行计划，如果没有工具可用，告知用户，不要自己制造工具或幻想',
             instruction=PLAN_MAKE_INSTRUCTION,
-            # tools=get_health_toolset(),
             disallow_transfer_to_parent=True,
             disallow_transfer_to_peers=True,
             before_agent_callback=[
