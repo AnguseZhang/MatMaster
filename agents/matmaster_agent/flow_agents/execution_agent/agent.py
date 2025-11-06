@@ -19,7 +19,10 @@ from agents.matmaster_agent.flow_agents.utils import (
 )
 from agents.matmaster_agent.llm_config import MatMasterLlmConfig
 from agents.matmaster_agent.prompt import MatMasterCheckTransferPrompt
-from agents.matmaster_agent.sub_agents.mapping import MatMasterSubAgentsEnum
+from agents.matmaster_agent.sub_agents.mapping import (
+    AGENT_CLASS_MAPPING,
+    MatMasterSubAgentsEnum,
+)
 from agents.matmaster_agent.utils.event_utils import update_state_event
 
 logger = logging.getLogger(__name__)
@@ -51,6 +54,10 @@ class MatMasterSupervisorAgent(ErrorHandleLlmAgent):
             ),
             # matmaster_hallucination_retry,
         ]
+
+        self.sub_agents = [
+            sub_agent(MatMasterLlmConfig) for sub_agent in AGENT_CLASS_MAPPING.values()
+        ] + [self.plan_execution_check_agent]
 
         return self
 
