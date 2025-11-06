@@ -412,7 +412,11 @@ async def display_failed_result_or_consume(
     else:
         # 更新 plan 为成功
         update_plan = copy.deepcopy(ctx.session.state['plan'])
-        update_plan['steps'][ctx.session.state['plan_index']]['status'] = 'success'
+        if not dict_result.get('job_id'):
+            status = 'success'  # real-time
+        else:
+            status = 'plan'  # job-type
+        update_plan['steps'][ctx.session.state['plan_index']]['status'] = status
         yield update_state_event(ctx, state_delta={'plan': update_plan})
 
         async for consume_event in photon_consume_event(ctx, event, author):
