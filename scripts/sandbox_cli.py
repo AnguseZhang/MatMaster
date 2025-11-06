@@ -250,7 +250,7 @@ def main():
             if args.download_output:
                 # 下载结果文件
                 if result_url and result_url != 'null':
-                    result_response = requests.get(result_url, stream=True)
+                    result_response = requests.get(result_url, stream=False)
                     check_status_and_download_file(result_response, args.output)
                 else:
                     logger.error('No resultUrl found or resultUrl is empty')

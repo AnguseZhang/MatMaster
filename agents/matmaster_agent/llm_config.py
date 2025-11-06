@@ -83,8 +83,8 @@ class LLMConfig:
         # Helper to init any provider model
         def _init_model(model: str):
             llm_kwargs = {}
-            if model.endswith(gpt_5_chat):
-                llm_kwargs = {'stream_options': {'include_usage': True}}
+            # if model.endswith(gpt_5_chat):
+            #     llm_kwargs = {'stream_options': {'include_usage': True}}
             logger.info(
                 f'[{MATMASTER_AGENT_NAME}] model = {model}, llm_kwargs = {llm_kwargs}'
             )
