@@ -13,6 +13,7 @@ from google.adk.agents.invocation_context import InvocationContext
 from google.adk.agents.llm_agent import AfterToolCallback, BeforeToolCallback
 from google.adk.models import LlmResponse
 from google.adk.tools import BaseTool, ToolContext
+from google.genai.types import Part
 from mcp.types import CallToolResult, TextContent
 
 from agents.matmaster_agent.constant import (
@@ -40,6 +41,7 @@ from agents.matmaster_agent.utils.job_utils import check_job_create_service
 from agents.matmaster_agent.utils.tool_response_utils import check_valid_tool_response
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 # after_model_callback
@@ -69,17 +71,25 @@ async def default_after_model_callback(
     if (
         callback_context.state.get('invocation_id_with_tool_call', None) is None
         or callback_context.invocation_id
-        != list(callback_context.state['invocation_id_with_tool_call'].keys())[0]
+        != list(callback_context.state['invocation_id_with_tool_call'].keys())[-1]
     ):  # 首次调用 function_call 或新一轮对话
         if len(current_function_calls) == 1:
-            logger.info(f'[{MATMASTER_AGENT_NAME}] Single Function Call In New Turn')
             logger.info(
-                f"[{MATMASTER_AGENT_NAME}] current_function_calls = {function_calls_to_str(current_function_calls)}"
+                f'[{MATMASTER_AGENT_NAME}] {callback_context.session.id} Single Function Call In New Turn'
+            )
+            logger.info(
+                f"[{MATMASTER_AGENT_NAME}] {callback_context.session.id} current_function_calls = {function_calls_to_str(current_function_calls)}"
             )
 
+            if not callback_context.state.get('invocation_id_with_tool_call'):
+                callback_context.state['invocation_id_with_tool_call'] = {}
             callback_context.state['invocation_id_with_tool_call'] = {
-                callback_context.invocation_id: current_function_calls
+                **callback_context.state['invocation_id_with_tool_call'],
+                callback_context.invocation_id: current_function_calls,
             }
+            logger.info(
+                f'[{MATMASTER_AGENT_NAME}] {callback_context.session.id} state = {callback_context.state.to_dict()}'
+            )
         else:
             logger.warning(f'[{MATMASTER_AGENT_NAME}] Multi Function Calls In One Turn')
             logger.info(
@@ -87,10 +97,12 @@ async def default_after_model_callback(
             )
 
             callback_context.state['invocation_id_with_tool_call'] = {
+                **callback_context.state['invocation_id_with_tool_call'],
                 callback_context.invocation_id: get_unique_function_call(
                     current_function_calls
-                )
+                ),
             }
+
             return update_llm_response(llm_response, current_function_calls, [])
     else:  # 同一轮对话又出现了 Function Call
         logger.warning(
@@ -105,10 +117,12 @@ async def default_after_model_callback(
         )
 
         callback_context.state['invocation_id_with_tool_call'] = {
+            **callback_context.state['invocation_id_with_tool_call'],
             callback_context.invocation_id: get_unique_function_call(
                 before_function_calls + current_function_calls
-            )
+            ),
         }
+
         return update_llm_response(
             llm_response, current_function_calls, before_function_calls
         )
@@ -156,15 +170,22 @@ async def remove_function_call(
                 llm_generated_text += response.choices[0].message.content
 
                 part.function_call = None
-        llm_response.content.parts.append(part)
+
+        if (
+            part.text or part.function_call
+        ):  # 如果原本只有一个 part，且 part.function_call 被移除了，该 if 不会走
+            llm_response.content.parts.append(part)
 
     if llm_generated_text:
         logger.info(
             f"[{MATMASTER_AGENT_NAME}] llm_generated_text = {llm_generated_text}"
         )
 
-    if not llm_response.content.parts[0].text:
-        llm_response.content.parts[0].text = llm_generated_text
+    if llm_generated_text:
+        if not llm_response.content.parts:
+            llm_response.content.parts.append(Part(text=llm_generated_text))
+        elif not llm_response.content.parts[0].text:
+            llm_response.content.parts[0].text = llm_generated_text
 
     if not llm_response.partial:
         logger.info(
@@ -179,7 +200,7 @@ async def default_before_tool_callback(tool, args, tool_context):
     return
 
 
-def default_cost_func(tool: BaseTool) -> tuple[int, int]:
+async def default_cost_func(tool: BaseTool, args: dict) -> tuple[int, int]:
     return 0, SKU_MAPPING['matmaster']
 
 
@@ -210,7 +231,7 @@ def check_user_phonon_balance(
             )
 
         user_id = _get_userId(tool_context)
-        cost, sku_id = cost_func(tool)
+        cost, sku_id = await cost_func(tool, args)
         tool_context.state['cost'][tool_context.function_call_id] = {
             'value': cost,
             'sku_id': sku_id,

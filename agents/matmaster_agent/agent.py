@@ -6,8 +6,6 @@ from google.adk.events import Event
 from google.adk.models.lite_llm import LiteLlm
 from opik.integrations.adk import track_adk_agent_recursive
 
-from agents.matmaster_agent.ABACUS_agent.agent import init_abacus_calculation_agent
-from agents.matmaster_agent.apex_agent.agent import init_apex_agent
 from agents.matmaster_agent.base_agents.io_agent import HandleFileUploadLlmAgent
 from agents.matmaster_agent.base_callbacks.public_callback import check_transfer
 from agents.matmaster_agent.callback import (
@@ -16,47 +14,69 @@ from agents.matmaster_agent.callback import (
     matmaster_prepare_state,
     matmaster_set_lang,
 )
-from agents.matmaster_agent.chembrain_agent.agent import init_chembrain_agent
-from agents.matmaster_agent.CompDART_agent.agent import init_compdrt_agent
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME, ModelRole
-from agents.matmaster_agent.document_parser_agent.agent import (
-    init_document_parser_agent,
-)
-from agents.matmaster_agent.DPACalculator_agent.agent import init_dpa_calculations_agent
-from agents.matmaster_agent.finetune_dpa_agent.agent import init_finetune_dpa_agent
-from agents.matmaster_agent.HEA_assistant_agent.agent import init_HEA_assistant_agent
-from agents.matmaster_agent.HEACalculator_agent.agent import init_hea_calculator_agent
 from agents.matmaster_agent.llm_config import (
     DEFAULT_MODEL,
     LLMConfig,
     MatMasterLlmConfig,
 )
 from agents.matmaster_agent.model import MatMasterTargetAgentEnum
-from agents.matmaster_agent.MrDice_agent.agent import init_MrDice_agent
-from agents.matmaster_agent.organic_reaction_agent.agent import (
-    init_organic_reaction_agent,
-)
-from agents.matmaster_agent.perovskite_agent.agent import init_perovskite_agent
-from agents.matmaster_agent.piloteye_electro_agent.agent import (
-    init_piloteye_electro_agent,
-)
 from agents.matmaster_agent.prompt import (
     AgentDescription,
     AgentInstruction,
     GlobalInstruction,
     MatMasterCheckTransferPrompt,
 )
-from agents.matmaster_agent.ssebrain_agent.agent import init_ssebrain_agent
-from agents.matmaster_agent.structure_generate_agent.agent import (
+from agents.matmaster_agent.sub_agents.ABACUS_agent.agent import (
+    init_abacus_calculation_agent,
+)
+from agents.matmaster_agent.sub_agents.apex_agent.agent import init_apex_agent
+from agents.matmaster_agent.sub_agents.chembrain_agent.agent import init_chembrain_agent
+from agents.matmaster_agent.sub_agents.CompDART_agent.agent import init_compdrt_agent
+from agents.matmaster_agent.sub_agents.document_parser_agent.agent import (
+    init_document_parser_agent,
+)
+from agents.matmaster_agent.sub_agents.DPACalculator_agent.agent import (
+    init_dpa_calculations_agent,
+)
+from agents.matmaster_agent.sub_agents.finetune_dpa_agent.agent import (
+    init_finetune_dpa_agent,
+)
+from agents.matmaster_agent.sub_agents.HEA_assistant_agent.agent import (
+    init_HEA_assistant_agent,
+)
+from agents.matmaster_agent.sub_agents.HEACalculator_agent.agent import (
+    init_hea_calculator_agent,
+)
+from agents.matmaster_agent.sub_agents.MrDice_agent.agent import init_MrDice_agent
+from agents.matmaster_agent.sub_agents.organic_reaction_agent.agent import (
+    init_organic_reaction_agent,
+)
+from agents.matmaster_agent.sub_agents.perovskite_agent.agent import (
+    init_perovskite_agent,
+)
+from agents.matmaster_agent.sub_agents.piloteye_electro_agent.agent import (
+    init_piloteye_electro_agent,
+)
+from agents.matmaster_agent.sub_agents.ssebrain_agent.agent import init_ssebrain_agent
+from agents.matmaster_agent.sub_agents.structure_generate_agent.agent import (
     init_structure_generate_agent,
 )
-from agents.matmaster_agent.superconductor_agent.agent import init_superconductor_agent
-from agents.matmaster_agent.task_orchestrator_agent.agent import (
+from agents.matmaster_agent.sub_agents.superconductor_agent.agent import (
+    init_superconductor_agent,
+)
+from agents.matmaster_agent.sub_agents.task_orchestrator_agent.agent import (
     init_task_orchestrator_agent,
 )
-from agents.matmaster_agent.thermoelectric_agent.agent import init_thermoelectric_agent
-from agents.matmaster_agent.traj_analysis_agent.agent import init_traj_analysis_agent
+from agents.matmaster_agent.sub_agents.thermoelectric_agent.agent import (
+    init_thermoelectric_agent,
+)
+from agents.matmaster_agent.sub_agents.traj_analysis_agent.agent import (
+    init_traj_analysis_agent,
+)
 from agents.matmaster_agent.utils.event_utils import (
+    cherry_pick_events,
+    context_function_event,
     frontend_text_event,
     send_error_event,
     update_state_event,
@@ -65,6 +85,9 @@ from agents.matmaster_agent.utils.event_utils import (
 logging.getLogger('google_adk.google.adk.tools.base_authenticated_tool').setLevel(
     logging.ERROR
 )
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class MatMasterAgent(HandleFileUploadLlmAgent):
@@ -116,7 +139,10 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
             global_instruction=GlobalInstruction,
             instruction=AgentInstruction,
             description=AgentDescription,
-            before_agent_callback=[matmaster_prepare_state, matmaster_set_lang],
+            before_agent_callback=[
+                matmaster_prepare_state,
+                matmaster_set_lang,
+            ],
             after_model_callback=[
                 matmaster_check_job_status,
                 check_transfer(
@@ -154,6 +180,38 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
             # 调用错误处理 Agent
             async for error_handel_event in error_handel_agent.run_async(ctx):
                 yield error_handel_event
+
+        matmaster_events_only_author = [item[2] for item in cherry_pick_events(ctx)]
+        logger.info(
+            f'[{MATMASTER_AGENT_NAME}] matmaster_events_only_author = {matmaster_events_only_author}'
+        )
+        last_user_index = (
+            len(matmaster_events_only_author)
+            - 1
+            - matmaster_events_only_author[::-1].index('user')
+        )
+        last_event_author = matmaster_events_only_author[-1]
+        slice_from_last_user = matmaster_events_only_author[last_user_index:]
+        only_user_matmaster = set(slice_from_last_user).issubset(
+            {'user', MATMASTER_AGENT_NAME}
+        )
+        if last_event_author == MATMASTER_AGENT_NAME and (
+            only_user_matmaster
+            or matmaster_events_only_author[-2] not in ['user', MATMASTER_AGENT_NAME]
+        ):
+            for generate_nps_event in context_function_event(
+                ctx,
+                self.name,
+                'matmaster_generate_nps',
+                {},
+                ModelRole,
+                {'session_id': ctx.session.id, 'invocation_id': ctx.invocation_id},
+            ):
+                yield generate_nps_event
+
+        logger.info(
+            f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} state = {ctx.session.state}'
+        )
 
 
 def init_matmaster_agent() -> LlmAgent:

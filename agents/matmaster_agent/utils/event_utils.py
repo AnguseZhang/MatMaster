@@ -5,6 +5,7 @@ import traceback
 import uuid
 from typing import Iterable, Optional
 
+from deepmerge import always_merger
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events import Event, EventActions
 from google.adk.tools import BaseTool
@@ -20,16 +21,32 @@ from agents.matmaster_agent.style import (
     tool_response_failed_card,
 )
 from agents.matmaster_agent.utils.finance import photon_consume
+from agents.matmaster_agent.utils.helper_func import is_algorithm_error
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
-def update_state_event(ctx: InvocationContext, state_delta: dict):
+def update_state_event(
+    ctx: InvocationContext, state_delta: dict, event: Optional[Event] = None
+):
     stack = inspect.stack()
     frame = stack[1]  # stack[1] 表示调用当前函数的上一层调用
     filename = os.path.basename(frame.filename)
     lineno = frame.lineno
-    actions_with_update = EventActions(state_delta=state_delta)
+
+    origin_event_state_delta = {}
+    if event and event.actions and event.actions.state_delta:
+        origin_event_state_delta = event.actions.state_delta
+        logger.warning(
+            f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} origin_event_state_delta = {origin_event_state_delta}'
+        )
+
+    final_state_delta = always_merger.merge(state_delta, origin_event_state_delta)
+    logger.info(
+        f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} final_state_delta = {final_state_delta}'
+    )
+    actions_with_update = EventActions(state_delta=final_state_delta)
     return Event(
         invocation_id=ctx.invocation_id,
         author=f"{filename}:{lineno}",
@@ -80,7 +97,12 @@ def frontend_text_event(ctx: InvocationContext, author: str, text: str, role: st
 
 
 def frontend_function_call_event(
-    ctx: InvocationContext, author: str, function_call: FunctionCall, role: str
+    ctx: InvocationContext,
+    author: str,
+    function_call_id: str,
+    function_call_name: str,
+    role: str,
+    args: Optional[dict] = None,
 ):
     return Event(
         author=author,
@@ -89,9 +111,9 @@ def frontend_function_call_event(
             parts=[
                 Part(
                     function_call=FunctionCall(
-                        id=f"frontend_{function_call.name}",
-                        name=function_call.name,
-                        args=function_call.args,
+                        id=function_call_id,
+                        name=function_call_name,
+                        args=args,
                     )
                 )
             ],
@@ -102,7 +124,12 @@ def frontend_function_call_event(
 
 
 def frontend_function_response_event(
-    ctx: InvocationContext, author: str, function_call: FunctionCall, role: str
+    ctx: InvocationContext,
+    author: str,
+    function_call_id: str,
+    function_call_name: str,
+    response: Optional[dict],
+    role: str,
 ):
     return Event(
         author=author,
@@ -111,9 +138,9 @@ def frontend_function_response_event(
             parts=[
                 Part(
                     function_response=FunctionResponse(
-                        id=f"frontend_{function_call.name}",
-                        name=function_call.name,
-                        response=None,
+                        id=function_call_id,
+                        name=function_call_name,
+                        response=response,
                     )
                 )
             ],
@@ -186,6 +213,23 @@ def context_function_response_event(
     )
 
 
+def frontend_function_event(
+    ctx: InvocationContext,
+    author: str,
+    function_call_name: str,
+    response: Optional[dict],
+    role: str,
+    args: Optional[dict] = None,
+):
+    function_call_id = f"added_{str(uuid.uuid4()).replace('-', '')[:24]}"
+    yield frontend_function_call_event(
+        ctx, author, function_call_id, function_call_name, role, args
+    )
+    yield frontend_function_response_event(
+        ctx, author, function_call_id, function_call_name, response, role
+    )
+
+
 def context_function_event(
     ctx: InvocationContext,
     author: str,
@@ -231,6 +275,22 @@ def all_text_event(ctx: InvocationContext, author: str, text: str, role: str):
     yield context_text_event(ctx, author, text, role)
 
 
+def all_function_event(
+    ctx: InvocationContext,
+    author: str,
+    function_call_name: str,
+    response: Optional[dict],
+    role: str,
+    args: Optional[dict] = None,
+):
+    yield from frontend_function_event(
+        ctx, author, function_call_name, response, role, args
+    )
+    yield from context_function_event(
+        ctx, author, function_call_name, response, role, args
+    )
+
+
 def cherry_pick_events(ctx: InvocationContext):
     events = ctx.session.events
     cherry_pick_parts = []
@@ -238,7 +298,9 @@ def cherry_pick_events(ctx: InvocationContext):
         if event.content:
             for part in event.content.parts:
                 if part.text:
-                    cherry_pick_parts.append((event.content.role, part.text))
+                    cherry_pick_parts.append(
+                        (event.content.role, part.text, event.author)
+                    )
 
     return cherry_pick_parts
 
@@ -310,8 +372,9 @@ async def photon_consume_event(ctx, event, author):
 async def display_future_consume_event(event, cost_func, ctx, author):
     for index in get_function_call_indexes(event):
         function_call_name = event.content.parts[index].function_call.name
+        function_call_args = event.content.parts[index].function_call.args
         invocated_tool = BaseTool(name=function_call_name, description='')
-        tool_cost, _ = cost_func(invocated_tool)
+        tool_cost, _ = await cost_func(invocated_tool, function_call_args)
 
         if tool_cost:
             future_consume_msg = f"{photon_consume_notify_card(tool_cost)}"
@@ -330,12 +393,7 @@ async def display_future_consume_event(event, cost_func, ctx, author):
 async def display_failed_result_or_consume(
     dict_result: dict, ctx, author: str, event: Event
 ):
-    runtime_error = event.content.parts[0].function_response.response['result'].isError
-    algorithm_error = dict_result.get('code') is not None and dict_result['code'] != 0
-    is_tool_error = runtime_error or algorithm_error
-
-    if is_tool_error:
-        # Tool Failed
+    if is_algorithm_error(dict_result):
         for tool_response_failed_event in all_text_event(
             ctx,
             author,

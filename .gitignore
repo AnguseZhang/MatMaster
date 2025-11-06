@@ -33,4 +33,5 @@ evaluate/experiments/threads/sse
 evaluation_results.json
 output.zip
 log
+*.log
 *.csv

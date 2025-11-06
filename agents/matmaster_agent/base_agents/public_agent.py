@@ -17,9 +17,9 @@ from agents.matmaster_agent.base_agents.job_agent import (
     SubmitCoreMCPAgent,
     SubmitRenderAgent,
     SubmitValidatorAgent,
-    ToolCallInfoAgent,
 )
 from agents.matmaster_agent.base_agents.mcp_agent import MCPInitMixin
+from agents.matmaster_agent.base_agents.schema_agent import SchemaAgent
 from agents.matmaster_agent.base_agents.subordinate_agent import (
     SubordinateFeaturesMixin,
 )
@@ -196,8 +196,8 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
             after_model_callback=remove_function_call,
         )
 
-        self._tool_call_info_agent = ToolCallInfoAgent(
-            model=self.model,
+        self._tool_call_info_agent = SchemaAgent(
+            model=MatMasterLlmConfig.tool_schema_model,
             name=f"{agent_prefix}_tool_call_info_agent",
             instruction=gen_tool_call_info_instruction(),
             tools=self.mcp_tools,
@@ -233,7 +233,7 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
 
     @computed_field
     @property
-    def tool_call_info_agent(self) -> ToolCallInfoAgent:
+    def tool_call_info_agent(self) -> SchemaAgent:
         return self._tool_call_info_agent
 
     @override

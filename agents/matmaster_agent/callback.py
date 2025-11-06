@@ -27,12 +27,17 @@ from agents.matmaster_agent.utils.job_utils import (
 )
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 # before_agent_callback
 async def matmaster_prepare_state(
     callback_context: CallbackContext,
 ) -> Optional[types.Content]:
+    session_id = callback_context.session.id
+    logger.info(
+        f'[{MATMASTER_AGENT_NAME}] {session_id} state = {callback_context.state.to_dict()}'
+    )
     callback_context.state['current_time'] = datetime.now().strftime(
         '%Y-%m-%d %H:%M:%S'
     )

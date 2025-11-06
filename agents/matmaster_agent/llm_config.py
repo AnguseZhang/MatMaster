@@ -49,6 +49,7 @@ MODEL_MAPPING = {
 }
 
 DEFAULT_MODEL = os.getenv('DEFAULT_MODEL', 'azure/gpt-5-chat')
+TOOL_SCHEMA_MODEL = os.getenv('TOOL_SCHEMA_MODEL', 'azure/gpt-4o')
 
 
 class LLMConfig:
@@ -116,6 +117,7 @@ class LLMConfig:
         self.gpt_5_chat = _init_model(MODEL_MAPPING.get(azure_provider, gpt_5_chat))
 
         self.default_litellm_model = _init_model(DEFAULT_MODEL)
+        self.tool_schema_model = _init_model(TOOL_SCHEMA_MODEL)
 
         # tracing
         self.opik_tracer = OpikTracer()

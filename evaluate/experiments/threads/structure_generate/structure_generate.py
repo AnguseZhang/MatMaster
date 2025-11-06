@@ -8,4 +8,4 @@ if __name__ == '__main__':
     print('🚀 人类模拟器启动')
     print('=' * 50)
 
-    asyncio.run(evaluation_threads_task('structure_generate.json'))
+    asyncio.run(evaluation_threads_task('structure_generate/structure_generate.json'))

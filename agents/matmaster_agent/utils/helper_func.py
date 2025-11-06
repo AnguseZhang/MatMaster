@@ -1,7 +1,7 @@
 import copy
 import json
 import logging
-from typing import List, Union
+from typing import Any, List, Optional, Union
 
 import jsonpickle
 from google.adk.agents.invocation_context import InvocationContext
@@ -122,12 +122,20 @@ def flatten_dict(d, parent_key='', sep='_'):
     return dict(items)
 
 
+def is_mcp_result(tool_response: Optional[dict[str, Any]]):
+    return tool_response.get('result', None) is not None and isinstance(
+        tool_response['result'], CallToolResult
+    )
+
+
+def is_algorithm_error(dict_result) -> bool:
+    return dict_result.get('code') is not None and dict_result['code'] != 0
+
+
 def load_tool_response(part: Part):
     tool_response = part.function_response.response
-    if tool_response.get('result', None) is not None and isinstance(
-        tool_response['result'], CallToolResult
-    ):
-        raw_result = part.function_response.response['result'].content[0].text
+    if is_mcp_result(tool_response):
+        raw_result = tool_response['result'].content[0].text
         try:
             dict_result = jsonpickle.loads(raw_result)
         except ScannerError as err:

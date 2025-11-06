@@ -88,11 +88,10 @@ async def check_job_create_service():
             job_create_url, json=payload, params=params
         ) as response:
             res = json.loads(await response.text())
-            print(job_create_url, payload, params)
             if res['code'] != 0:
                 if res['code'] == 140202:
                     res['error'][
                         'msg'
                     ] = 'Agent 开发者账户余额不足，需开发者充值，请稍后重试。'
-                print(res)
+
                 return res

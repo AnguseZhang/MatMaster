@@ -33,6 +33,7 @@ from agents.matmaster_agent.constant import (
     get_BohriumStorage,
     get_DFlowExecutor,
 )
+from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.model import (
     BohrJobInfo,
     DFlowJobInfo,
@@ -41,6 +42,7 @@ from agents.matmaster_agent.prompt import (
     ResultCoreAgentDescription,
     SubmitRenderAgentDescription,
 )
+from agents.matmaster_agent.style import tool_response_failed_card
 from agents.matmaster_agent.utils.event_utils import (
     all_text_event,
     context_function_event,
@@ -57,6 +59,7 @@ from agents.matmaster_agent.utils.event_utils import (
 )
 from agents.matmaster_agent.utils.frontend import get_frontend_job_result_data
 from agents.matmaster_agent.utils.helper_func import (
+    is_mcp_result,
     load_tool_response,
     parse_result,
 )
@@ -259,34 +262,6 @@ class ParamsCheckInfoAgent(ErrorHandleLlmAgent):
                     yield system_job_result_event
 
 
-class ToolCallInfoAgent(ErrorHandleLlmAgent):
-    @override
-    async def _run_events(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
-        async for event in super()._run_events(ctx):
-            for part in event.content.parts:
-                if part.text:
-                    if not event.partial:
-                        try:
-                            tool_call_info = json.loads(part.text)
-                        except BaseException:
-                            logger.info(
-                                f'[{MATMASTER_AGENT_NAME}]:[{self.name}] raw_text = {part.text}'
-                            )
-                            raise
-
-                        for system_job_result_event in context_function_event(
-                            ctx,
-                            self.name,
-                            'matmaster_tool_call_info',
-                            tool_call_info,
-                            ModelRole,
-                        ):
-                            yield system_job_result_event
-                    # 置空 text 消息
-                    part.text = None
-            yield event
-
-
 class SubmitCoreMCPAgent(MCPAgent):
     @override
     async def _run_events(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
@@ -311,6 +286,7 @@ class SubmitCoreMCPAgent(MCPAgent):
                         ]
                         + 1
                     },
+                    event=event,
                 )
                 # prompt user photon cost
                 cost_func = self.cost_func
@@ -326,13 +302,26 @@ class SubmitCoreMCPAgent(MCPAgent):
                 in ctx.session.state['sync_tools']
             ):
                 try:
-                    dict_result = load_tool_response(event.content.parts[0])
+                    first_part = event.content.parts[0]
+                    tool_response = first_part.function_response.response
+                    if (
+                        is_mcp_result(tool_response) and tool_response['result'].isError
+                    ):  # Original MCPResult & Error
+                        for tool_response_failed_event in all_text_event(
+                            ctx,
+                            self.name,
+                            f"{tool_response_failed_card(i18n=i18n)}",
+                            ModelRole,
+                        ):
+                            yield tool_response_failed_event
+                        raise RuntimeError('Tool Execution Failed')
+                    dict_result = load_tool_response(first_part)
                     async for (
-                        display_or_consume_event
+                        failed_or_consume_event
                     ) in display_failed_result_or_consume(
                         dict_result, ctx, self.name, event
                     ):
-                        yield display_or_consume_event
+                        yield failed_or_consume_event
                 except BaseException:
                     yield event
                     raise
@@ -371,6 +360,7 @@ class SubmitCoreMCPAgent(MCPAgent):
                         'long_running_ids': ctx.session.state['long_running_ids']
                         + list(event.long_running_tool_ids)
                     },
+                    event=event,
                 )
 
                 # prompt user tool-call cost

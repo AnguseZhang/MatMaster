@@ -60,14 +60,14 @@ async def agent_main() -> None:
     # user_input = "高熵合金AlCoCr0.5FeNi2的可能结构是什么"
     # user_input = "调用 thermoelectric_agent 帮我生成10个具有Sn和Te元素的热电结构"
     # user_input = "plot perovstite 2021 to 2025"
-    user_input = '帮我创建一个 FCC Bulk Cu 的结构'
+    # user_input = '帮我创建一个 FCC Bulk Cu 的结构'
     # user_input = "帮我用DPA优化这个结构：https://dp-storage-test2.oss-cn-zhangjiakou.aliyuncs.com/bohrium-test/110663/12791/store/7ba41529-5af4-4e38-a6fb-c569cd769dd9/outputs/structure_paths/structure_bulk.cif"
     # user_input = "帮我检索TiO2"
     # user_input = "请你为我搭建一个氯化钠的结构"
     # user_input = '我想要一个bandgap 小于0.5ev的结构，空间群225，生成数量1'
     # user_input = '用openlam查找一个TiO2'
     # user_input = '对 NbSe₂ 超导体进行声子谱计算并结合电子–声子耦合分析估算临界温度 Tc（从开源数据库获取初始结构并自行设定参数），并以 URL 导出声子谱与 e–ph 计算结果'
-    # user_input = '在 Materials Project 中检索并返回3个带隙大于 2 eV 的氧化物结构'
+    user_input = '在 Materials Project 中检索并返回3个带隙大于 2 eV 的氧化物结构'
     # user_input = '请根据给定的空间群和 Wyckoff 位置信息生成一个晶体结构：Pm-3m空间群（编号221），a=b=c=3.90 Angstrom，α = β = γ = 90°，Sr占据1b位点(0.5, 0.5, 0.5)，Ti占据1a位点(0.0, 0.0, 0.0)，O占据3d位点(0.5, 0.0, 0.0)'
     print(f"🧑 用户：{user_input}")
 

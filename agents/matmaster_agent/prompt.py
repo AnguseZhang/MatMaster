@@ -1,30 +1,48 @@
-from agents.matmaster_agent.ABACUS_agent.constant import ABACUS_AGENT_NAME
-from agents.matmaster_agent.apex_agent.constant import ApexAgentName
-from agents.matmaster_agent.CompDART_agent.constant import COMPDART_AGENT_NAME
-from agents.matmaster_agent.document_parser_agent.constant import (
+from agents.matmaster_agent.sub_agents.ABACUS_agent.constant import ABACUS_AGENT_NAME
+from agents.matmaster_agent.sub_agents.apex_agent.constant import ApexAgentName
+from agents.matmaster_agent.sub_agents.CompDART_agent.constant import (
+    COMPDART_AGENT_NAME,
+)
+from agents.matmaster_agent.sub_agents.document_parser_agent.constant import (
     DocumentParserAgentName,
 )
-from agents.matmaster_agent.DPACalculator_agent.constant import DPACalulator_AGENT_NAME
-from agents.matmaster_agent.finetune_dpa_agent.constant import FinetuneDPAAgentName
-from agents.matmaster_agent.HEA_assistant_agent.constant import HEA_assistant_AgentName
-from agents.matmaster_agent.HEACalculator_agent.constant import HEACALCULATOR_AGENT_NAME
-from agents.matmaster_agent.MrDice_agent.constant import MrDice_Agent_Name
-from agents.matmaster_agent.organic_reaction_agent.constant import (
+from agents.matmaster_agent.sub_agents.DPACalculator_agent.constant import (
+    DPACalulator_AGENT_NAME,
+)
+from agents.matmaster_agent.sub_agents.finetune_dpa_agent.constant import (
+    FinetuneDPAAgentName,
+)
+from agents.matmaster_agent.sub_agents.HEA_assistant_agent.constant import (
+    HEA_assistant_AgentName,
+)
+from agents.matmaster_agent.sub_agents.HEACalculator_agent.constant import (
+    HEACALCULATOR_AGENT_NAME,
+)
+from agents.matmaster_agent.sub_agents.MrDice_agent.constant import MrDice_Agent_Name
+from agents.matmaster_agent.sub_agents.organic_reaction_agent.constant import (
     ORGANIC_REACTION_AGENT_NAME,
 )
-from agents.matmaster_agent.perovskite_agent.constant import PerovskiteAgentName
-from agents.matmaster_agent.piloteye_electro_agent.constant import (
+from agents.matmaster_agent.sub_agents.perovskite_agent.constant import (
+    PerovskiteAgentName,
+)
+from agents.matmaster_agent.sub_agents.piloteye_electro_agent.constant import (
     PILOTEYE_ELECTRO_AGENT_NAME,
 )
-from agents.matmaster_agent.structure_generate_agent.constant import (
+from agents.matmaster_agent.sub_agents.structure_generate_agent.constant import (
     StructureGenerateAgentName,
 )
-from agents.matmaster_agent.superconductor_agent.constant import SuperconductorAgentName
-from agents.matmaster_agent.task_orchestrator_agent.constant import (
+from agents.matmaster_agent.sub_agents.superconductor_agent.constant import (
+    SuperconductorAgentName,
+)
+from agents.matmaster_agent.sub_agents.task_orchestrator_agent.constant import (
     TASK_ORCHESTRATOR_AGENT_NAME,
 )
-from agents.matmaster_agent.thermoelectric_agent.constant import ThermoelectricAgentName
-from agents.matmaster_agent.traj_analysis_agent.constant import TrajAnalysisAgentName
+from agents.matmaster_agent.sub_agents.thermoelectric_agent.constant import (
+    ThermoelectricAgentName,
+)
+from agents.matmaster_agent.sub_agents.traj_analysis_agent.constant import (
+    TrajAnalysisAgentName,
+)
 
 GlobalInstruction = """
 ---
@@ -185,6 +203,12 @@ When multiple tools can perform the same calculation or property analysis, you M
   1) {ApexAgentName}
   2) {ABACUS_AGENT_NAME}
   3) {DPACalulator_AGENT_NAME}
+- **DOS/PDOS calculations (态密度计算):
+  1) {ABACUS_AGENT_NAME}**
+- **Band structure calculations (能带结构):
+  1) {ABACUS_AGENT_NAME}**
+- **EOS calculations (状态方程):
+  1) {ApexAgentName}**
 
 **📋 MANDATORY RESPONSE FORMAT FOR PROPERTY CALCULATIONS**:
 When user asks for ANY property calculation (elastic constants, band structure, phonon, etc.), you MUST respond in this exact format:
@@ -247,14 +271,27 @@ You have access to the following specialized sub-agents. You must delegate the t
      - Elastic properties (bulk modulus, shear modulus, Young's modulus, Poisson's ratio)
      - Defect properties (vacancy formation, interstitial energies)
      - Surface and interface properties
-     - Thermodynamic properties (EOS, phonon spectra)
+     - Thermodynamic properties (EOS(equation of state), phonon spectra)
      - Crystal structure optimization for alloys
      - Stacking fault energies (γ-surface)
      - Structure optimization (geometry relaxation)
+     - **Note: Does NOT support DOS/PDOS, band structure, or Bader charge calculations**
+
+   - **MANDATORY Workflow for APEX Calculations**:
+      1. **MUST first call `apex_show_and_modify_config` tool** to display default parameters for the requested property calculation
+      2. Present the default parameters to the user for review
+      3. Wait for user confirmation or parameter modifications
+      4. **ONLY after user confirmation**, proceed to submit the calculation task with the confirmed parameters
+      5. **NEVER directly submit APEX calculations without first showing parameters to the user**
+
    - Example Queries:
      - 计算类："Calculate elastic properties of Fe-Cr-Ni alloy", "Analyze vacancy formation in CoCrFeNi high-entropy alloy", "Optimize structure of Cu bulk crystal"
      - 查询类："我的APEX任务完成了吗？", "查看空位形成能结果", "APEX任务状态怎么样？"
-     - 参数咨询类："APEX的空位形成能计算默认参数是什么？", "APEX支持哪些计算类型？", "APEX的EOS计算需要什么参数？"
+     - 参数咨询类："APEX的空位形成能计算默认参数是什么？", "APEX支持哪些计算类型？"
+     - **参数咨询处理规则**：
+        * 当用户查询具体性质的默认参数值时，Apex Agent 必须调用 `apex_show_and_modify_config` 工具获取真实参数
+        * 禁止 Apex Agent 在不调用工具的情况下编造或猜测参数值
+        * 通用问题（如"支持哪些计算类型"）可以直接回答，无需调用工具
 
 2. **{HEA_assistant_AgentName}** - **High-entropy alloy specialist**
    - Purpose: Provide multiple services for data-driven research about High Entropy Alloys
@@ -515,12 +552,25 @@ Any progress or completion message without an actual sub-agent call IS A CRITICA
       - "对这个分子动力学轨迹进行反应网络分析"
 
 14. **{ABACUS_AGENT_NAME}** - **DFT calculation using ABACUS**
-    - Purpose: Perform DFT calculations using ABACUS code
+    - Purpose: Calculate properties of materials by perform DFT calculations using ABACUS
     - Capabilities:
-      - Prepare ABACUS input files (INPUT, STRU, pseudopotential, orbital files) from structure files (supprors CIF, VASP POSCAR and ABACUS STRU format)
-      - Geometry optimization, molecular dynamics
-      - Property calculations: band structure, phonon spectrum, elastic properties, DOS/PDOS, Bader charge
-      - Result collection from ABACUS job directories
+      - Use a structure file (CIF, VASP POSCAR or ABACUS stru format) to calculate various properties including:
+        - Bader charge of a structure
+        - Electron localization function (ELF)
+        - Electronic band and band gap
+        - Density of states (DOS) and projected DOS
+        - Elastic properties, including elastic tensor, bulk modulus, shear modulus, Young's modules and Possion ratio
+        - Phonon dispersion
+        - Molecule dynamics using DFT (very expensive!)
+        - Work function
+        - Vacancy formation energy
+      - Whether to do relax before calculating selected property
+      - Collinear magnetic materials are supported, and setting initial magnetic moments and DFT+U parameters are supported
+    - Example Queries:
+      - "请帮我计算CsPbI3的能带"
+      - "请计算BaTiO3的Bader电荷"
+      - "请计算Si的声子谱"
+      - "请计算Pt(111)面的功函数"
 
 15. **{DocumentParserAgentName}** - **Materials science document parser**
     - Purpose: Extract materials science data from scientific documents
@@ -748,15 +798,24 @@ Based on the rules above, output a JSON object.
 
 def gen_params_check_info_agent_instruction():
     return """
-Your task is to confirm with users the parameters needed to call tools. Do not directly invoke any tools.
-If any parameter is a file path or filename for INPUT files, you must request an accessible HTTP URL containing the file instead of accepting a local filename.
-For OUTPUT files, do not ask users to provide URLs - these will be automatically generated as OSS HTTP links after successful execution.
+Your task is to confirm with users the parameters needed to call a tool. Do not directly invoke any tool.
+
+**Parameter Confirmation Guidelines:**
+1.  **For INPUT parameters** that are file paths or filenames, you must request an accessible, public HTTP URL. Do not accept local filenames.
+2.  **For OUTPUT parameters** (files to be generated), do not ask users for URLs. These will be automatically generated as OSS HTTP links after successful execution.
+
+**Response Format:**
+In every response, you must clearly present the status of all required parameters using the following format:
+*   **Confirmed Parameters:** [List of parameters and their values]
+*   **Pending Parameters:** [List of parameters that still need to be confirmed]
+
+Guide the user step-by-step until all necessary parameters are confirmed.
 """
 
 
 def gen_tool_call_info_instruction():
     return """
-You are an AI agent that matches user requests to available tools. Your task is to analyze the user's query and return a JSON object with the following structure:
+You are an AI agent that matches user requests to available tools. Your task is to analyze the user's query against the complete parameter schema (including all parameters and their default values) and return a JSON object with the following structure:
 {{
   "tool_name": "string",
   "tool_args": {{"param1_name": "value1", "param2_name": "value2"}},
@@ -764,13 +823,17 @@ You are an AI agent that matches user requests to available tools. Your task is 
 }}
 
 **Key Rules:**
-- The `tool_args` object should contain parameter names as keys and the actual values extracted from the user's request as values
-- For parameters where values cannot be extracted from the user's request, include the parameter name in the `missing_tool_args` list
+- First, obtain the complete parameter schema for the target tool, including ALL parameters (both required and optional) and their default values
+- The `tool_args` object should contain ALL parameters that have values:
+  - Use values explicitly provided by the user when available
+  - Use default values from the schema for parameters not mentioned by the user
+  - Include ALL parameter names as keys with their corresponding values (user-provided or default)
+- For parameters where neither user-provided values nor default values are available, include the parameter name in the `missing_tool_args` list
+- Include ALL optional parameters in the schema - they should appear in either `tool_args` (with default values if not user-provided) or `missing_tool_args` (if no default exists)
 - If any parameter involves an input file, the parameter name should indicate it requires an HTTP URL (e.g., "file_url", "image_url")
 - For output file parameters, use appropriate names (e.g., "output_path", "result_file") - these will handle OSS URLs automatically
 - Only return the JSON object - do not execute any tools directly
-- Extract and include all available parameter values from the user's request in `tool_args`
-- List all missing required parameter names in `missing_tool_args`
+- Ensure EVERY parameter from the tool schema is represented either in `tool_args` (with values) or `missing_tool_args` (without values)
 
 **Example Response:**
 {{
@@ -778,15 +841,22 @@ You are an AI agent that matches user requests to available tools. Your task is 
   "tool_args": {{
     "image_url": "https://example.com/image.jpg",
     "operation": "resize",
-    "width": 800
+    "width": 800,
+    "height": 600,
+    "output_format": "jpg",
+    "quality": 85,
+    "optimize_size": true,
+    "preserve_metadata": false
   }},
-  "missing_tool_args": ["height", "output_format"]
+  "missing_tool_args": ["watermark_text", "filter_effect"]
 }}
 
 **Constraints:**
 - Return only valid JSON - no additional text or explanations
-- Include all available parameter values from the user's request in `tool_args`
-- List all missing required parameter names in `missing_tool_args`
+- Include ALL parameters from the tool schema in the response (both required and optional)
+- Use user-provided values when available, otherwise use default values from the schema
+- List only parameters with no user value AND no default value in `missing_tool_args`
+- All optional parameters with default values must appear in `tool_args`
 - Match the tool precisely based on the user's request
 - If no suitable tool is found, return an empty object: {{}}
 """

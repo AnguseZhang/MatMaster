@@ -7,6 +7,7 @@ from agents.matmaster_agent.constant import (
     BOHRIUM_HOST,
     MATERIALS_ACCESS_KEY,
     MATERIALS_PROJECT_ID,
+    OPENAPI_HOST,
     OPENAPI_JOB_CREATE_API,
     OPENAPI_JOB_KILL_API,
     OPENAPI_JOB_LIST_API,
@@ -14,6 +15,14 @@ from agents.matmaster_agent.constant import (
 )
 
 logger = init_colored_logger(__name__)
+
+
+def get_token():
+    url = f'{OPENAPI_HOST}/openapi/v1/storage/token'
+    headers = {'x-app-key': 'agent'}
+    params = {'projectId': MATERIALS_PROJECT_ID, 'accessKey': MATERIALS_ACCESS_KEY}
+    response = requests.get(url, headers=headers, params=params)
+    logger.info(response.json())
 
 
 def get_ticket(authorization):
@@ -78,5 +87,6 @@ if __name__ == '__main__':
     authorization = os.getenv('BEARER_TOKEN')
     job_id = 'da2fc84fdf56443a9b600a3007a502b1'
     # use_ticket_get_job_list(['03b212ee76964c82bc58c1c2314fac79'], 110680, '19c1a7d4-2502-44fc-a58c-f29cce49986f')
-    kill_job(job_id, use_ticket=True, authorization=authorization)
-    get_job_detail(job_id, use_ticket=True, authorization=authorization)
+    # kill_job(job_id, use_ticket=True, authorization=authorization)
+    # get_job_detail(job_id, use_ticket=True, authorization=authorization)
+    get_token()

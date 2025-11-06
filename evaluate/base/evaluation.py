@@ -331,7 +331,7 @@ async def _run_conversation(
     print(f"   - 耗时: {summary['duration_minutes']:.1f} 分钟")
 
     # 保存结果
-    with open('evaluation_results.json', save_mode) as f:
+    with open('evaluation_results.json', save_mode, encoding='utf-8') as f:
         json.dump(eval_results, f, indent=4, ensure_ascii=False)
 
     if summary['final_state'] == 'satisfied':
