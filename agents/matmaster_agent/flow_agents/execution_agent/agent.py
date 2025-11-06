@@ -76,7 +76,10 @@ class MatMasterSupervisorAgent(ErrorHandleLlmAgent):
                     step['tool_name']
                 )
                 target_agent = target_agent_class(MatMasterLlmConfig)
-                if step['status'] == 'plan':
+                if step['status'] in [
+                    PlanStepStatusEnum.PLAN,
+                    PlanStepStatusEnum.PROCESS,
+                ]:
                     yield update_state_event(
                         ctx, state_delta={'plan_index': index}
                     )  # TODO: One Agent Many Tools Call

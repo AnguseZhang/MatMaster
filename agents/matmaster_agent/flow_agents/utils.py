@@ -31,12 +31,15 @@ def check_plan(ctx: InvocationContext):
 
     plan_json = ctx.session.state['plan']
     plan_step_count = 0  # 统计状态为 plan 的 step 个数
+    process_step_count = 0
     total_steps = len(plan_json['steps'])
     for step in plan_json['steps']:
         if step['status'] == PlanStepStatusEnum.PLAN:
             plan_step_count += 1
+        elif step['status'] == PlanStepStatusEnum.PROCESS:
+            process_step_count += 1
 
-    if not plan_step_count:
+    if not plan_step_count and not process_step_count:
         return FlowStatusEnum.COMPLETE
     elif plan_step_count == total_steps:
         return FlowStatusEnum.NEW_PLAN
