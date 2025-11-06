@@ -30,3 +30,4 @@ class FlowStatusEnum(str, Enum):
     NO_PLAN = 'no_plan'
     NEW_PLAN = 'new_plan'
     PROCESS = 'process'
+    COMPLETE = 'complete'

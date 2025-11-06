@@ -23,9 +23,6 @@ from agents.matmaster_agent.flow_agents.execution_agent.agent import (
     MatMasterSupervisorAgent,
 )
 from agents.matmaster_agent.flow_agents.model import FlowStatusEnum, PlanSchema
-from agents.matmaster_agent.flow_agents.plan_execution_check_agent.prompt import (
-    PLAN_EXECUTION_CHECK_INSTRUCTION,
-)
 from agents.matmaster_agent.flow_agents.planner_agent.prompt import (
     PLAN_MAKE_INSTRUCTION,
     PLAN_SUMMARY_INSTRUCTION,
@@ -76,15 +73,6 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
             disallow_transfer_to_peers=True,
         )
 
-        self._plan_execution_check_agent = ErrorHandleLlmAgent(
-            name='plan_execution_check_agent',
-            model=MatMasterLlmConfig.default_litellm_model,
-            description='汇总计划的执行情况，并根据计划提示下一步的动作',
-            instruction=PLAN_EXECUTION_CHECK_INSTRUCTION,
-            disallow_transfer_to_parent=True,
-            disallow_transfer_to_peers=True,
-        )
-
         self._execution_agent = MatMasterSupervisorAgent(
             name='execution_agent',
             model=MatMasterLlmConfig.default_litellm_model,
@@ -125,11 +113,6 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
 
     @computed_field
     @property
-    def plan_execution_check_agent(self) -> LlmAgent:
-        return self._plan_execution_check_agent
-
-    @computed_field
-    @property
     def execution_agent(self) -> LlmAgent:
         return self._execution_agent
 
@@ -161,25 +144,18 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
             ):
                 return
 
-            logger.info(f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} {check_plan(ctx)}')
-            if check_plan(ctx) not in [FlowStatusEnum.NO_PLAN, FlowStatusEnum.NEW_PLAN]:
-                # 检查之前的计划执行情况，老计划才执行
-                async for (
-                    plan_execution_check_event
-                ) in self.plan_execution_check_agent.run_async(ctx):
-                    yield plan_execution_check_event
-
             # 执行计划
             if ctx.session.state['plan']['feasibility'] in ['full', 'part']:
                 async for execution_event in self.execution_agent.run_async(ctx):
                     yield execution_event
 
-            # 总结执行情况
-            self._analysis_agent.instruction = get_analysis_instruction(
-                ctx.session.state['plan']
-            )
-            async for analysis_event in self.analysis_agent.run_async(ctx):
-                yield analysis_event
+            # 全部执行完毕，总结执行情况
+            if check_plan(ctx) == FlowStatusEnum.COMPLETE:
+                self._analysis_agent.instruction = get_analysis_instruction(
+                    ctx.session.state['plan']
+                )
+                async for analysis_event in self.analysis_agent.run_async(ctx):
+                    yield analysis_event
         except BaseException as err:
             async for error_event in send_error_event(err, ctx, self.name):
                 yield error_event
