@@ -1,3 +1,4 @@
+import copy
 import json
 import logging
 from typing import AsyncGenerator, Optional, Union, override
@@ -239,8 +240,15 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
     @override
     async def _run_events(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
         session_state = get_session_state(ctx)
+        update_plan = copy.deepcopy(session_state['plan'])
+        update_plan['steps'][session_state['plan_index']]['status'] = 'process'
         yield update_state_event(
-            ctx, state_delta={'dflow': self.dflow_flag, 'sync_tools': self.sync_tools}
+            ctx,
+            state_delta={
+                'dflow': self.dflow_flag,
+                'sync_tools': self.sync_tools,
+                'plan': update_plan,
+            },
         )
 
         async for result_event in self.result_agent.run_async(ctx):
