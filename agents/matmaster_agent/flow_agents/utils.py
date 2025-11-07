@@ -3,22 +3,16 @@ import logging
 from google.adk.agents import InvocationContext
 
 from agents.matmaster_agent.flow_agents.model import FlowStatusEnum, PlanStepStatusEnum
-from agents.matmaster_agent.sub_agents.mapping import (
-    ALL_AGENT_TOOLS_DICT,
-)
+from agents.matmaster_agent.sub_agents.mapping import ALL_TOOLS
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
 def get_agent_name(tool_name, sub_agents):
-    target_agent_name = ''
-    for key, value in ALL_AGENT_TOOLS_DICT.items():
-        if tool_name in value:
-            target_agent_name = key
-            break
-
-    if not target_agent_name:
+    try:
+        target_agent_name = ALL_TOOLS[tool_name]['belonging_agent']
+    except BaseException:
         raise RuntimeError(f"ToolName Error: {tool_name}")
 
     for sub_agent in sub_agents:
