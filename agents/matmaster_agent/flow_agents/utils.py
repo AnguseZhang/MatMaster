@@ -30,6 +30,9 @@ def check_plan(ctx: InvocationContext):
     if not ctx.session.state.get('plan'):
         return FlowStatusEnum.NO_PLAN
 
+    if ctx.session.state['plan']['feasibility'] == 'null':
+        return FlowStatusEnum.NO_PLAN
+
     plan_json = ctx.session.state['plan']
     plan_step_count = 0  # 统计状态为 plan 的 step 个数
     process_step_count = 0

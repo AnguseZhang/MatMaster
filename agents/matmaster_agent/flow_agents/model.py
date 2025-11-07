@@ -23,7 +23,7 @@ class PlanStepSchema(BaseModel):
 
 class PlanSchema(BaseModel):
     steps: List[PlanStepSchema]
-    feasibility: Optional[Literal['full', 'part']] = None
+    feasibility: Literal['full', 'part', 'null']
 
 
 class FlowStatusEnum(str, Enum):
