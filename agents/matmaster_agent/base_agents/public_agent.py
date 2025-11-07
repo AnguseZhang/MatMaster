@@ -58,6 +58,7 @@ from agents.matmaster_agent.utils.helper_func import (
 logger = logging.getLogger(__name__)
 
 
+# 同步计算 Agent，可自动 transfer 回主 Agent
 class BaseSyncAgent(SubordinateFeaturesMixin, SyncMCPAgent):
     pass
 

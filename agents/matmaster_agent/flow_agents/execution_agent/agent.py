@@ -1,3 +1,4 @@
+import copy
 import logging
 from typing import AsyncGenerator, override
 
@@ -65,8 +66,18 @@ class MatMasterSupervisorAgent(ErrorHandleLlmAgent):
                     async for event in target_agent.run_async(ctx):
                         yield event
 
+                    if (
+                        ctx.session.state['plan']['steps'][index]['status']
+                        == PlanStepStatusEnum.PLAN
+                    ):
+                        update_plan = copy.deepcopy(ctx.session.state['plan'])
+                        update_plan['steps'][index][
+                            'status'
+                        ] = PlanStepStatusEnum.PROCESS
+                        yield update_state_event(ctx, state_delta={'plan': update_plan})
+
                     logger.info(
-                        f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} {check_plan(ctx)}'
+                        f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} plan = {plan}, {check_plan(ctx)}'
                     )
                     if check_plan(ctx) not in [
                         FlowStatusEnum.NO_PLAN,
