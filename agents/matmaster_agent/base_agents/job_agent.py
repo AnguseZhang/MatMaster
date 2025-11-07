@@ -415,6 +415,15 @@ class SubmitCoreMCPAgent(MCPAgent):
                                 ):
                                     yield tool_response_failed_event
 
+                                # 更新 plan 为失败
+                                update_plan = copy.deepcopy(ctx.session.state['plan'])
+                                update_plan['steps'][ctx.session.state['plan_index']][
+                                    'status'
+                                ] = 'failed'
+                                yield update_state_event(
+                                    ctx, state_delta={'plan': update_plan}
+                                )
+
                                 raise RuntimeError('Tool Execution Failed')
                             dict_result = load_tool_response(part)
                             async for (
