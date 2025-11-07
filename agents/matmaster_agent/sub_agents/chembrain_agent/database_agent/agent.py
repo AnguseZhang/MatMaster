@@ -1,11 +1,12 @@
 from typing import Any, Dict
 
-from google.adk.agents import LlmAgent
 from google.adk.tools.base_tool import BaseTool
 from google.adk.tools.tool_context import ToolContext
 
+from agents.matmaster_agent.base_agents.subordinate_agent import SubordinateLlmAgent
 from agents.matmaster_agent.llm_config import MatMasterLlmConfig
 
+from ..constant import CHEMBRAIN_AGENT_NAME
 from ..tools.database import DatabaseManager
 from .prompt import instructions_cch_v1
 
@@ -35,7 +36,7 @@ def init_database_agent(config):
     query_table = db_manager.init_query_table()
     get_table_field = db_manager.init_get_table_fields()
 
-    database_agent = LlmAgent(
+    database_agent = SubordinateLlmAgent(
         name='poly_database_agent',
         model=selected_model,
         # instruction=instructions_v1,
@@ -45,6 +46,7 @@ def init_database_agent(config):
         output_key='query_result',
         # before_model_callback=update_invoke_message,
         after_tool_callback=save_query_results,
+        supervisor_agent=CHEMBRAIN_AGENT_NAME,
     )
     return database_agent
 

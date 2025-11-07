@@ -1,17 +1,23 @@
 import secrets
 from datetime import datetime
 
-from google.adk.agents import BaseAgent, ParallelAgent, SequentialAgent
+from google.adk.agents import BaseAgent, ParallelAgent
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.events import Event, EventActions
 
-from agents.matmaster_agent.constant import TMP_FRONTEND_STATE_KEY
-from agents.matmaster_agent.llm_config import MatMasterLlmConfig
-from agents.matmaster_agent.sub_agents.chembrain_agent.constant import (
+from agents.matmaster_agent.base_agents.subordinate_agent import (
+    SubordinateSequentialAgent,
+)
+from agents.matmaster_agent.constant import (
     LOADING_DESC,
     LOADING_START,
     LOADING_STATE_KEY,
     LOADING_TITLE,
+    TMP_FRONTEND_STATE_KEY,
+)
+from agents.matmaster_agent.llm_config import MatMasterLlmConfig
+from agents.matmaster_agent.sub_agents.chembrain_agent.constant import (
+    CHEMBRAIN_AGENT_NAME,
 )
 
 from .paper_agent.agent import init_paper_agent
@@ -130,11 +136,12 @@ def init_deep_research_agent(llm_config):
     paper_group_agent = init_paper_group_agent()
     report_agent = init_report_agent(llm_config)
 
-    root_agent = SequentialAgent(
+    root_agent = SubordinateSequentialAgent(
         name='poly_deep_research_agent',
         description='Summarize the content of single/multiple papers to generate a review or report.',
         sub_agents=[paper_group_agent, report_agent],
         before_agent_callback=paper_list_before_agent,
+        supervisor_agent=CHEMBRAIN_AGENT_NAME,
     )
     return root_agent
 
