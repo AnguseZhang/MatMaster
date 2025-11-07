@@ -33,5 +33,5 @@ def wallet_info():
     print(data)
 
 
-if __name__ == '__main__':
-    wallet_info()
+# if __name__ == '__main__':
+#     wallet_info()

@@ -148,11 +148,11 @@ class MCPRunEventsMixin(BaseMixin):
                         event=event,
                     )
                     # prompt user photon cost
-                    cost_func = self.cost_func
-                    async for future_consume_event in display_future_consume_event(
-                        event, cost_func, ctx, self.name
-                    ):
-                        yield future_consume_event
+                    # cost_func = self.cost_func
+                    # async for future_consume_event in display_future_consume_event(
+                    #     event, cost_func, ctx, self.name
+                    # ):
+                    #     yield future_consume_event
                 elif is_function_response(event):
                     # Loading Event
                     if self.loading:

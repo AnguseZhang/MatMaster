@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     asyncio.run(
         evaluation_threads_single_task(
-            'computing/computing.json',
+            'computing.json',
             item_id=args.item_id,
             max_turn_count=args.max_turn_count,
         )
