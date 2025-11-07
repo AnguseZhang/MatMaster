@@ -1,3 +1,4 @@
+import copy
 import logging
 from typing import AsyncGenerator
 
@@ -38,6 +39,7 @@ from agents.matmaster_agent.llm_config import (
 from agents.matmaster_agent.sub_agents.mapping import AGENT_CLASS_MAPPING
 from agents.matmaster_agent.utils.event_utils import (
     send_error_event,
+    update_state_event,
 )
 
 logging.getLogger('google_adk.google.adk.tools.base_authenticated_tool').setLevel(
@@ -100,7 +102,7 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
         )
 
         self._analysis_agent = ErrorHandleLlmAgent(
-            name='post_execution_agent',
+            name='execution_summary_agent',
             model=MatMasterLlmConfig.default_litellm_model,
             global_instruction='使用 {target_language} 回答',
             description='总结本轮的计划执行情况',
@@ -148,11 +150,21 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
                 async for plan_event in self.plan_make_agent.run_async(ctx):
                     yield plan_event
 
-                # 检查计划的合理性，TODO: tool_name 伪造, target_agent 为 None
-
                 # 总结计划
                 async for plan_summary_event in self.plan_summary_agent.run_async(ctx):
                     yield plan_summary_event
+
+                # 更新计划为可执行的计划
+                update_plan = copy.deepcopy(ctx.session.state['plan'])
+                origin_steps = ctx.session.state['plan']['steps']
+                actual_steps = []
+                for step in origin_steps:
+                    if step.get('tool_name'):
+                        actual_steps.append(step)
+                    else:
+                        break
+                update_plan['steps'] = actual_steps
+                yield update_state_event(ctx, state_delta={'plan': update_plan})
 
             # 执行计划
             if ctx.session.state['plan']['feasibility'] in ['full', 'part']:
@@ -160,7 +172,10 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
                     yield execution_event
 
             # 全部执行完毕，总结执行情况
-            if check_plan(ctx) == FlowStatusEnum.COMPLETE:
+            if (
+                check_plan(ctx) == FlowStatusEnum.COMPLETE
+                or ctx.session.state['plan']['feasibility'] == 'null'
+            ):
                 self._analysis_agent.instruction = get_analysis_instruction(
                     ctx.session.state['plan']
                 )

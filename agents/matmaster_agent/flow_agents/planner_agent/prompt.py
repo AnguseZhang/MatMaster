@@ -15,7 +15,7 @@ Return a JSON structure with the following format:
       "status": "plan"        // Always return "plan"
     }}
   ],
-  "feasibility": <string>    // "full" if ALL steps have corresponding tools, "part" if SOME steps have tools, "null" if NO steps have tools
+  "feasibility": <string>    // "full" if ALL steps have corresponding tools, "part" if SOME steps have tools, "null" if NO steps have tools OR if the FIRST step has null tool_name
 }}
 
 CRITICAL INSTRUCTIONS:
@@ -24,8 +24,7 @@ CRITICAL INSTRUCTIONS:
 3. Do not create or invent tools - only use tools that are actually available in the system
 4. Be precise in matching user requirements to available tools - if a tool doesn't exactly match the required functionality, set tool_name to null
 5. The steps array should represent the complete execution sequence needed to fulfill the user's request
-
-Available tools will be provided separately. Analyze the user's query carefully and create a comprehensive plan that covers all necessary actions.
+6. CRITICAL: If the FIRST step in the steps array has null tool_name, feasibility MUST be "null" regardless of subsequent steps
 """
 
 PLAN_SUMMARY_INSTRUCTION = """
