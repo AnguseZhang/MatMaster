@@ -154,13 +154,6 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
                 async for plan_summary_event in self.plan_summary_agent.run_async(ctx):
                     yield plan_summary_event
 
-            # 计划出错或者无可调用工具，直接返回
-            if (
-                ctx.session.state['error_occurred']
-                or not ctx.session.state['plan']['feasibility']
-            ):
-                return
-
             # 执行计划
             if ctx.session.state['plan']['feasibility'] in ['full', 'part']:
                 async for execution_event in self.execution_agent.run_async(ctx):
