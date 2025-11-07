@@ -39,6 +39,7 @@ class MatMasterSupervisorAgent(ErrorHandleLlmAgent):
                 prompt=MatMasterCheckTransferPrompt,
                 target_agent_enum=MatMasterSubAgentsEnum,
             ),
+            MatMasterLlmConfig.opik_tracer.after_model_callback,
             # matmaster_hallucination_retry,
         ]
 
