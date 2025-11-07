@@ -1,5 +1,6 @@
 from enum import Enum
 
+from agents.matmaster_agent.flow_agents.scene_agent.model import SceneEnum
 from agents.matmaster_agent.sub_agents.ABACUS_agent.agent import (
     ABACUSCalculatorAgent,
     abacus_toolset,
@@ -261,52 +262,55 @@ ALL_TOOLS = {
     'database_agent': {'belonging_agent': SSEBRAIN_AGENT_NAME, 'scene': []},
     'generate_calypso_structures': {
         'belonging_agent': StructureGenerateAgentName,
-        'scene': [],
+        'scene': [SceneEnum.STRUCTURE_GENERATE],
     },
     'generate_crystalformer_structures': {
         'belonging_agent': StructureGenerateAgentName,
-        'scene': [],
+        'scene': [SceneEnum.STRUCTURE_GENERATE],
     },
     'make_supercell_structure': {
         'belonging_agent': StructureGenerateAgentName,
-        'scene': [],
+        'scene': [SceneEnum.STRUCTURE_GENERATE],
     },
     'build_bulk_structure_by_template': {
         'belonging_agent': StructureGenerateAgentName,
-        'scene': [],
+        'scene': [SceneEnum.STRUCTURE_GENERATE],
     },
     'build_molecule_structure_from_g2database': {
         'belonging_agent': StructureGenerateAgentName,
-        'scene': [],
+        'scene': [SceneEnum.STRUCTURE_GENERATE],
     },
-    'build_surface_slab': {'belonging_agent': StructureGenerateAgentName, 'scene': []},
+    'build_surface_slab': {
+        'belonging_agent': StructureGenerateAgentName,
+        'scene': [SceneEnum.STRUCTURE_GENERATE],
+    },
     'build_surface_adsorbate': {
         'belonging_agent': StructureGenerateAgentName,
-        'scene': [],
+        'scene': [SceneEnum.STRUCTURE_GENERATE],
     },
     'build_surface_interface': {
         'belonging_agent': StructureGenerateAgentName,
-        'scene': [],
+        'scene': [SceneEnum.STRUCTURE_GENERATE],
     },
     'add_cell_for_molecules': {
         'belonging_agent': StructureGenerateAgentName,
-        'scene': [],
+        'scene': [SceneEnum.STRUCTURE_GENERATE],
     },
     'build_bulk_structure_by_wyckoff': {
         'belonging_agent': StructureGenerateAgentName,
-        'scene': [],
+        'scene': [SceneEnum.STRUCTURE_GENERATE],
     },
     'build_molecule_structures_from_smiles': {
         'belonging_agent': StructureGenerateAgentName,
-        'scene': [],
+        'scene': [SceneEnum.STRUCTURE_GENERATE],
     },
     'make_doped_structure': {
         'belonging_agent': StructureGenerateAgentName,
-        'scene': [],
+        'scene': [SceneEnum.STRUCTURE_GENERATE],
     },
     'make_amorphous_structure': {
         'belonging_agent': StructureGenerateAgentName,
-        'scene': [],
+        'scene': [SceneEnum.STRUCTURE_GENERATE],
     },
     'get_structure_info': {'belonging_agent': StructureGenerateAgentName, 'scene': []},
     'run_superconductor_optimization': {

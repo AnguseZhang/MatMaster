@@ -1,12 +1,21 @@
 import logging
+from typing import List, Literal, Optional
 
 from google.adk.agents import InvocationContext
+from pydantic import BaseModel, create_model
 
 from agents.matmaster_agent.flow_agents.model import FlowStatusEnum, PlanStepStatusEnum
-from agents.matmaster_agent.sub_agents.mapping import ALL_TOOLS
+from agents.matmaster_agent.sub_agents.mapping import ALL_AGENT_TOOLS_LIST, ALL_TOOLS
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+
+def get_tools_list(scene):
+    if scene == 'other':
+        return ALL_AGENT_TOOLS_LIST
+    else:
+        return [k for k, v in ALL_TOOLS.items() if scene in v['scene']]
 
 
 def get_agent_name(tool_name, sub_agents):
@@ -43,3 +52,32 @@ def check_plan(ctx: InvocationContext):
         return FlowStatusEnum.NEW_PLAN
     else:
         return FlowStatusEnum.PROCESS
+
+
+def create_dynamic_plan_schema(scene: str):
+    """动态创建基于场景的 PlanSchema"""
+
+    # 获取当前场景可用的工具
+    available_tools = get_tools_list(scene)
+
+    # 动态创建 PlanStepSchema
+    DynamicPlanStepSchema = create_model(
+        f'{scene.capitalize()}PlanStepSchema',
+        tool_name=(Optional[Literal[tuple(available_tools)]], None),
+        description=(str, ...),
+        status=(
+            Literal[tuple(PlanStepStatusEnum.__members__.values())],
+            PlanStepStatusEnum.PLAN.value,
+        ),
+        __base__=BaseModel,
+    )
+
+    # 动态创建 PlanSchema
+    DynamicPlanSchema = create_model(
+        f'{scene.capitalize()}PlanSchema',
+        steps=(List[DynamicPlanStepSchema], ...),
+        feasibility=(Literal['full', 'part', 'null'], ...),
+        __base__=BaseModel,
+    )
+
+    return DynamicPlanSchema

@@ -1,4 +1,5 @@
 import copy
+import logging
 from typing import AsyncGenerator
 
 from google.adk.agents import InvocationContext, LlmAgent
@@ -22,10 +23,15 @@ from agents.matmaster_agent.flow_agents.plan_execution_check_agent.prompt import
     PLAN_EXECUTION_CHECK_INSTRUCTION,
 )
 from agents.matmaster_agent.flow_agents.planner_agent.prompt import (
-    PLAN_MAKE_INSTRUCTION,
     PLAN_SUMMARY_INSTRUCTION,
+    get_plan_make_instruction,
 )
-from agents.matmaster_agent.flow_agents.utils import check_plan
+from agents.matmaster_agent.flow_agents.scene_agent.model import SceneSchema
+from agents.matmaster_agent.flow_agents.scene_agent.prompt import SCENE_INSTRUCTION
+from agents.matmaster_agent.flow_agents.utils import (
+    check_plan,
+    create_dynamic_plan_schema,
+)
 from agents.matmaster_agent.llm_config import DEFAULT_MODEL, MatMasterLlmConfig
 from agents.matmaster_agent.sub_agents.mapping import AGENT_CLASS_MAPPING
 from agents.matmaster_agent.utils.event_utils import (
@@ -33,21 +39,34 @@ from agents.matmaster_agent.utils.event_utils import (
     update_state_event,
 )
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 
 class MatMasterFlowAgent(HandleFileUploadLlmAgent):
     @model_validator(mode='after')
     def after_init(self):
-        self._plan_make_agent = SchemaAgent(
-            name='plan_make_agent',
+        self._scene_agent = SchemaAgent(
+            name='scene_agent',
             model=MatMasterLlmConfig.tool_schema_model,
-            description='根据用户的问题依据现有工具执行计划，如果没有工具可用，告知用户，不要自己制造工具或幻想',
-            instruction=PLAN_MAKE_INSTRUCTION,
+            description='把用户的问题划分到特定的场景',
+            instruction=SCENE_INSTRUCTION,
             disallow_transfer_to_parent=True,
             disallow_transfer_to_peers=True,
             before_agent_callback=[
                 matmaster_prepare_state,
                 matmaster_set_lang,
             ],
+            output_schema=SceneSchema,
+            state_key='scene',
+        )
+
+        self._plan_make_agent = SchemaAgent(
+            name='plan_make_agent',
+            model=MatMasterLlmConfig.tool_schema_model,
+            description='根据用户的问题依据现有工具执行计划，如果没有工具可用，告知用户，不要自己制造工具或幻想',
+            disallow_transfer_to_parent=True,
+            disallow_transfer_to_peers=True,
             after_model_callback=remove_function_call,
             output_schema=PlanSchema,
             state_key='plan',
@@ -96,6 +115,7 @@ class MatMasterFlowAgent(HandleFileUploadLlmAgent):
         )
 
         self.sub_agents = [
+            self.scene_agent,
             self.plan_make_agent,
             self.plan_summary_agent,
             self.execution_agent,
@@ -103,6 +123,11 @@ class MatMasterFlowAgent(HandleFileUploadLlmAgent):
         ]
 
         return self
+
+    @computed_field
+    @property
+    def scene_agent(self) -> LlmAgent:
+        return self._scene_agent
 
     @computed_field
     @property
@@ -128,9 +153,16 @@ class MatMasterFlowAgent(HandleFileUploadLlmAgent):
         self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
         try:
+            # 划分问题场景
+            async for scene_event in self.scene_agent.run_async(ctx):
+                yield scene_event
+
             # 判断要不要制定计划
             if check_plan(ctx) == FlowStatusEnum.NO_PLAN:
                 # 制定计划
+                scene = ctx.session.state['scene']['scene']
+                self.plan_make_agent.instruction = get_plan_make_instruction()
+                self.plan_make_agent.output_schema = create_dynamic_plan_schema(scene)
                 async for plan_event in self.plan_make_agent.run_async(ctx):
                     yield plan_event
 
