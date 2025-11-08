@@ -254,12 +254,20 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
         async for result_event in self.result_agent.run_async(ctx):
             yield result_event
 
-        if session_state.get('origin_job_id', None) is not None or (
-            session_state[FRONTEND_STATE_KEY]['biz'].get('origin_id', None) is not None
-            and list(session_state['long_running_jobs'].keys())
-            and session_state[FRONTEND_STATE_KEY]['biz']['origin_id']
-            in list(session_state['long_running_jobs'].keys())
-        ):  # Only Query Job Result
+        frontend_origin_id = session_state[FRONTEND_STATE_KEY]['biz'].get('origin_id')
+        # 检查是否需要查询任务结果
+        has_origin_job_id = session_state.get('origin_job_id') is not None
+        has_matching_job = (
+            frontend_origin_id is not None
+            and frontend_origin_id in session_state.get('long_running_jobs', {})
+            and ctx.invocation_id
+            != session_state['long_running_jobs'][frontend_origin_id][
+                'last_invocation_id'
+            ]
+        )
+
+        if has_origin_job_id or has_matching_job:
+            # Only Query Job Result
             pass
         else:
             # 根据计划来
