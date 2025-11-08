@@ -12,11 +12,15 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def get_tools_list(scene):
-    if scene == 'other':
+def get_tools_list(scenes: list):
+    if not scenes:
         return ALL_AGENT_TOOLS_LIST
     else:
-        return [k for k, v in ALL_TOOLS.items() if scene in v['scene']]
+        return [
+            k
+            for k, v in ALL_TOOLS.items()
+            if any(scene in v['scene'] for scene in scenes)
+        ]
 
 
 def get_agent_name(tool_name, sub_agents):
@@ -55,15 +59,15 @@ def check_plan(ctx: InvocationContext):
         return FlowStatusEnum.PROCESS
 
 
-def create_dynamic_plan_schema(scene: str):
+def create_dynamic_plan_schema(scenes: list):
     """动态创建基于场景的 PlanSchema"""
 
     # 获取当前场景可用的工具
-    available_tools = get_tools_list(scene)
+    available_tools = get_tools_list(scenes)
 
     # 动态创建 PlanStepSchema
     DynamicPlanStepSchema = create_model(
-        f'{scene.capitalize()}PlanStepSchema',
+        'DynamicPlanStepSchema',
         tool_name=(Optional[Literal[tuple(available_tools)]], None),
         description=(str, ...),
         status=(
@@ -75,7 +79,7 @@ def create_dynamic_plan_schema(scene: str):
 
     # 动态创建 PlanSchema
     DynamicPlanSchema = create_model(
-        f'{scene.capitalize()}PlanSchema',
+        'DynamicPlanSchema',
         steps=(List[DynamicPlanStepSchema], ...),
         feasibility=(Literal['full', 'part', 'null'], ...),
         __base__=BaseModel,

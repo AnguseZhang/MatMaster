@@ -242,15 +242,30 @@ ALL_TOOLS = {
         'belonging_agent': HEACALCULATOR_AGENT_NAME,
         'scene': [],
     },
-    'fetch_structures_with_filter': {'belonging_agent': MrDice_Agent_Name, 'scene': []},
-    'fetch_structures_with_spg': {'belonging_agent': MrDice_Agent_Name, 'scene': []},
+    'fetch_structures_with_filter': {
+        'belonging_agent': MrDice_Agent_Name,
+        'scene': [SceneEnum.DATABASE_SEARCH],
+    },
+    'fetch_structures_with_spg': {
+        'belonging_agent': MrDice_Agent_Name,
+        'scene': [SceneEnum.DATABASE_SEARCH],
+    },
     'fetch_structures_with_bandgap': {
         'belonging_agent': MrDice_Agent_Name,
-        'scene': [],
+        'scene': [SceneEnum.DATABASE_SEARCH],
     },
-    'fetch_bohrium_crystals': {'belonging_agent': MrDice_Agent_Name, 'scene': []},
-    'fetch_openlam_structures': {'belonging_agent': MrDice_Agent_Name, 'scene': []},
-    'fetch_mofs_sql': {'belonging_agent': MrDice_Agent_Name, 'scene': []},
+    'fetch_bohrium_crystals': {
+        'belonging_agent': MrDice_Agent_Name,
+        'scene': [SceneEnum.DATABASE_SEARCH],
+    },
+    'fetch_openlam_structures': {
+        'belonging_agent': MrDice_Agent_Name,
+        'scene': [SceneEnum.DATABASE_SEARCH],
+    },
+    'fetch_mofs_sql': {
+        'belonging_agent': MrDice_Agent_Name,
+        'scene': [SceneEnum.DATABASE_SEARCH],
+    },
     'calculate_reaction_profile': {
         'belonging_agent': ORGANIC_REACTION_AGENT_NAME,
         'scene': [],

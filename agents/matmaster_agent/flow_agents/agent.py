@@ -25,8 +25,8 @@ from agents.matmaster_agent.flow_agents.planner_agent.prompt import (
     PLAN_SUMMARY_INSTRUCTION,
     get_plan_make_instruction,
 )
-from agents.matmaster_agent.flow_agents.scene_agent.model import SceneSchema
 from agents.matmaster_agent.flow_agents.scene_agent.prompt import SCENE_INSTRUCTION
+from agents.matmaster_agent.flow_agents.scene_agent.schema import SceneSchema
 from agents.matmaster_agent.flow_agents.schema import FlowStatusEnum, PlanSchema
 from agents.matmaster_agent.flow_agents.utils import (
     check_plan,
@@ -160,9 +160,9 @@ class MatMasterFlowAgent(HandleFileUploadLlmAgent):
             # 判断要不要制定计划
             if check_plan(ctx) == FlowStatusEnum.NO_PLAN:
                 # 制定计划
-                scene = ctx.session.state['scene']['scene']
+                scenes: list = ctx.session.state['scene']['scene']
                 self.plan_make_agent.instruction = get_plan_make_instruction()
-                self.plan_make_agent.output_schema = create_dynamic_plan_schema(scene)
+                self.plan_make_agent.output_schema = create_dynamic_plan_schema(scenes)
                 async for plan_event in self.plan_make_agent.run_async(ctx):
                     yield plan_event
 
