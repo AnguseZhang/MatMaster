@@ -134,7 +134,7 @@ def photon_consume_success_card(cost):
 """
 
 
-def hallucination_card(i18n: I18N):
+def tool_hallucination_card(i18n: I18N):
     def _inner_css():
         return """
 <style>
@@ -191,7 +191,7 @@ def hallucination_card(i18n: I18N):
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-      ">{i18n.t("JobSubmitHallucination")}</div>
+      ">{i18n.t('ToolInvocateHallucination')}</div>
       <div style="
         font-size: 12px;
         opacity: 0.7;
@@ -200,7 +200,7 @@ def hallucination_card(i18n: I18N):
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
-      ">{i18n.t("JobSubmitHallucinationAction")}</div>
+      ">{i18n.t("ToolInvocateHallucinationAction")}</div>
     </div>
   </div>
   <div style="
@@ -225,7 +225,7 @@ def hallucination_card(i18n: I18N):
     )
 
 
-def tool_hallucination_card(i18n: I18N):
+def hallucination_card(i18n: I18N):
     def _inner_css():
         return """
 <style>

@@ -110,13 +110,25 @@ class ResultMCPAgent(MCPAgent):
             )
 
         for origin_job_id in list(ctx.session.state['long_running_jobs'].keys()):
-            # 如果该任务结果已经在上下文中 && 用户没有请求这个任务结果，则不再重复查询
-            if ctx.session.state['long_running_jobs'][origin_job_id][
-                'job_in_ctx'
-            ] and origin_job_id != ctx.session.state[FRONTEND_STATE_KEY]['biz'].get(
-                'origin_id', None
-            ):
-                continue
+            # 检查是否需要跳过当前长运行任务的处理
+            if ctx.session.state['long_running_jobs'][origin_job_id]['job_in_ctx']:
+                # 获取前端业务状态中的原始ID
+                frontend_origin_id = ctx.session.state[FRONTEND_STATE_KEY]['biz'].get(
+                    'origin_id'
+                )
+
+                # 如果当前任务ID与前端状态中的原始ID不匹配，跳过处理
+                if origin_job_id != frontend_origin_id:
+                    continue
+
+                # 如果当前调用ID与该任务的上次调用ID相同，跳过重复处理
+                if (
+                    ctx.session.state['long_running_jobs'][origin_job_id][
+                        'last_invocation_id'
+                    ]
+                    == ctx.invocation_id
+                ):
+                    continue
 
             if self.tools[0].query_tool is None:
                 yield context_text_event(
@@ -246,6 +258,9 @@ class ResultMCPAgent(MCPAgent):
                     ctx.session.state['long_running_jobs']
                 )
                 update_long_running_jobs[origin_job_id]['job_in_ctx'] = True
+                update_long_running_jobs[origin_job_id][
+                    'last_invocation_id'
+                ] = ctx.invocation_id
                 yield update_state_event(
                     ctx,
                     state_delta={'long_running_jobs': update_long_running_jobs},

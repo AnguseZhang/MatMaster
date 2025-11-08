@@ -4,7 +4,8 @@ from typing import List, Literal, Optional
 from google.adk.agents import InvocationContext
 from pydantic import BaseModel, create_model
 
-from agents.matmaster_agent.flow_agents.model import FlowStatusEnum, PlanStepStatusEnum
+from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
+from agents.matmaster_agent.flow_agents.schema import FlowStatusEnum
 from agents.matmaster_agent.sub_agents.mapping import ALL_AGENT_TOOLS_LIST, ALL_TOOLS
 
 logger = logging.getLogger(__name__)

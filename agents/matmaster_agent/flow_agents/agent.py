@@ -18,7 +18,6 @@ from agents.matmaster_agent.flow_agents.analysis_agent.prompt import (
 from agents.matmaster_agent.flow_agents.execution_agent.agent import (
     MatMasterSupervisorAgent,
 )
-from agents.matmaster_agent.flow_agents.model import FlowStatusEnum, PlanSchema
 from agents.matmaster_agent.flow_agents.plan_execution_check_agent.prompt import (
     PLAN_EXECUTION_CHECK_INSTRUCTION,
 )
@@ -28,6 +27,7 @@ from agents.matmaster_agent.flow_agents.planner_agent.prompt import (
 )
 from agents.matmaster_agent.flow_agents.scene_agent.model import SceneSchema
 from agents.matmaster_agent.flow_agents.scene_agent.prompt import SCENE_INSTRUCTION
+from agents.matmaster_agent.flow_agents.schema import FlowStatusEnum, PlanSchema
 from agents.matmaster_agent.flow_agents.utils import (
     check_plan,
     create_dynamic_plan_schema,
