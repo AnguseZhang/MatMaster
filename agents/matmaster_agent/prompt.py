@@ -794,7 +794,7 @@ Your role is to assist users by executing the `{agent_prefix}` calculation tool 
 """
 
 
-def gen_result_core_agent_instruction(agent_prefix: str):
+def gen_result_agent_instruction(agent_prefix: str):
     return f"""
 You are an expert in materials science and computational chemistry.
 Help users obtain {agent_prefix} calculation results.
