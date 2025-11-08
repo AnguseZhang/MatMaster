@@ -38,6 +38,7 @@ from agents.matmaster_agent.llm_config import MatMasterLlmConfig
 from agents.matmaster_agent.model import ToolCallInfo
 from agents.matmaster_agent.prompt import (
     gen_params_check_info_agent_instruction,
+    gen_result_agent_description,
     gen_result_agent_instruction,
     gen_submit_agent_description,
     gen_submit_core_agent_description,
@@ -171,12 +172,18 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
         )
 
         # Create result retrieval agent
-        self._result_agent = ResultMCPAgent(
+        result_core_agent = ResultMCPAgent(
             model=self.model,
-            name=f"{agent_prefix}_result_agent",
+            name=f"{agent_prefix}_result_core_agent",
             tools=self.mcp_tools,
             instruction=gen_result_agent_instruction(agent_prefix),
             enable_tgz_unpack=self.enable_tgz_unpack,
+        )
+
+        self._result_agent = SequentialAgent(
+            name=f"{agent_prefix}_result_agent",
+            description=gen_result_agent_description(),
+            sub_agents=[result_core_agent],
         )
 
         # Create validation and information agents
@@ -217,7 +224,7 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
 
     @computed_field
     @property
-    def result_agent(self) -> ResultMCPAgent:
+    def result_agent(self) -> SequentialAgent:
         return self._result_agent
 
     @computed_field
