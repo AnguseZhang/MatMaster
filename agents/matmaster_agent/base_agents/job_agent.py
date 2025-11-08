@@ -274,7 +274,7 @@ class ResultMCPAgent(MCPAgent):
                 ModelRole,
             ):
                 yield event
-        yield Event(author=self.name)
+        yield Event(author=self.name, invocation_id=ctx.invocation_id)
 
 
 class ParamsCheckInfoAgent(ErrorHandleLlmAgent):
