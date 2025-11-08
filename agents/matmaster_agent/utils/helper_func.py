@@ -1,6 +1,7 @@
 import copy
 import json
 import logging
+import re
 from typing import Any, List, Optional, Union
 
 import jsonpickle
@@ -344,3 +345,26 @@ def check_None_wrapper(func):
         return result  # 通常装饰器应该返回原函数的结果
 
     return wrapper
+
+
+def extract_json_from_string(json_string) -> str:
+    """
+    从包含JSON数据的字符串中提取JSON部分并转换为Python字典
+
+    Args:
+        json_string (str): 包含JSON数据的字符串，可能包含```json和```标记
+
+    Returns:
+        dict: 提取出的JSON数据对应的Python字典
+    """
+    # 使用正则表达式匹配```json和```之间的内容
+    pattern = r'```json\s*(.*?)\s*```'
+    match = re.search(pattern, json_string, re.DOTALL)
+
+    if match:
+        # 提取JSON字符串
+        json_content = match.group(1)
+        # 转换为Python字典
+        return json_content
+    else:
+        return json_string

@@ -1,22 +1,19 @@
 import json
 import logging
-from json import JSONDecodeError
 from typing import AsyncGenerator, Optional, override
 
-import litellm
 from google.adk.agents import InvocationContext
 from google.adk.events import Event
 
 from agents.matmaster_agent.base_agents.error_agent import ErrorHandleLlmAgent
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME, ModelRole
-from agents.matmaster_agent.llm_config import TOOL_SCHEMA_MODEL
-from agents.matmaster_agent.llm_node.prompt import repair_schema_prompt
 from agents.matmaster_agent.utils.event_utils import (
     context_function_event,
     is_function_call,
     is_function_response,
     update_state_event,
 )
+from agents.matmaster_agent.utils.helper_func import extract_json_from_string
 
 logger = logging.getLogger(__name__)
 
@@ -33,28 +30,11 @@ class SchemaAgent(ErrorHandleLlmAgent):
                 if part.text:  # json 字符串转为 function_call
                     if not event.partial:
                         raw_text = part.text
+                        repaired_raw_text = extract_json_from_string(raw_text)
                         logger.info(
-                            f'[{MATMASTER_AGENT_NAME}]:[{ctx.session.id}] raw_text = {raw_text}'
+                            f'[{MATMASTER_AGENT_NAME}]:[{ctx.session.id}] repaired_raw_text = {repaired_raw_text}'
                         )
-                        try:
-                            schema_info: dict = json.loads(raw_text)
-                        except JSONDecodeError:
-                            try:
-                                prompt = repair_schema_prompt().format(
-                                    raw_text=raw_text
-                                )
-                                response = litellm.completion(
-                                    model=TOOL_SCHEMA_MODEL,
-                                    messages=[{'role': 'user', 'content': prompt}],
-                                    response_format=self.output_schema,
-                                )
-                                repaired_raw_text = response.choices[0].message.content
-                                logger.info(
-                                    f'[{MATMASTER_AGENT_NAME}]:[{ctx.session.id}] response = {repaired_raw_text}'
-                                )
-                                schema_info: dict = json.loads(repaired_raw_text)
-                            except BaseException:
-                                raise
+                        schema_info: dict = json.loads(repaired_raw_text)
 
                         if schema_info.get(
                             'arguments'
