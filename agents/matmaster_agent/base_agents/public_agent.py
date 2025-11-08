@@ -292,11 +292,11 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
                     tool_call_info = tool_call_info_event.content.parts[
                         0
                     ].function_response.response
-                    logger.info(
-                        f'[{MATMASTER_AGENT_NAME}] tool_call_info = {tool_call_info}'
-                    )
                 yield tool_call_info_event
 
+            logger.info(
+                f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} tool_call_info = {tool_call_info}'
+            )
             if not tool_call_info:
                 return
 

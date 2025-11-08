@@ -282,17 +282,17 @@ def hallucination_card(i18n: I18N):
 def tool_retry_failed_card(i18n: I18N):
     def _inner_css():
         return """
-    <style>
+<style>
     @keyframes bounce {
         0%, 100% { transform: translateY(0); }
         50% { transform: translateY(-2px); }
     }
-    </style>
+</style>
         """
 
     return (
         f"""
-    <div style="
+<div style="
     background: linear-gradient(135deg, #ffa502 0%, #ff7f50 100%);
     color: white;
     padding: 10px 18px;
@@ -309,8 +309,7 @@ def tool_retry_failed_card(i18n: I18N):
             <div style="font-size: 11px; opacity: 0.9;">{i18n.t('ToolInvocateHallucinationRetryFailed')}</div>
         </div>
     </div>
-</div>
-    """
+</div>"""
         + _inner_css()
     )
 
