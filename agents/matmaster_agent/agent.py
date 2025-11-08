@@ -3,7 +3,6 @@ import logging
 from google.adk.agents import LlmAgent
 from opik.integrations.adk import track_adk_agent_recursive
 
-from agents.matmaster_agent.base_callbacks.private_callback import remove_function_call
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
 from agents.matmaster_agent.flow_agents.agent import MatMasterFlowAgent
 from agents.matmaster_agent.llm_config import (
@@ -148,7 +147,6 @@ def init_matmaster_agent() -> LlmAgent:
     matmaster_agent = MatMasterFlowAgent(
         name=MATMASTER_AGENT_NAME,
         model=MatMasterLlmConfig.default_litellm_model,
-        after_model_callback=remove_function_call,
     )
     track_adk_agent_recursive(matmaster_agent, MatMasterLlmConfig.opik_tracer)
 

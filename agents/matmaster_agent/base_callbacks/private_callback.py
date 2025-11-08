@@ -6,14 +6,12 @@ import traceback
 from functools import wraps
 from typing import Optional, Union
 
-import litellm
 from dp.agent.adapter.adk import CalculationMCPTool
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.agents.llm_agent import AfterToolCallback, BeforeToolCallback
 from google.adk.models import LlmResponse
 from google.adk.tools import BaseTool, ToolContext
-from google.genai.types import Part
 from mcp.types import CallToolResult, TextContent
 
 from agents.matmaster_agent.constant import (
@@ -26,7 +24,6 @@ from agents.matmaster_agent.constant import (
     Transfer2Agent,
 )
 from agents.matmaster_agent.model import CostFuncType
-from agents.matmaster_agent.prompt import get_params_check_info_prompt
 from agents.matmaster_agent.utils.auth import ak_to_ticket, ak_to_username
 from agents.matmaster_agent.utils.finance import get_user_photon_balance
 from agents.matmaster_agent.utils.helper_func import (
@@ -144,7 +141,6 @@ async def remove_function_call(
 
     origin_parts = copy.deepcopy(llm_response.content.parts)
     llm_response.content.parts = []
-    llm_generated_text = ''
     for part in origin_parts:
         if part.function_call:
             function_name = part.function_call.name
@@ -158,17 +154,6 @@ async def remove_function_call(
                 logger.info(
                     f"[{MATMASTER_AGENT_NAME}] FunctionCall will be removed, name = {function_name}, args = {function_args}"
                 )
-
-                prompt = get_params_check_info_prompt().format(
-                    target_language=callback_context.state['target_language'],
-                    function_name=function_name,
-                    function_args=function_args,
-                )
-                response = litellm.completion(
-                    model='azure/gpt-4o', messages=[{'role': 'user', 'content': prompt}]
-                )
-                llm_generated_text += response.choices[0].message.content
-
                 part.function_call = None
 
         if (
@@ -176,20 +161,9 @@ async def remove_function_call(
         ):  # 如果原本只有一个 part，且 part.function_call 被移除了，该 if 不会走
             llm_response.content.parts.append(part)
 
-    if llm_generated_text:
-        logger.info(
-            f"[{MATMASTER_AGENT_NAME}] llm_generated_text = {llm_generated_text}"
-        )
-
-    if llm_generated_text:
-        if not llm_response.content.parts:
-            llm_response.content.parts.append(Part(text=llm_generated_text))
-        elif not llm_response.content.parts[0].text:
-            llm_response.content.parts[0].text = llm_generated_text
-
     if not llm_response.partial:
         logger.info(
-            f"[{MATMASTER_AGENT_NAME}] final llm_response_text = {llm_response.content.parts[0].text}"
+            f"[{MATMASTER_AGENT_NAME}] final llm_response = {llm_response.content.parts}"  # 有可能是空列表
         )
 
     return llm_response

@@ -199,7 +199,7 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
         )
 
         self._tool_call_info_agent = SchemaAgent(
-            model=MatMasterLlmConfig.tool_schema_model,
+            model=self.model,
             name=f"{agent_prefix}_tool_call_info_agent",
             instruction=gen_tool_call_info_instruction(),
             tools=self.mcp_tools,

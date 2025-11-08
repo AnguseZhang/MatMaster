@@ -26,9 +26,11 @@ class SchemaAgent(ErrorHandleLlmAgent):
 
     @override
     async def _run_events(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
+        event_exist = False
         async for event in super()._run_events(ctx):
+            event_exist = True
             for part in event.content.parts:
-                if part.text:
+                if part.text:  # json 字符串转为 function_call
                     if not event.partial:
                         raw_text = part.text
                         logger.info(
@@ -74,5 +76,12 @@ class SchemaAgent(ErrorHandleLlmAgent):
                             )
                     # 置空 text 消息
                     part.text = None
-            if is_function_call(event) or is_function_response(event):
+            if is_function_call(event) or is_function_response(
+                event
+            ):  # 没有被移除的 function_call: set_model_response
                 yield event
+
+        if not event_exist:
+            logger.warning(
+                f'[{MATMASTER_AGENT_NAME}]:[{ctx.session.id}] No event after remove_function_call'
+            )
