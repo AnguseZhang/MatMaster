@@ -884,7 +884,7 @@ You are an AI agent that matches user requests to available tools. Your task is 
 - For parameters where neither user-provided values nor default values are available, include the parameter name in the `missing_tool_args` list
 - Include ALL optional parameters in the schema - they should appear in either `tool_args` (with default values if not user-provided) or `missing_tool_args` (if no default exists)
 - If any parameter involves an input file, the parameter name should indicate it requires an HTTP URL (e.g., "file_url", "image_url")
-- For output file parameters, use appropriate names (e.g., "output_path", "result_file") - these will handle OSS URLs automatically
+- For output file parameters, provide a default filename and include it in `tool_args` - do not put output file parameters in `missing_tool_args`
 - Only return the JSON object - do not execute any tools directly
 - Ensure EVERY parameter from the tool schema is represented either in `tool_args` (with values) or `missing_tool_args` (without values)
 
@@ -899,7 +899,8 @@ You are an AI agent that matches user requests to available tools. Your task is 
     "output_format": "jpg",
     "quality": 85,
     "optimize_size": true,
-    "preserve_metadata": false
+    "preserve_metadata": false,
+    "output_path": "processed_image.jpg"
   }},
   "missing_tool_args": ["watermark_text", "filter_effect"]
 }}
@@ -910,6 +911,7 @@ You are an AI agent that matches user requests to available tools. Your task is 
 - Use user-provided values when available, otherwise use default values from the schema
 - List only parameters with no user value AND no default value in `missing_tool_args`
 - All optional parameters with default values must appear in `tool_args`
+- For output file parameters, always provide a default filename in `tool_args`
 - Match the tool precisely based on the user's request
 - If no suitable tool is found, return an empty object: {{}}
 """
