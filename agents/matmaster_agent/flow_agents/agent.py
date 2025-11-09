@@ -171,7 +171,7 @@ class MatMasterFlowAgent(HandleFileUploadLlmAgent):
             async for scene_event in self.scene_agent.run_async(ctx):
                 yield scene_event
 
-            scenes: list = ctx.session.state['scene']['type']
+            scenes = list(set(ctx.session.state['scene']['type']))
 
             # 判断要不要制定计划
             if check_plan(ctx) == FlowStatusEnum.NO_PLAN:
