@@ -6,5 +6,5 @@ from agents.matmaster_agent.flow_agents.scene_agent.model import SceneEnum
 
 
 class SceneSchema(BaseModel):
-    scene: List[SceneEnum]
+    type: List[SceneEnum]
     reason: str

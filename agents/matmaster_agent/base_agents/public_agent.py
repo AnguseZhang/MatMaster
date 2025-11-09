@@ -33,6 +33,7 @@ from agents.matmaster_agent.constant import (
     MATMASTER_AGENT_NAME,
     ModelRole,
 )
+from agents.matmaster_agent.flow_agents.scene_agent.model import SceneEnum
 from agents.matmaster_agent.llm_config import MatMasterLlmConfig
 from agents.matmaster_agent.model import ToolCallInfo
 from agents.matmaster_agent.prompt import (
@@ -265,7 +266,11 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
             f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} has_origin_job_id = {has_origin_job_id}, has_matching_job = {has_matching_job}, {ctx.invocation_id}, {session_state['long_running_jobs']}'
         )
 
-        if has_origin_job_id or has_matching_job:
+        if (
+            has_origin_job_id
+            or has_matching_job
+            or ctx.session.state['scene']['type'] == SceneEnum.JobResultRetrieval
+        ):
             # Only Query Job Result
             pass
         else:

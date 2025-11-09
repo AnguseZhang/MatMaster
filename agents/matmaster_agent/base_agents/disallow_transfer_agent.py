@@ -19,5 +19,5 @@ class DisallowTransferMixin(BaseMixin):
         return data
 
 
-class DisallowTransferAgent(DisallowTransferMixin, ErrorHandleLlmAgent):
+class DisallowTransferLlmAgent(DisallowTransferMixin, ErrorHandleLlmAgent):
     pass

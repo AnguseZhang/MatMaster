@@ -7,17 +7,21 @@ from google.adk.events import Event
 from google.adk.models.lite_llm import LiteLlm
 from pydantic import computed_field, model_validator
 
-from agents.matmaster_agent.base_agents.error_agent import ErrorHandleLlmAgent
+from agents.matmaster_agent.base_agents.disallow_transfer_agent import (
+    DisallowTransferLlmAgent,
+)
 from agents.matmaster_agent.base_agents.io_agent import HandleFileUploadLlmAgent
 from agents.matmaster_agent.base_agents.schema_agent import SchemaAgent
 from agents.matmaster_agent.base_callbacks.private_callback import remove_function_call
-from agents.matmaster_agent.callback import matmaster_prepare_state, matmaster_set_lang
 from agents.matmaster_agent.flow_agents.analysis_agent.prompt import (
     get_analysis_instruction,
 )
 from agents.matmaster_agent.flow_agents.execution_agent.agent import (
     MatMasterSupervisorAgent,
 )
+from agents.matmaster_agent.flow_agents.expand_agent.agent import ExpandAgent
+from agents.matmaster_agent.flow_agents.expand_agent.prompt import EXPAND_INSTRUCTION
+from agents.matmaster_agent.flow_agents.expand_agent.schema import ExpandSchema
 from agents.matmaster_agent.flow_agents.plan_execution_check_agent.prompt import (
     PLAN_EXECUTION_CHECK_INSTRUCTION,
 )
@@ -47,6 +51,17 @@ logger.setLevel(logging.INFO)
 class MatMasterFlowAgent(HandleFileUploadLlmAgent):
     @model_validator(mode='after')
     def after_init(self):
+        self._expand_agent = ExpandAgent(
+            name='expand_agent',
+            model=MatMasterLlmConfig.tool_schema_model,
+            description='扩写用户的问题',
+            instruction=EXPAND_INSTRUCTION,
+            disallow_transfer_to_parent=True,
+            disallow_transfer_to_peers=True,
+            output_schema=ExpandSchema,
+            state_key='expand',
+        )
+
         self._scene_agent = SchemaAgent(
             name='scene_agent',
             model=MatMasterLlmConfig.tool_schema_model,
@@ -54,10 +69,6 @@ class MatMasterFlowAgent(HandleFileUploadLlmAgent):
             instruction=SCENE_INSTRUCTION,
             disallow_transfer_to_parent=True,
             disallow_transfer_to_peers=True,
-            before_agent_callback=[
-                matmaster_prepare_state,
-                matmaster_set_lang,
-            ],
             output_schema=SceneSchema,
             state_key='scene',
         )
@@ -73,22 +84,18 @@ class MatMasterFlowAgent(HandleFileUploadLlmAgent):
             state_key='plan',
         )
 
-        self._plan_summary_agent = ErrorHandleLlmAgent(
+        self._plan_summary_agent = DisallowTransferLlmAgent(
             name='plan_summary_agent',
             model=MatMasterLlmConfig.default_litellm_model,
             description='根据 materials_plan 返回的计划进行总结',
             instruction=PLAN_SUMMARY_INSTRUCTION,
-            disallow_transfer_to_parent=True,
-            disallow_transfer_to_peers=True,
         )
 
-        plan_execution_check_agent = ErrorHandleLlmAgent(
+        plan_execution_check_agent = DisallowTransferLlmAgent(
             name='plan_execution_check_agent',
             model=MatMasterLlmConfig.default_litellm_model,
             description='汇总计划的执行情况，并根据计划提示下一步的动作',
             instruction=PLAN_EXECUTION_CHECK_INSTRUCTION,
-            disallow_transfer_to_parent=True,
-            disallow_transfer_to_peers=True,
         )
 
         self._execution_agent = MatMasterSupervisorAgent(
@@ -96,8 +103,6 @@ class MatMasterFlowAgent(HandleFileUploadLlmAgent):
             model=MatMasterLlmConfig.default_litellm_model,
             description='根据 materials_plan 返回的计划进行总结',
             instruction='',
-            disallow_transfer_to_parent=True,
-            disallow_transfer_to_peers=True,
             sub_agents=[
                 sub_agent(MatMasterLlmConfig)
                 for sub_agent in AGENT_CLASS_MAPPING.values()
@@ -105,17 +110,16 @@ class MatMasterFlowAgent(HandleFileUploadLlmAgent):
             + [plan_execution_check_agent],
         )
 
-        self._analysis_agent = ErrorHandleLlmAgent(
+        self._analysis_agent = DisallowTransferLlmAgent(
             name='execution_summary_agent',
             model=MatMasterLlmConfig.default_litellm_model,
             global_instruction='使用 {target_language} 回答',
             description='总结本轮的计划执行情况',
             instruction='',
-            disallow_transfer_to_parent=True,
-            disallow_transfer_to_peers=True,
         )
 
         self.sub_agents = [
+            self.expand_agent,
             self.scene_agent,
             self.plan_make_agent,
             self.plan_summary_agent,
@@ -124,6 +128,11 @@ class MatMasterFlowAgent(HandleFileUploadLlmAgent):
         ]
 
         return self
+
+    @computed_field
+    @property
+    def expand_agent(self) -> LlmAgent:
+        return self._expand_agent
 
     @computed_field
     @property
@@ -154,14 +163,19 @@ class MatMasterFlowAgent(HandleFileUploadLlmAgent):
         self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
         try:
+            # 扩写用户问题
+            async for expand_event in self.expand_agent.run_async(ctx):
+                yield expand_event
+
             # 划分问题场景
             async for scene_event in self.scene_agent.run_async(ctx):
                 yield scene_event
 
+            scenes: list = ctx.session.state['scene']['type']
+
             # 判断要不要制定计划
             if check_plan(ctx) == FlowStatusEnum.NO_PLAN:
                 # 制定计划
-                scenes: list = ctx.session.state['scene']['scene']
                 available_tools = get_tools_list(scenes)
                 available_tools_with_description = {
                     item: ALL_TOOLS[item]['description'] for item in available_tools
