@@ -31,9 +31,10 @@ from agents.matmaster_agent.flow_agents.schema import FlowStatusEnum, PlanSchema
 from agents.matmaster_agent.flow_agents.utils import (
     check_plan,
     create_dynamic_plan_schema,
+    get_tools_list,
 )
 from agents.matmaster_agent.llm_config import DEFAULT_MODEL, MatMasterLlmConfig
-from agents.matmaster_agent.sub_agents.mapping import AGENT_CLASS_MAPPING
+from agents.matmaster_agent.sub_agents.mapping import AGENT_CLASS_MAPPING, ALL_TOOLS
 from agents.matmaster_agent.utils.event_utils import (
     send_error_event,
     update_state_event,
@@ -161,8 +162,22 @@ class MatMasterFlowAgent(HandleFileUploadLlmAgent):
             if check_plan(ctx) == FlowStatusEnum.NO_PLAN:
                 # 制定计划
                 scenes: list = ctx.session.state['scene']['scene']
-                self.plan_make_agent.instruction = get_plan_make_instruction()
-                self.plan_make_agent.output_schema = create_dynamic_plan_schema(scenes)
+                available_tools = get_tools_list(scenes)
+                available_tools_with_description = {
+                    item: ALL_TOOLS[item]['description'] for item in available_tools
+                }
+                available_tools_with_description_str = '\n'.join(
+                    [
+                        f"{key}:{value}"
+                        for key, value in available_tools_with_description.items()
+                    ]
+                )
+                self.plan_make_agent.instruction = get_plan_make_instruction(
+                    available_tools_with_description_str
+                )
+                self.plan_make_agent.output_schema = create_dynamic_plan_schema(
+                    available_tools
+                )
                 async for plan_event in self.plan_make_agent.run_async(ctx):
                     yield plan_event
 

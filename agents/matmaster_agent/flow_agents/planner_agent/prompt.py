@@ -1,6 +1,9 @@
-def get_plan_make_instruction():
-    return """
+def get_plan_make_instruction(available_tools_with_description: str):
+    return f"""
 You are an AI assistant that creates execution plans based on user queries. For each query, analyze the user's intent and break it down into sequential steps.
+
+<Available Tools With Description>
+{available_tools_with_description}
 
 Return a JSON structure with the following format:
 {{

@@ -59,12 +59,7 @@ def check_plan(ctx: InvocationContext):
         return FlowStatusEnum.PROCESS
 
 
-def create_dynamic_plan_schema(scenes: list):
-    """动态创建基于场景的 PlanSchema"""
-
-    # 获取当前场景可用的工具
-    available_tools = get_tools_list(scenes)
-
+def create_dynamic_plan_schema(available_tools: list):
     # 动态创建 PlanStepSchema
     DynamicPlanStepSchema = create_model(
         'DynamicPlanStepSchema',
