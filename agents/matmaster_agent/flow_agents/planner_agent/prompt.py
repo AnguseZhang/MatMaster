@@ -20,7 +20,11 @@ CRITICAL INSTRUCTIONS:
 3. Do not create or invent tools - only use tools that are actually available in the system
 4. Be precise in matching user requirements to available tools - if a tool doesn't exactly match the required functionality, set tool_name to null
 5. The steps array should represent the complete execution sequence needed to fulfill the user's request
-6. CRITICAL: If the FIRST step in the steps array has null tool_name, feasibility MUST be "null" regardless of subsequent steps
+6. CRITICAL: Feasibility determination logic:
+   - "full": ALL steps have non-null tool_name
+   - "part": SOME steps have non-null tool_name AND the FIRST step has non-null tool_name
+   - "null": ONLY if NO steps have tools OR if the FIRST step has null tool_name (even if subsequent steps have tools)
+7. DOUBLE-CHECK: Before setting feasibility to "null", verify that the first step indeed has null tool_name
 """
 
 
