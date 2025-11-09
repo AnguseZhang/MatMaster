@@ -1,4 +1,3 @@
-import copy
 import logging
 from typing import AsyncGenerator, Optional, Union, override
 
@@ -239,21 +238,18 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
 
     @override
     async def _run_events(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
-        session_state = get_session_state(ctx)
-        update_plan = copy.deepcopy(session_state['plan'])
-        update_plan['steps'][session_state['plan_index']]['status'] = 'process'
         yield update_state_event(
             ctx,
             state_delta={
                 'dflow': self.dflow_flag,
                 'sync_tools': self.sync_tools,
-                'plan': update_plan,
             },
         )
 
         async for result_event in self.result_agent.run_async(ctx):
             yield result_event
 
+        session_state = get_session_state(ctx)
         frontend_origin_id = session_state[FRONTEND_STATE_KEY]['biz'].get('origin_id')
         # 检查是否需要查询任务结果
         has_origin_job_id = session_state.get('origin_job_id') is not None
@@ -261,9 +257,12 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
             frontend_origin_id is not None
             and frontend_origin_id in session_state.get('long_running_jobs', {})
             and ctx.invocation_id
-            != session_state['long_running_jobs'][frontend_origin_id][
+            == session_state['long_running_jobs'][frontend_origin_id][
                 'last_invocation_id'
             ]
+        )
+        logger.info(
+            f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} has_origin_job_id = {has_origin_job_id}, has_matching_job = {has_matching_job}, {ctx.invocation_id}, {session_state['long_running_jobs']}'
         )
 
         if has_origin_job_id or has_matching_job:
@@ -276,7 +275,7 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
                 self.name,
                 'materials_plan_function_call',
                 {
-                    'msg': f'According to the plan, I will call the `{update_plan['steps'][session_state['plan_index']]['tool_name']}`'
+                    'msg': f'According to the plan, I will call the `{session_state['plan']['steps'][session_state['plan_index']]['tool_name']}`'
                 },
                 ModelRole,
             ):
