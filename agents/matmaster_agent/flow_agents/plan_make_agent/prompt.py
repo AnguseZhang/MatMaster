@@ -17,17 +17,17 @@ Return a JSON structure with the following format:
 }}
 
 CRITICAL GUIDELINES:
-1. Create a step for EVERY discrete action identified in the user request, regardless of tool availability
-2. Configuration parameters should NOT be treated as separate steps - integrate them into relevant execution steps
+1. Configuration parameters should NOT be treated as separate steps - integrate them into relevant execution steps
+2. Create a step for EVERY discrete action identified in the user request, regardless of tool availability
 3. Use null for tool_name only when no appropriate tool exists in the available tools list
 4. Never invent or assume tools - only use tools explicitly listed in the available tools
 5. Match tools precisely to requirements - if functionality doesn't align exactly, use null
 6. Ensure steps array represents the complete execution sequence for the request
 
 EXECUTION PRINCIPLES:
+- Configuration parameters should be embedded within the step that uses them, not isolated as standalone steps
 - Prioritize accuracy over assumptions
 - Maintain logical flow in step sequencing
 - Ensure descriptions clearly communicate purpose
 - Validate tool compatibility before assignment
-- Configuration parameters should be embedded within the step that uses them, not isolated as standalone steps
 """
