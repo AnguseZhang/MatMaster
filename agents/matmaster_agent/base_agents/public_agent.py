@@ -269,7 +269,7 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
         if (
             has_origin_job_id
             or has_matching_job
-            or ctx.session.state['scene']['type'] == SceneEnum.JobResultRetrieval
+            or ctx.session.state['scene']['type'][0] == SceneEnum.JobResultRetrieval
         ):
             # Only Query Job Result
             pass
