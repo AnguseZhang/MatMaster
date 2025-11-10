@@ -59,6 +59,7 @@ class MatMasterSupervisorAgent(DisallowTransferLlmAgent):
                 if step['status'] in [
                     PlanStepStatusEnum.PLAN,
                     PlanStepStatusEnum.PROCESS,
+                    PlanStepStatusEnum.FAILED,
                 ]:
                     yield update_state_event(
                         ctx, state_delta={'plan_index': index}
