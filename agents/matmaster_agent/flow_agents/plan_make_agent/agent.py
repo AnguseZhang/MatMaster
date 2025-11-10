@@ -33,7 +33,9 @@ class PlanMakeAgent(SchemaAgent):
                 exist_step += 1
             else:
                 break
-        if exist_step != total_steps:
+        if not exist_step:
+            pass
+        elif exist_step != total_steps:
             update_plan['feasibility'] = 'part'
         else:
             update_plan['feasibility'] = 'full'
