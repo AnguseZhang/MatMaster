@@ -277,8 +277,8 @@ ALL_TOOLS = {
     },
     'apex_optimize_structure': {
         'belonging_agent': ApexAgentName,
-        'scene': [SceneEnum.Calculation],
-        'description': '',
+        'scene': [SceneEnum.Calculation, SceneEnum.APEX],
+        'description': 'Perform geometry optimization of a crystal(recommend alloy system), relaxing atomic positions and optionally the unit cell.',
     },
     'apex_calculate_interstitial': {
         'belonging_agent': ApexAgentName,
@@ -352,8 +352,8 @@ ALL_TOOLS = {
     },
     'optimize_structure': {
         'belonging_agent': DPACalulator_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
-        'description': '',
+        'scene': [SceneEnum.Calculation, SceneEnum.DPA],
+        'description': 'Perform geometry optimization of a crystal or molecular structure. Supports relaxation of atomic positions and optionally the unit cell.',
     },
     'run_molecular_dynamics': {
         'belonging_agent': DPACalulator_AGENT_NAME,

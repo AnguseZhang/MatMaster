@@ -6,3 +6,6 @@ class SceneEnum(str, Enum):
     DATABASE_SEARCH = 'database_search'
     Calculation = 'calculation'
     JobResultRetrieval = 'job_result_retrieval'
+    DPA = 'DPA'
+    APEX = 'APEX'
+    ABACUS = 'ABACUS'
