@@ -363,7 +363,7 @@ ALL_TOOLS = {
     'calculate_phonon': {
         'belonging_agent': DPACalulator_AGENT_NAME,
         'scene': [SceneEnum.Calculation],
-        'description': '',
+        'description': 'Compute phonon properties. Generates displaced supercells, calculates interatomic forces, and derives phonon dispersion, thermal properties, and optional total/projected DOS. Outputs band structures, entropy, free energy, heat capacity, and maximum phonon frequencies. Requires optimized structure as input.',
     },
     'calculate_elastic_constants': {
         'belonging_agent': DPACalulator_AGENT_NAME,
@@ -398,32 +398,32 @@ ALL_TOOLS = {
     'fetch_structures_with_filter': {
         'belonging_agent': MrDice_Agent_Name,
         'scene': [SceneEnum.DATABASE_SEARCH],
-        'description': 'OPTIMADE Database',
+        'description': 'Retrieve crystal structures from multiple OPTIMADE-compatible databases using raw OPTIMADE filter strings (elements, chemical formulas, logical combinations) across providers like alexandria, cod, mp, oqmd, tcod.',
     },
     'fetch_structures_with_spg': {
         'belonging_agent': MrDice_Agent_Name,
         'scene': [SceneEnum.DATABASE_SEARCH],
-        'description': 'OPTIMADE Database',
+        'description': 'Retrieve crystal structures filtered by specific space group numbers (1-230) or mineral/structure types (e.g., rutile, spinel, perovskite) combined with base filters from OPTIMADE-compatible databases.',
     },
     'fetch_structures_with_bandgap': {
         'belonging_agent': MrDice_Agent_Name,
         'scene': [SceneEnum.DATABASE_SEARCH],
-        'description': 'OPTIMADE Database',
+        'description': 'Retrieve crystal structures filtered by band gap range (min/max in eV) combined with base filters (elements, formulas) from OPTIMADE-compatible databases that provide band gap data.',
     },
     'fetch_bohrium_crystals': {
         'belonging_agent': MrDice_Agent_Name,
         'scene': [SceneEnum.DATABASE_SEARCH],
-        'description': 'Bohrium Database',
+        'description': 'Retrieve crystal structures from the Bohrium Public database (includes Materials Project data) with flexible filtering by formula, elements, space group, atom counts, predicted formation energy range, and band gap range, supporting exact or contains match modes.',
     },
     'fetch_openlam_structures': {
         'belonging_agent': MrDice_Agent_Name,
         'scene': [SceneEnum.DATABASE_SEARCH],
-        'description': 'OpenLAM Database',
+        'description': 'Retrieve crystal structures from the OpenLAM database filtered by chemical formula, energy range, and submission time, with output in CIF or JSON format.',
     },
     'fetch_mofs_sql': {
         'belonging_agent': MrDice_Agent_Name,
         'scene': [SceneEnum.DATABASE_SEARCH],
-        'description': 'MOF Database',
+        'description': 'Execute SQL queries against the MOF database with support for complex multi-table joins, window functions, CTEs, and statistical analysis for advanced MOF property queries and composition analysis.',
     },
     'calculate_reaction_profile': {
         'belonging_agent': ORGANIC_REACTION_AGENT_NAME,
