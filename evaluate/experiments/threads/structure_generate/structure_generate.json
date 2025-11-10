@@ -258,11 +258,11 @@
     ]
   },
   {
-  "expected_outcomes": [
-    "成功通过 Wyckoff 位生成 NaCl 晶体结构",
-    "空间群 Fm-3m, a = 5.64 Å",
-    "导出 CIF 文件并提供 URL"
-  ],
+    "expected_outcomes": [
+      "成功通过 Wyckoff 位生成 NaCl 晶体结构",
+      "空间群 Fm-3m, a = 5.64 Å",
+      "导出 CIF 文件并提供 URL"
+    ],
     "initial_question": "构建空间群 Fm-3m 下的 NaCl 结构，使用 Wyckoff 位置 4a (0,0,0) 和 4b (1/2,1/2,1/2)",
     "success_criteria": [
       "结构的原子位置与 Wyckoff 对应",
