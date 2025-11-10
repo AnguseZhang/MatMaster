@@ -107,6 +107,12 @@ async def matmaster_prepare_state(
     callback_context.state['plan_index'] = callback_context.state.get(
         'plan_index', None
     )
+    callback_context.state['tool_call_info'] = callback_context.state.get(
+        'tool_call_info', []
+    )
+    callback_context.state['update_tool_args'] = callback_context.state.get(
+        'update_tool_args', {}
+    )
 
 
 async def matmaster_set_lang(

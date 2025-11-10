@@ -6,6 +6,7 @@ import traceback
 from functools import wraps
 from typing import Optional, Union
 
+from deepdiff import DeepDiff
 from dp.agent.adapter.adk import CalculationMCPTool
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.agents.invocation_context import InvocationContext
@@ -433,6 +434,53 @@ def check_job_create(func: BeforeToolCallback) -> BeforeToolCallback:
     return wrapper
 
 
+def update_tool_args(func: BeforeToolCallback) -> BeforeToolCallback:
+    @wraps(func)
+    async def wrapper(
+        tool: BaseTool, args: dict, tool_context: ToolContext
+    ) -> Optional[dict]:
+        # 两步操作：
+        # 1. 调用被装饰的 before_tool_callback；
+        # 2. 如果调用的 before_tool_callback 有返回值，以这个为准
+        if (before_tool_result := await func(tool, args, tool_context)) is not None:
+            return before_tool_result
+
+        # 如果 tool 不是 CalculationMCPTool，不应该调用这个 callback
+        if not isinstance(tool, CalculationMCPTool):
+            raise TypeError(
+                "Not CalculationMCPTool type, current tool can't create job!"
+            )
+
+        tool_call_info = tool_context.state['tool_call_info']
+        if not tool_call_info:
+            logger.warning(
+                f'[{MATMASTER_AGENT_NAME}] empty, tool_call_info = {tool_call_info}'
+            )
+            return
+
+        last_tool_call_info = tool_call_info[-1]
+        if last_tool_call_info['tool_name'] != tool.name:
+            logger.warning(
+                f'[{MATMASTER_AGENT_NAME}] not match, tool_call_info = {tool_call_info}, tool.name = {tool.name}'
+            )
+            return
+
+        logger.info(f'[{MATMASTER_AGENT_NAME}] before args = {args}')
+        diff = DeepDiff(args, last_tool_call_info['tool_args'])
+        if diff:
+            args = last_tool_call_info['tool_args']
+            logger.info(
+                f'[{MATMASTER_AGENT_NAME}] args updated with differences: {diff}'
+            )
+            logger.info(f'[{MATMASTER_AGENT_NAME}] after args = {args}')
+        else:
+            logger.info(f'[{MATMASTER_AGENT_NAME}] args unchanged')
+
+        tool_context.state['update_tool_args'] = args
+
+    return wrapper
+
+
 # 总应该在最后
 def catch_before_tool_callback_error(func: BeforeToolCallback) -> BeforeToolCallback:
     @wraps(func)
@@ -461,8 +509,12 @@ def catch_before_tool_callback_error(func: BeforeToolCallback) -> BeforeToolCall
             logger.info(
                 f'[{MATMASTER_AGENT_NAME}]:[catch_before_tool_callback_error] executor={tool.executor}'
             )
-
-            return await tool.run_async(args=args, tool_context=tool_context)
+            logger.info(
+                f'[{MATMASTER_AGENT_NAME}] update_tool_args = {tool_context.state['update_tool_args']}'
+            )
+            return await tool.run_async(
+                args=tool_context.state['update_tool_args'], tool_context=tool_context
+            )
         except Exception as e:
             return {
                 'status': 'error',

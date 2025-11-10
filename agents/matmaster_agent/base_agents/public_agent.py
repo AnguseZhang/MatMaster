@@ -1,3 +1,4 @@
+import copy
 import logging
 from typing import AsyncGenerator, Optional, Union, override
 
@@ -312,6 +313,20 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
                 ) in self.params_check_info_agent.run_async(ctx):
                     yield params_check_info_event
             else:
+                # 先更新 tool_call_info
+                update_tool_call_info = copy.deepcopy(
+                    ctx.session.state['tool_call_info']
+                )
+                update_tool_call_info.append(tool_call_info)
+                yield update_state_event(
+                    ctx,
+                    state_delta={'tool_call_info': update_tool_call_info},
+                )
+                logger.info(
+                    f'[{MATMASTER_AGENT_NAME}] update_tool_call_info = {update_tool_call_info}'
+                )
+
+                # 前置 tool_hallucination 为 False
                 yield update_state_event(ctx, state_delta={'tool_hallucination': False})
                 for _ in range(2):
                     async for submit_event in self.submit_agent.run_async(ctx):

@@ -23,6 +23,7 @@ from agents.matmaster_agent.base_callbacks.private_callback import (
     inject_username_ticket,
     remove_job_link,
     tgz_oss_to_oss_list,
+    update_tool_args,
 )
 from agents.matmaster_agent.constant import (
     JOB_RESULT_KEY,
@@ -89,12 +90,14 @@ class MCPCallbackMixin(BaseMixin):
             data['enable_tgz_unpack'] = True
 
         data['before_tool_callback'] = catch_before_tool_callback_error(
-            inject_current_env(
-                inject_username_ticket(
-                    check_job_create(
-                        check_user_phonon_balance(
-                            inject_userId_sessionId(data['before_tool_callback']),
-                            data['cost_func'],
+            update_tool_args(
+                inject_current_env(
+                    inject_username_ticket(
+                        check_job_create(
+                            check_user_phonon_balance(
+                                inject_userId_sessionId(data['before_tool_callback']),
+                                data['cost_func'],
+                            )
                         )
                     )
                 )

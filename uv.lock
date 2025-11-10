@@ -833,6 +833,18 @@ wheels = [
 ]
 
 [[package]]
+name = "deepdiff"
+version = "8.6.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "orderly-set" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/19/76/36c9aab3d5c19a94091f7c6c6e784efca50d87b124bf026c36e94719f33c/deepdiff-8.6.1.tar.gz", hash = "sha256:ec56d7a769ca80891b5200ec7bd41eec300ced91ebcc7797b41eb2b3f3ff643a", size = 634054, upload-time = "2025-09-03T19:40:41.461Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f7/e6/efe534ef0952b531b630780e19cabd416e2032697019d5295defc6ef9bd9/deepdiff-8.6.1-py3-none-any.whl", hash = "sha256:ee8708a7f7d37fb273a541fa24ad010ed484192cd0c4ffc0fa0ed5e2d4b9e78b", size = 91378, upload-time = "2025-09-03T19:40:39.679Z" },
+]
+
+[[package]]
 name = "deepmerge"
 version = "2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2831,6 +2843,7 @@ dependencies = [
     { name = "anyio" },
     { name = "bohr-agent-sdk" },
     { name = "bohrium-sdk" },
+    { name = "deepdiff" },
     { name = "deepmerge" },
     { name = "google-adk", extra = ["a2a", "eval", "extensions", "test"] },
     { name = "litellm" },
@@ -2848,6 +2861,7 @@ requires-dist = [
     { name = "anyio", specifier = ">=4.10.0" },
     { name = "bohr-agent-sdk", specifier = "==0.1.106" },
     { name = "bohrium-sdk", specifier = ">=0.14.0" },
+    { name = "deepdiff", specifier = ">=8.6.1" },
     { name = "deepmerge", specifier = ">=2.0" },
     { name = "google-adk", extras = ["a2a", "eval", "extensions", "test"], specifier = "==1.16.0" },
     { name = "litellm", specifier = ">=1.76.1" },
@@ -3471,6 +3485,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/00/1c/b648a5f5a92baceb01d22c1b1d79efa4c3023ae067f8c63a5585d67efaf0/opik-1.8.81.tar.gz", hash = "sha256:0d68c41456671192f90a1567b66fb3dc2996c7cfd7cf4f7a911741f137c134c3", size = 414502, upload-time = "2025-10-17T09:06:56.467Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/55/76/85fb1cbc84a323566b6dc1c530ede3203ca7a0a0d5981914eda755abcc57/opik-1.8.81-py3-none-any.whl", hash = "sha256:b501006b6e23f5c3fa63ca49754932ebb52d02e2ddc365d3299fd0243ecfdc15", size = 775645, upload-time = "2025-10-17T09:06:54.909Z" },
+]
+
+[[package]]
+name = "orderly-set"
+version = "5.5.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/4a/88/39c83c35d5e97cc203e9e77a4f93bf87ec89cf6a22ac4818fdcc65d66584/orderly_set-5.5.0.tar.gz", hash = "sha256:e87185c8e4d8afa64e7f8160ee2c542a475b738bc891dc3f58102e654125e6ce", size = 27414, upload-time = "2025-07-10T20:10:55.885Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/12/27/fb8d7338b4d551900fa3e580acbe7a0cf655d940e164cb5c00ec31961094/orderly_set-5.5.0-py3-none-any.whl", hash = "sha256:46f0b801948e98f427b412fcabb831677194c05c3b699b80de260374baa0b1e7", size = 13068, upload-time = "2025-07-10T20:10:54.377Z" },
 ]
 
 [[package]]
