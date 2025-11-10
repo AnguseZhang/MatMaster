@@ -89,15 +89,15 @@ class MCPCallbackMixin(BaseMixin):
         if data.get('enable_tgz_unpack') is None:
             data['enable_tgz_unpack'] = True
 
+        data['after_model_callback'] = update_tool_args(data['after_model_callback'])
+
         data['before_tool_callback'] = catch_before_tool_callback_error(
-            update_tool_args(
-                inject_current_env(
-                    inject_username_ticket(
-                        check_job_create(
-                            check_user_phonon_balance(
-                                inject_userId_sessionId(data['before_tool_callback']),
-                                data['cost_func'],
-                            )
+            inject_current_env(
+                inject_username_ticket(
+                    check_job_create(
+                        check_user_phonon_balance(
+                            inject_userId_sessionId(data['before_tool_callback']),
+                            data['cost_func'],
                         )
                     )
                 )
