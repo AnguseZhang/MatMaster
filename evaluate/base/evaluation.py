@@ -139,6 +139,7 @@ async def _run_conversation(
     max_turn_count: int,
     item_id: int,
     save_mode: str = 'w',
+    label_key: str = '',
 ) -> Dict[str, Any]:
     """
     执行一次对话测试，并返回结果
@@ -212,6 +213,8 @@ async def _run_conversation(
     # 对话循环
     turn_count = 0
     while turn_count < max_turn_count:
+        if not os.path.exists(f"{label_key}/logs/job_{item_id}"):
+            os.makedirs(f"{label_key}/logs/job_{item_id}")
         turn_count += 1
         print(f"\n🔄 第 {turn_count} 轮对话:")
 
@@ -252,7 +255,9 @@ async def _run_conversation(
 
             # 将事件保存到txt文件
             with open(
-                f"logs/job_{item_id}/turn_{turn_count}.txt", 'w', encoding='utf-8'
+                f"{label_key}/logs/job_{item_id}/turn_{turn_count}.txt",
+                'w',
+                encoding='utf-8',
             ) as f:
                 f.write(str(events_list))
 
@@ -371,7 +376,7 @@ async def evaluation_threads_task(file_path: str, max_turn_count: int = 10):
 
 
 async def evaluation_threads_single_task(
-    file_path: str, item_id: int, max_turn_count: int = 10
+    file_path: str, item_id: int, max_turn_count: int = 10, label_key: str = ''
 ):
     """测试单个数据"""
     print('=' * 80)
@@ -383,7 +388,11 @@ async def evaluation_threads_single_task(
     time.sleep(10)  # 避免请求过于频繁
 
     result = await _run_conversation(
-        dataset_item, max_turn_count, save_mode='a', item_id=item_id
+        dataset_item,
+        max_turn_count,
+        save_mode='a',
+        item_id=item_id,
+        label_key=label_key,
     )
 
     print('\n' + '=' * 80)

@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import os
 import sys
 
 from evaluate.base.evaluation import evaluation_threads_single_task
@@ -16,10 +17,14 @@ if __name__ == '__main__':
     parser.add_argument('--item_id', type=int, default=0, help='样本索引')
     args = parser.parse_args()
 
+    # 获取所在文件夹名称(windows与linux通用)
+    dir_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
+
     asyncio.run(
         evaluation_threads_single_task(
-            'computing.json',
+            f'{dir_name}/{dir_name}.json',
             item_id=args.item_id,
             max_turn_count=args.max_turn_count,
+            label_key=dir_name,
         )
     )
