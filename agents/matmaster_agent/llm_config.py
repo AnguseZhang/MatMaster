@@ -33,11 +33,10 @@ MODEL_MAPPING = {
     ('litellm_proxy', 'gemini-2.5-flash'): 'litellm_proxy/gemini-2.5-flash',
     ('litellm_proxy', 'gemini-2.5-pro'): 'litellm_proxy/gemini-2.5-pro',
     ('litellm_proxy', 'claude-sonnet-4'): 'litellm_proxy/claude-sonnet-4',
-    ('litellm_proxy', 'gpt-5'): 'litellm_proxy/azure/gpt-5',
+    ('azure', 'gpt-5'): 'azure/gpt-5',
     ('litellm_proxy', 'gpt-5-mini'): 'litellm_proxy/azure/gpt-5-mini',
     ('litellm_proxy', 'gpt-5-nano'): 'litellm_proxy/azure/gpt-5-nano',
-    ('litellm_proxy', 'gpt-5-chat'): 'litellm_proxy/azure/gpt-5-chat',
-    ('litellm_proxy', 'zh-gpt-5-chat'): 'litellm_proxy/zh-gpt-5-chat',
+    ('azure', 'gpt-5-chat'): 'azure/gpt-5-chat',
     # ("gemini", "gemini1.5-turbo"): "gemini/gemini1.5-turbo",
     # ("gemini", "gemini2.5-pro"): "gemini/gemini-2.5-pro-preview-03-25",
     # ("deepseek", "deepseek-reasoner"): "deepseek/deepseek-reasoner",
@@ -49,7 +48,7 @@ MODEL_MAPPING = {
     ('volcengine', 'Doubao-Seed-1.6-thinking'): 'volcengine/ep-20250627141021-h4wch',
 }
 
-DEFAULT_MODEL = os.getenv('DEFAULT_MODEL', 'litellm_proxy/azure/gpt-5-chat')
+DEFAULT_MODEL = os.getenv('DEFAULT_MODEL', 'azure/gpt-5-chat')
 TOOL_SCHEMA_MODEL = os.getenv('TOOL_SCHEMA_MODEL', 'azure/gpt-4o')
 
 
@@ -85,8 +84,8 @@ class LLMConfig:
         # Helper to init any provider model
         def _init_model(model: str):
             llm_kwargs = {}
-            if model.endswith(gpt_5_chat):
-                llm_kwargs = {'stream_options': {'include_usage': True}}
+            # if model.endswith(gpt_5_chat):
+            #     llm_kwargs = {'stream_options': {'include_usage': True}}
             logger.info(
                 f'[{MATMASTER_AGENT_NAME}] model = {model}, llm_kwargs = {llm_kwargs}'
             )
@@ -112,12 +111,11 @@ class LLMConfig:
         )
 
         # GPT-5 models
-        self.gpt_5 = _init_model(MODEL_MAPPING.get((litellm_provider, gpt_5)))
-        self.gpt_5_nano = _init_model(MODEL_MAPPING.get((litellm_provider, gpt_5_nano)))
-        self.gpt_5_mini = _init_model(MODEL_MAPPING.get((litellm_provider, gpt_5_mini)))
-        self.gpt_5_chat = _init_model(MODEL_MAPPING.get((litellm_provider, gpt_5_chat)))
+        self.gpt_5 = _init_model(MODEL_MAPPING.get(azure_provider, gpt_5))
+        self.gpt_5_nano = _init_model(MODEL_MAPPING.get(litellm_provider, gpt_5_nano))
+        self.gpt_5_mini = _init_model(MODEL_MAPPING.get(litellm_provider, gpt_5_mini))
+        self.gpt_5_chat = _init_model(MODEL_MAPPING.get(azure_provider, gpt_5_chat))
 
-        # Default Model
         self.default_litellm_model = _init_model(DEFAULT_MODEL)
         self.tool_schema_model = _init_model(TOOL_SCHEMA_MODEL)
 

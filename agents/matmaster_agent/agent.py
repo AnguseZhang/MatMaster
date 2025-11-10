@@ -16,7 +16,6 @@ from agents.matmaster_agent.callback import (
 )
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME, ModelRole
 from agents.matmaster_agent.llm_config import (
-    DEFAULT_MODEL,
     LLMConfig,
     MatMasterLlmConfig,
 )
@@ -175,7 +174,7 @@ class MatMasterAgent(HandleFileUploadLlmAgent):
 
             error_handel_agent = LlmAgent(
                 name='error_handel_agent',
-                model=LiteLlm(model=DEFAULT_MODEL),
+                model=LiteLlm(model='azure/gpt-5-chat'),
             )
             # 调用错误处理 Agent
             async for error_handel_event in error_handel_agent.run_async(ctx):

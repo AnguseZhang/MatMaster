@@ -49,7 +49,6 @@ from agents.matmaster_agent.utils.event_utils import (
     context_multipart2function_event,
     context_text_event,
     display_failed_result_or_consume,
-    display_future_consume_event,
     frontend_text_event,
     get_function_call_indexes,
     is_function_call,
@@ -289,11 +288,11 @@ class SubmitCoreMCPAgent(MCPAgent):
                     event=event,
                 )
                 # prompt user photon cost
-                cost_func = self.cost_func
-                async for future_consume_event in display_future_consume_event(
-                    event, cost_func, ctx, self.name
-                ):
-                    yield future_consume_event
+                # cost_func = self.cost_func
+                # async for future_consume_event in display_future_consume_event(
+                #     event, cost_func, ctx, self.name
+                # ):
+                #     yield future_consume_event
 
             if (
                 is_function_response(event)
@@ -364,11 +363,11 @@ class SubmitCoreMCPAgent(MCPAgent):
                 )
 
                 # prompt user tool-call cost
-                cost_func = self.cost_func
-                async for future_consume_event in display_future_consume_event(
-                    event, cost_func, ctx, self.name
-                ):
-                    yield future_consume_event
+                # cost_func = self.cost_func
+                # async for future_consume_event in display_future_consume_event(
+                #     event, cost_func, ctx, self.name
+                # ):
+                #     yield future_consume_event
 
             if event.content and event.content.parts:
                 for part in event.content.parts:

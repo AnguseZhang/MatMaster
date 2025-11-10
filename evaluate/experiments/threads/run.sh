@@ -53,6 +53,8 @@ cat > "$PYTHON_SCRIPT" <<EOF
 import os
 import sys
 import json
+if not os.path.exists(f'$THREADS_DIR/$1/logs'):
+    os.makedirs(f'$THREADS_DIR/$1/logs')
 try:
     # Use relative path to avoid Windows Git Bash path issues
     filepath = '$RELATIVE_JSON_PATH'
@@ -100,7 +102,7 @@ for ((i=0; i<$TOTAL; i++)); do
     echo "🚀 提交任务: item $i"
     sleep 3
     $PYTHON $THREADS_DIR/$1/${1}_bash.py \
-        --item_id $i > item_$i.log 2>&1 &
+        --item_id $i >  $THREADS_DIR/$1/logs/item_$i.log 2>&1 &
 
     ((running_jobs++))
 
