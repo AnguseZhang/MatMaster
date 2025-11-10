@@ -1,6 +1,6 @@
 from typing import AsyncGenerator, final
 
-from google.adk.agents import BaseAgent, InvocationContext, LlmAgent
+from google.adk.agents import BaseAgent, InvocationContext, LlmAgent, SequentialAgent
 from google.adk.events import Event
 
 from agents.matmaster_agent.base_agents.abc_agent import BaseMixin
@@ -46,6 +46,10 @@ class ErrorHandlerMixin(BaseMixin):
 
 
 class ErrorHandleBaseAgent(ErrorHandlerMixin, BaseAgent):
+    pass
+
+
+class ErrorHandelSequentialAgent(ErrorHandlerMixin, SequentialAgent):
     pass
 
 

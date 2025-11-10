@@ -240,7 +240,7 @@ def check_user_phonon_balance(
         balance = await get_user_photon_balance(user_id)
 
         logger.info(
-            f"[{MATMASTER_AGENT_NAME}] user_id={user_id}, sku_id={sku_id}, cost={cost}, balance={balance}"
+            f"[{MATMASTER_AGENT_NAME}] {tool_context.session.id} user_id={user_id}, sku_id={sku_id}, cost={cost}, balance={balance}"
         )
         if balance < cost:
             raise RuntimeError('Phonon is not enough, Please recharge.')

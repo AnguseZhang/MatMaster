@@ -258,48 +258,48 @@
     ]
   },
   {
-  "initial_question": "构建空间群 Fm-3m 下的 NaCl 结构，使用 Wyckoff 位置 4a (0,0,0) 和 4b (1/2,1/2,1/2)",
   "expected_outcomes": [
     "成功通过 Wyckoff 位生成 NaCl 晶体结构",
     "空间群 Fm-3m, a = 5.64 Å",
     "导出 CIF 文件并提供 URL"
   ],
-  "success_criteria": [
-    "结构的原子位置与 Wyckoff 对应",
-    "结构文件可通过 URL 下载"
-  ]
-},
-{
-  "initial_question": "根据 SMILES 'C1=CC=CC=C1' 生成苯分子结构并导出文件 URL",
-  "expected_outcomes": [
-    "成功生成苯分子几何结构",
-    "导出结构文件并提供 URL"
-  ],
-  "success_criteria": [
-    "分子化学式 C6H6",
-    "结构文件通过 URL 可下载"
-  ]
-},
-{
-  "initial_question": "为 Si 生成 (111) 表面 slab，厚度 10 Å，真空层 15 Å，并导出结构文件 URL",
-  "expected_outcomes": [
-    "成功生成 Si(111) 表面 slab 结构",
-    "真空层厚度 15 Å",
-    "结构文件通过 URL 下载"
-  ],
-  "success_criteria": [
-    "表面方向与真空层匹配",
-    "结构文件可下载"
-  ]
-},
-{
-    "initial_question": "生成 TiO₂ (001) 表面 slab，并在表面吸附 2 个 H₂O 分子，然后将体系放入 20×20×25 Å³ 周期盒中并加入 5 Å 真空层，导出最终结构文件 URL",
+    "initial_question": "构建空间群 Fm-3m 下的 NaCl 结构，使用 Wyckoff 位置 4a (0,0,0) 和 4b (1/2,1/2,1/2)",
+    "success_criteria": [
+      "结构的原子位置与 Wyckoff 对应",
+      "结构文件可通过 URL 下载"
+    ]
+  },
+  {
+    "expected_outcomes": [
+      "成功生成苯分子几何结构",
+      "导出结构文件并提供 URL"
+    ],
+    "initial_question": "根据 SMILES 'C1=CC=CC=C1' 生成苯分子结构并导出文件 URL",
+    "success_criteria": [
+      "分子化学式 C6H6",
+      "结构文件通过 URL 可下载"
+    ]
+  },
+  {
+    "expected_outcomes": [
+      "成功生成 Si(111) 表面 slab 结构",
+      "真空层厚度 15 Å",
+      "结构文件通过 URL 下载"
+    ],
+    "initial_question": "为 Si 生成 (111) 表面 slab，厚度 10 Å，真空层 15 Å，并导出结构文件 URL",
+    "success_criteria": [
+      "表面方向与真空层匹配",
+      "结构文件可下载"
+    ]
+  },
+  {
     "expected_outcomes": [
       "成功生成 TiO₂ (001) 表面",
       "在表面放置 2 个 H₂O 分子",
       "扩展为 20×20×25 Å³ 周期盒并添加真空层",
       "导出最终结构文件 URL"
     ],
+    "initial_question": "生成 TiO₂ (001) 表面 slab，并在表面吸附 2 个 H₂O 分子，然后将体系放入 20×20×25 Å³ 周期盒中并加入 5 Å 真空层，导出最终结构文件 URL",
     "success_criteria": [
       "吸附分子位置合理，无重叠",
       "真空层厚度正确",

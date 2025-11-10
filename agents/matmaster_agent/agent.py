@@ -16,7 +16,6 @@ from agents.matmaster_agent.callback import (
 )
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME, ModelRole
 from agents.matmaster_agent.llm_config import (
-    DEFAULT_MODEL,
     LLMConfig,
     MatMasterLlmConfig,
 )

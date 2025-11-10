@@ -4,7 +4,7 @@
       "content": {
         "parts": [
           {
-            "text": "\u4f60\u7684\u9700\u6c42 \u201c\u6784\u5efa\u4e00\u4e2aTiO\u2082\u201d \u6709\u4e9b\u542b\u7cca\uff0c\u56e0\u4e3a\u5b83\u65e2\u53ef\u80fd\u6307 **\u751f\u6210** \u4e00\u4e2a\u7406\u60f3\u5316\u7684\u6676\u4f53\u7ed3\u6784\uff0c\u4e5f\u53ef\u80fd\u6307 **\u68c0\u7d22** \u6570\u636e\u5e93\u4e2d\u5df2\u7ecf\u5b58\u5728\u7684 TiO\u2082 \u6750\u6599\u7ed3\u6784\u3002  \n\n\u6839\u636e\u89c4\u5219\uff0c\u8fd9\u4e24\u79cd\u65b9\u5f0f\u662f\u4e0d\u540c\u7684\u8def\u5f84\uff1a  \n- \ud83d\udce6 **\u7ed3\u6784\u751f\u6210** (`structure_generate_agent`)\uff1a\u9002\u5408\u751f\u6210\u7406\u60f3\u5316\u6216\u5047\u60f3\u7684 TiO\u2082 \u6676\u4f53\uff08\u9700\u8981\u6307\u5b9a\u6676\u578b\uff0c\u5982\u91d1\u7ea2\u77f3\u3001\u9510\u949b\u77ff\u7b49\uff0c\u4ee5\u53ca\u6676\u683c\u53c2\u6570\u7b49\uff09  \n- \ud83c\udfdb **\u7ed3\u6784\u68c0\u7d22** (`optimade_agent`)\uff1a\u9002\u5408\u83b7\u53d6\u6750\u6599\u6570\u636e\u5e93\u4e2d\u5df2\u6709\u7684\u3001\u7ecf\u8fc7\u5b9e\u9a8c\u6216\u8ba1\u7b97\u7684 TiO\u2082 \u7ed3\u6784  \n\n**\u8bf7\u9009\u62e9\u4e0b\u4e00\u6b65**\uff1a  \n1. **\u751f\u6210\u7ed3\u6784**\uff08\u6211\u4f1a\u5e2e\u4f60\u7528 `structure_generate_agent` \u642d\u5efa TiO\u2082 \u6676\u4f53\uff09  \n2. **\u68c0\u7d22\u7ed3\u6784**\uff08\u6211\u4f1a\u5e2e\u4f60\u7528 `optimade_agent` \u4ece\u6570\u636e\u5e93\u4e2d\u67e5\u627e TiO\u2082 \u7684\u73b0\u6709\u7ed3\u6784\uff09  \n\n\u4f60\u60f3\u9009\u62e9\u54ea\u4e00\u79cd\u65b9\u5f0f\uff1f"
+            "text": "你的需求 “构建一个TiO₂” 有些含糊，因为它既可能指 **生成** 一个理想化的晶体结构，也可能指 **检索** 数据库中已经存在的 TiO₂ 材料结构。  \n\n根据规则，这两种方式是不同的路径：  \n- 📦 **结构生成** (`structure_generate_agent`)：适合生成理想化或假想的 TiO₂ 晶体（需要指定晶型，如金红石、锐钛矿等，以及晶格参数等）  \n- 🏛 **结构检索** (`optimade_agent`)：适合获取材料数据库中已有的、经过实验或计算的 TiO₂ 结构  \n\n**请选择下一步**：  \n1. **生成结构**（我会帮你用 `structure_generate_agent` 搭建 TiO₂ 晶体）  \n2. **检索结构**（我会帮你用 `optimade_agent` 从数据库中查找 TiO₂ 的现有结构）  \n\n你想选择哪一种方式？"
           }
         ],
         "role": "model"
@@ -14,7 +14,7 @@
     "input": {
       "parts": [
         {
-          "text": "\u8bf7\u5e2e\u6211\u6784\u5efa\u4e00\u4e2aTiO2"
+          "text": "请帮我构建一个TiO2"
         }
       ],
       "role": "user"

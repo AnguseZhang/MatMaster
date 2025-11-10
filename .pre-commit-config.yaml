@@ -20,7 +20,7 @@ repos:
             gvasp/gvasp-bash-completion.sh
           )$
       - id: pretty-format-json
-        args: [ --autofix ]
+        args: [ --autofix, --no-ensure-ascii]  # 关键参数：--no-ensure-ascii]
       - id: check-merge-conflict
       - id: check-symlinks
       - id: check-toml

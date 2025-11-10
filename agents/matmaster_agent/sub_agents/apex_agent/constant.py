@@ -16,7 +16,7 @@ ApexBohriumExecutor = copy.deepcopy(BohriumExecutor)
 
 ApexBohriumExecutor['machine']['remote_profile'][
     'image_address'
-] = 'registry.dp.tech/dptech/dp/native/prod-16664/apex-agent-all:0.1.0'
+] = 'registry.dp.tech/dptech/dp/native/prod-16664/apex-agent-all:0.1.5'
 
 # APEX专用的Bohrium存储配置
 ApexBohriumStorage = copy.deepcopy(BohriumStorge)

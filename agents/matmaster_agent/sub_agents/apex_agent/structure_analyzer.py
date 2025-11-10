@@ -111,12 +111,8 @@ class StructureAnalyzer:
         """
         atom_ratio = self.effective_atoms / self.REFERENCE_ATOMS
 
-        if self.is_multi_element():
-            # 多元素：1:2比例
-            scaling_factor = atom_ratio**2
-        else:
-            # 单元素：1:1.5比例
-            scaling_factor = atom_ratio**1.5
+        # 所有体系统一采用 1:1 比例缩放
+        scaling_factor = atom_ratio**1.0
 
         logger.info(
             f"时间缩放因子: {scaling_factor:.2f} "

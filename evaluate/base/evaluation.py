@@ -1,9 +1,9 @@
 import asyncio
 import json
 import logging
+import os
 import re
 import time
-import os
 import uuid
 from typing import Any, Dict, List
 
@@ -135,7 +135,10 @@ def multi_turn_evaluation_task(dataset_item):
 
 
 async def _run_conversation(
-    dataset_item: Dict[str, Any], max_turn_count: int, item_id: int, save_mode: str = 'w'
+    dataset_item: Dict[str, Any],
+    max_turn_count: int,
+    item_id: int,
+    save_mode: str = 'w',
 ) -> Dict[str, Any]:
     """
     执行一次对话测试，并返回结果
@@ -148,7 +151,7 @@ async def _run_conversation(
         item_id = 0
     if not os.path.exists(f'logs/job_{item_id}'):
         os.makedirs(f'logs/job_{item_id}')
-        
+
     session_service = InMemorySessionService()
     artifact_service = InMemoryArtifactService()
     session = await session_service.create_session(
@@ -248,10 +251,11 @@ async def _run_conversation(
                 events_list.append(dict(event))
 
             # 将事件保存到txt文件
-            with open(f"logs/job_{item_id}/turn_{turn_count}.txt", "w", encoding="utf-8") as f:
+            with open(
+                f"logs/job_{item_id}/turn_{turn_count}.txt", 'w', encoding='utf-8'
+            ) as f:
                 f.write(str(events_list))
 
-                
         except asyncio.CancelledError:
             msg = '任务被取消，可能是超时或作用域取消导致'
             logger.error(msg)
@@ -288,8 +292,10 @@ async def _run_conversation(
                 all_finished = True
                 for job_id in job_ids:
                     try:
-                        bohrium_client = Bohrium(access_key=os.getenv("MATERIALS_ACCESS_KEY"),
-                                                project_id=os.getenv("MATERIALS_PROJECT_ID"))
+                        bohrium_client = Bohrium(
+                            access_key=os.getenv('MATERIALS_ACCESS_KEY'),
+                            project_id=os.getenv('MATERIALS_PROJECT_ID'),
+                        )
                         job_info = bohrium_client.job.detail(job_id)
                     except Exception as e:
                         logger.error(f"查询job状态失败: {e}")
@@ -376,7 +382,9 @@ async def evaluation_threads_single_task(
     dataset_item = dataset_json[item_id]
     time.sleep(10)  # 避免请求过于频繁
 
-    result = await _run_conversation(dataset_item, max_turn_count, save_mode='a',item_id=item_id)
+    result = await _run_conversation(
+        dataset_item, max_turn_count, save_mode='a', item_id=item_id
+    )
 
     print('\n' + '=' * 80)
     print('🎉 单条多轮对话测试完成！')

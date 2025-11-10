@@ -1,197 +1,197 @@
 [
   {
     "expected_outcomes": [
-      "\u627e\u5230 Materials Project \u4e2d\u5e26\u9699 >2 eV \u7684 \u6c27\u5316\u7269"
+      "找到 Materials Project 中带隙 >2 eV 的 氧化物"
     ],
-    "initial_question": "\u5728 Materials Project \u4e2d\u68c0\u7d22\u5e76\u8fd4\u56de3\u4e2a\u5e26\u9699\u5927\u4e8e 2 eV \u7684\u6c27\u5316\u7269\u7ed3\u6784",
+    "initial_question": "在 Materials Project 中检索并返回3个带隙大于 2 eV 的氧化物结构",
     "success_criteria": [
-      "\u6240\u6709\u7ed3\u679c\u5747\u4e3a\u6c27\u5316\u7269",
-      "\u8fd4\u56de\u6587\u4ef6URL",
-      "\u7ed3\u679c\u6570\u91cf\u6b63\u786e"
+      "所有结果均为氧化物",
+      "返回文件URL",
+      "结果数量正确"
     ]
   },
   {
     "expected_outcomes": [
-      "\u5728 Alexandria \u4e2d\u68c0\u7d22",
-      "\u627e\u5230\u6ee1\u8db3\u5143\u7d20\u7684\u6750\u6599",
-      "\u83b7\u5f97\u5bf9\u5e94\u7684\u6750\u6599\u4fe1\u606f",
-      "\u6210\u529f\u8fd4\u56de\u5bf9\u5e94\u6587\u4ef6URL"
+      "在 Alexandria 中检索",
+      "找到满足元素的材料",
+      "获得对应的材料信息",
+      "成功返回对应文件URL"
     ],
-    "initial_question": "\u5728 Alexandria \u4e2d\u67e5\u627e\u5e76\u8fd4\u56de 5 \u4e2a\u542b Li\u3001Mn\u3001O \u7684\u6750\u6599",
+    "initial_question": "在 Alexandria 中查找并返回 5 个含 Li、Mn、O 的材料",
     "success_criteria": [
-      "\u6240\u6709\u7ed3\u679c\u5747\u6765\u81eaAlexandria",
-      "\u6240\u6709\u7ed3\u679c\u5747\u542b Li\u3001Mn\u3001O",
-      "\u6587\u4ef6 URL \u5b8c\u6574",
-      "\u7ed3\u679c\u6570\u91cf\u6b63\u786e"
+      "所有结果均来自Alexandria",
+      "所有结果均含 Li、Mn、O",
+      "文件 URL 完整",
+      "结果数量正确"
     ]
   },
   {
     "expected_outcomes": [
-      "\u5728 Materials Project \u4e2d\u68c0\u7d22",
-      "\u627e\u5230\u7b26\u5408\u5143\u7d20\u548c\u7a7a\u95f4\u7fa4\u6761\u4ef6\u7684\u5316\u5408\u7269",
-      "\u6210\u529f\u8fd4\u56de\u5bf9\u5e94\u6587\u4ef6URL"
+      "在 Materials Project 中检索",
+      "找到符合元素和空间群条件的化合物",
+      "成功返回对应文件URL"
     ],
-    "initial_question": "\u5728 Materials Project \u4e2d\u68c0\u7d22\u5e76\u8fd4\u56de\u4e0d\u8d85\u8fc7 2 \u4e2a\u4ec5\u542b Ti\u3001Al\u3001O \u4e14\u7a7a\u95f4\u7fa4\u4e3a 63 \u7684\u5316\u5408\u7269\uff0c\u5e76\u5bfc\u51fa CIF \u6587\u4ef6",
+    "initial_question": "在 Materials Project 中检索并返回不超过 2 个仅含 Ti、Al、O 且空间群为 63 的化合物，并导出 CIF 文件",
     "success_criteria": [
-      "\u7ed3\u679c\u53ea\u542b Ti\u3001Al\u3001O",
-      "\u7a7a\u95f4\u7fa4\u5747\u4e3a 63",
-      "\u6587\u4ef6 URL \u5b8c\u6574",
-      "\u7ed3\u679c\u6570\u91cf\u6b63\u786e"
+      "结果只含 Ti、Al、O",
+      "空间群均为 63",
+      "文件 URL 完整",
+      "结果数量正确"
     ]
   },
   {
     "expected_outcomes": [
-      "\u5728 Alexandria \u4e2d\u68c0\u7d22",
-      "\u627e\u5230 Alexandria \u4e2d\u7684 Heusler \u5408\u91d1",
-      "\u6210\u529f\u5bfc\u8fd4\u56de\u6587\u4ef6 URL"
+      "在 Alexandria 中检索",
+      "找到 Alexandria 中的 Heusler 合金",
+      "成功导返回文件 URL"
     ],
-    "initial_question": "\u5728 Alexandria \u4e2d\u968f\u673a\u68c0\u7d22 5 \u4e2a\u5df2\u77e5\u7684 Heusler \u5408\u91d1",
+    "initial_question": "在 Alexandria 中随机检索 5 个已知的 Heusler 合金",
     "success_criteria": [
-      "\u7ed3\u679c\u5747\u4e3a Heusler \u5408\u91d1",
-      "\u6587\u4ef6 URL \u5b8c\u6574",
-      "\u7ed3\u679c\u6570\u91cf\u6b63\u786e"
+      "结果均为 Heusler 合金",
+      "文件 URL 完整",
+      "结果数量正确"
     ]
   },
   {
     "expected_outcomes": [
-      "\u627e\u5230\u7a7a\u95f4\u7fa4 61 \u7684 \u7ed3\u6784",
-      "\u6210\u529f\u8fd4\u56de\u5bf9\u5e94\u6587\u4ef6URL"
+      "找到空间群 61 的 结构",
+      "成功返回对应文件URL"
     ],
-    "initial_question": "\u67e5\u627e\u5e76\u8fd4\u56de\u4e0d\u8d85\u8fc7 5 \u4e2a\u7a7a\u95f4\u7fa4\u4e3a 61 \u7684\u7ed3\u6784\uff0c\u5e76\u8fd4\u56de\u6587\u4ef6\u4e0b\u8f7d\u94fe\u63a5",
+    "initial_question": "查找并返回不超过 5 个空间群为 61 的结构，并返回文件下载链接",
     "success_criteria": [
-      "\u6240\u6709\u7ed3\u679c\u7a7a\u95f4\u7fa4\u4e3a 61",
-      "\u6587\u4ef6 URL \u5b8c\u6574",
-      "\u7ed3\u679c\u6570\u91cf\u6b63\u786e"
+      "所有结果空间群为 61",
+      "文件 URL 完整",
+      "结果数量正确"
     ]
   },
   {
     "expected_outcomes": [
-      "\u627e\u5230\u539f\u5b50\u6570 \u22644 \u7684 BCC \u91d1\u5c5e",
-      "\u6210\u529f\u8fd4\u56de\u5bf9\u5e94\u6587\u4ef6URL"
+      "找到原子数 ≤4 的 BCC 金属",
+      "成功返回对应文件URL"
     ],
-    "initial_question": "\u5728 COD \u4e2d\u68c0\u7d22\u539f\u5b50\u6570\u4e0d\u8d85\u8fc7 4 \u7684 BCC \u91d1\u5c5e\uff0c\u5e76\u8fd4\u56de\u6587\u4ef6\u4e0b\u8f7d\u94fe\u63a5",
+    "initial_question": "在 COD 中检索原子数不超过 4 的 BCC 金属，并返回文件下载链接",
     "success_criteria": [
-      "\u6240\u6709\u7ed3\u679c\u4e3a BCC \u91d1\u5c5e",
-      "\u539f\u5b50\u6570 \u22644",
-      "\u6587\u4ef6 URL \u5b8c\u6574",
-      "\u7ed3\u679c\u6570\u91cf\u6b63\u786e"
+      "所有结果为 BCC 金属",
+      "原子数 ≤4",
+      "文件 URL 完整",
+      "结果数量正确"
     ]
   },
   {
     "expected_outcomes": [
-      "\u5728 Materials Project \u4e2d\u68c0\u7d22",
-      "\u83b7\u5f97\u7b26\u5408\u6761\u4ef6\u7684\u4e09\u5143\u5316\u5408\u7269",
-      "\u6210\u529f\u8fd4\u56de\u6587\u4ef6 URL"
+      "在 Materials Project 中检索",
+      "获得符合条件的三元化合物",
+      "成功返回文件 URL"
     ],
-    "initial_question": "\u5728 Materials Project \u4e2d\u68c0\u7d22\u5e76\u8fd4\u56de\u4e0d\u8d85\u8fc7 5 \u4e2a\u542b\u7a00\u571f\u3001\u8fc7\u6e21\u91d1\u5c5e\u548c\u6c27\uff0c\u5e76\u4e14\u4e0d\u5305\u542b Fe \u548c Ni \u7684\u4e09\u5143\u5316\u5408\u7269",
+    "initial_question": "在 Materials Project 中检索并返回不超过 5 个含稀土、过渡金属和氧，并且不包含 Fe 和 Ni 的三元化合物",
     "success_criteria": [
-      "\u6240\u6709\u7ed3\u679c\u5747\u6765\u81eaMaterials Project",
-      "\u5168\u90e8\u7ed3\u679c\u542b\u7a00\u571f\u3001\u8fc7\u6e21\u91d1\u5c5e\u548c\u6c27",
-      "\u7ed3\u679c\u4e0d\u542b Fe \u548c Ni",
-      "\u6587\u4ef6 URL \u5b8c\u6574",
-      "\u7ed3\u679c\u6570\u91cf\u6b63\u786e"
+      "所有结果均来自Materials Project",
+      "全部结果含稀土、过渡金属和氧",
+      "结果不含 Fe 和 Ni",
+      "文件 URL 完整",
+      "结果数量正确"
     ]
   },
   {
     "expected_outcomes": [
-      "\u5728Materials Project\u4e2d\u68c0\u7d22",
-      "\u68c0\u7d22\u5230\u542b Si \u548c O \u7684\u56db\u5143\u5316\u5408\u7269",
-      "\u6392\u9664 Fe \u548c Ni \u5143\u7d20",
-      "\u6210\u529f\u8fd4\u56de\u5bf9\u5e94\u7684\u6587\u4ef6 URL"
+      "在Materials Project中检索",
+      "检索到含 Si 和 O 的四元化合物",
+      "排除 Fe 和 Ni 元素",
+      "成功返回对应的文件 URL"
     ],
-    "initial_question": "\u5728 Materials Project \u4e2d\u68c0\u7d22\u542b\u6709 Si \u548c O \u4e14\u4e0d\u542b Fe \u548c Ni \u7684\u56db\u5143\u5316\u5408\u7269\uff0c\u8fd4\u56de\u4e0d\u8d85\u8fc7 5 \u4e2a\u7ed3\u679c",
+    "initial_question": "在 Materials Project 中检索含有 Si 和 O 且不含 Fe 和 Ni 的四元化合物，返回不超过 5 个结果",
     "success_criteria": [
-      "\u6240\u6709\u7ed3\u679c\u5747\u7b26\u5408\u8981\u6c42",
-      "\u6240\u6709\u7ed3\u679c\u5747\u6765\u81eaMaterials Project",
-      "\u6587\u4ef6 URL \u5b8c\u6574",
-      "\u7ed3\u679c\u6570\u91cf\u6b63\u786e"
+      "所有结果均符合要求",
+      "所有结果均来自Materials Project",
+      "文件 URL 完整",
+      "结果数量正确"
     ]
   },
   {
     "expected_outcomes": [
-      "\u83b7\u53d6 Alexandria \u4e0e Materials Project \u4e2d MoS\u2082 \u5c42\u72b6\u6750\u6599\u7684\u6570\u636e",
-      "\u5bf9\u6bd4\u5e26\u9699\u548c DOS",
-      "\u6210\u529f\u8fd4\u56de CIF \u6587\u4ef6 URL"
+      "获取 Alexandria 与 Materials Project 中 MoS₂ 层状材料的数据",
+      "对比带隙和 DOS",
+      "成功返回 CIF 文件 URL"
     ],
-    "initial_question": "\u5bf9\u6bd4 Alexandria \u4e0e Materials Project \u4e2d MoS\u2082 \u5c42\u72b6\u6750\u6599\u7684\u5e26\u9699",
+    "initial_question": "对比 Alexandria 与 Materials Project 中 MoS₂ 层状材料的带隙",
     "success_criteria": [
-      "\u6240\u6709\u7ed3\u679c\u5747\u4e3a MoS\u2082 \u5c42\u72b6\u6750\u6599",
-      "\u5e26\u9699\u548c DOS \u5bf9\u6bd4\u5b8c\u6574",
-      "CIF \u6587\u4ef6\u5b8c\u6574\u5bfc\u51fa"
+      "所有结果均为 MoS₂ 层状材料",
+      "带隙和 DOS 对比完整",
+      "CIF 文件完整导出"
     ]
   },
   {
     "expected_outcomes": [
-      "\u4ece\u4e24\u4e2a\u4ee5\u4e0a\u7684\u6570\u636e\u5e93\u4e2d\u83b7\u53d6 Fe\u2082O\u2083 \u7684\u7ed3\u6784\u548c\u5e26\u9699",
-      "\u8fdb\u884c\u6570\u503c\u5bf9\u6bd4",
-      "\u6210\u529f\u8fd4\u56de\u6587\u4ef6 URL"
+      "从两个以上的数据库中获取 Fe₂O₃ 的结构和带隙",
+      "进行数值对比",
+      "成功返回文件 URL"
     ],
-    "initial_question": "\u5bf9\u6bd4\u4e0d\u540c\u6570\u636e\u5e93\u4e2d Fe\u2082O\u2083 \u7684\u5e26\u9699\u6570\u636e",
+    "initial_question": "对比不同数据库中 Fe₂O₃ 的带隙数据",
     "success_criteria": [
-      "\u7ed3\u679c\u5305\u542b Fe\u2082O\u2083 \u5728\u591a\u4e2a\u6570\u636e\u5e93\u4e2d\u7684\u6570\u636e",
-      "\u6587\u4ef6URL\u5b8c\u6574\u5bfc\u51fa"
+      "结果包含 Fe₂O₃ 在多个数据库中的数据",
+      "文件URL完整导出"
     ]
   },
   {
     "expected_outcomes": [
-      "\u4e0b\u8f7d\u542b\u9502\u6750\u6599\u7684 CIF \u6587\u4ef6",
-      "\u8ba1\u7b97\u5e73\u5747\u4f53\u79ef/\u539f\u5b50",
-      "\u6210\u529f\u8fd4\u56de CIF \u6587\u4ef6 URL"
+      "下载含锂材料的 CIF 文件",
+      "计算平均体积/原子",
+      "成功返回 CIF 文件 URL"
     ],
-    "initial_question": "\u6279\u91cf\u4e0b\u8f7d Materials Project \u4e2d\u524d 5 \u4e2a\u542b\u9502\u6750\u6599\u7684 CIF \u6587\u4ef6\uff0c\u5e76\u7edf\u8ba1\u5176\u5e73\u5747\u4f53\u79ef/\u539f\u5b50",
+    "initial_question": "批量下载 Materials Project 中前 5 个含锂材料的 CIF 文件，并统计其平均体积/原子",
     "success_criteria": [
-      "\u4e0b\u8f7d\u7684 CIF \u6587\u4ef6\u6570\u91cf\u4e3a 5",
-      "\u5e73\u5747\u4f53\u79ef/\u539f\u5b50\u8ba1\u7b97\u6b63\u786e",
-      "\u6587\u4ef6URL\u5b8c\u6574\u5bfc\u51fa",
-      "\u7ed3\u679c\u6570\u91cf\u6b63\u786e"
+      "下载的 CIF 文件数量为 5",
+      "平均体积/原子计算正确",
+      "文件URL完整导出",
+      "结果数量正确"
     ]
   },
   {
     "expected_outcomes": [
-      "\u627e\u5230\u5c42\u72b6\u8fc7\u6e21\u91d1\u5c5e\u786b\u5316\u7269",
-      "\u6210\u529f\u8fd4\u56de\u6587\u4ef6 URL"
+      "找到层状过渡金属硫化物",
+      "成功返回文件 URL"
     ],
-    "initial_question": "\u68c0\u7d22\u5e76\u8fd4\u56de 4 \u4e2a\u5c42\u72b6\u8fc7\u6e21\u91d1\u5c5e\u786b\u5316\u7269\u7684\u7ed3\u6784",
+    "initial_question": "检索并返回 4 个层状过渡金属硫化物的结构",
     "success_criteria": [
-      "\u5168\u90e8\u7ed3\u679c\u4e3a\u5c42\u72b6\u8fc7\u6e21\u91d1\u5c5e\u786b\u5316\u7269",
-      "\u7ed3\u679c\u6570\u91cf\u6b63\u786e"
+      "全部结果为层状过渡金属硫化物",
+      "结果数量正确"
     ]
   },
   {
     "expected_outcomes": [
-      "\u627e\u5230 MXene \u7ed3\u6784",
-      "\u7b5b\u9009\u51fa\u8868\u9762\u7ec8\u6b62\u57fa\u56e2\u4e3a O \u6216 F \u7684\u7ed3\u6784",
-      "\u5bfc\u51fa\u6587\u4ef6"
+      "找到 MXene 结构",
+      "筛选出表面终止基团为 O 或 F 的结构",
+      "导出文件"
     ],
-    "initial_question": "\u68c0\u7d22 3 \u4e2a\u542b\u6709 O \u6216 F \u7684 MXene \u7ed3\u6784\uff0c\u5e76\u8fd4\u56de\u6587\u4ef6URL",
+    "initial_question": "检索 3 个含有 O 或 F 的 MXene 结构，并返回文件URL",
     "success_criteria": [
-      "\u5168\u90e8\u7ed3\u679c\u4e3a MXene",
-      "\u7b5b\u9009\u51fa\u7684\u7ed3\u679c\u8868\u9762\u7ec8\u6b62\u57fa\u56e2\u4e3a O \u6216 F",
-      "URL\u5b8c\u6574\u5bfc\u51fa",
-      "\u7ed3\u679c\u6570\u91cf\u6b63\u786e"
+      "全部结果为 MXene",
+      "筛选出的结果表面终止基团为 O 或 F",
+      "URL完整导出",
+      "结果数量正确"
     ]
   },
   {
     "expected_outcomes": [
-      "\u627e\u5230\u5c42\u72b6\u6750\u6599",
-      "\u7b5b\u9009\u5e26\u9699 <1 eV \u7684\u5b50\u96c6",
-      "\u6210\u529f\u8fd4\u56deURL"
+      "找到层状材料",
+      "筛选带隙 <1 eV 的子集",
+      "成功返回URL"
     ],
-    "initial_question": "\u68c0\u7d22\u7981\u5e26\u5bbd\u5ea6\u5c0f\u4e8e 1 eV \u7684\u5c42\u72b6\u6750\u6599\uff0c\u8fd4\u56de 5 \u4e2a\u7ed3\u679c",
+    "initial_question": "检索禁带宽度小于 1 eV 的层状材料，返回 5 个结果",
     "success_criteria": [
-      "\u7ed3\u679c\u5747\u4e3a\u5c42\u72b6\u6750\u6599",
-      "\u5e26\u9699 <1 eV",
-      "\u6587\u4ef6URL\u5b8c\u6574\u5bfc\u51fa",
-      "\u7ed3\u679c\u6570\u91cf\u6b63\u786e"
+      "结果均为层状材料",
+      "带隙 <1 eV",
+      "文件URL完整导出",
+      "结果数量正确"
     ]
   },
   {
-    "initial_question": "从 hMOF 数据库中检索比表面积 > 2000 m²/g 且孔径在 6–8 Å 的 MOF 结构，并导出 10 个候选结构（以 URL 提供）",
     "expected_outcomes": [
       "从 hMOF 数据库中筛选满足比表面积与孔径条件的结构",
       "根据稳定性或能量排序选出前 10 个候选",
       "将候选结构文件以 URL 导出"
     ],
+    "initial_question": "从 hMOF 数据库中检索比表面积 > 2000 m²/g 且孔径在 6–8 Å 的 MOF 结构，并导出 10 个候选结构（以 URL 提供）",
     "success_criteria": [
       "返回的 MOF 数量为 10（若不足则说明）",
       "每个结果包含：结构名、比表面积、孔径、能量",
@@ -199,12 +199,12 @@
     ]
   },
   {
-    "initial_question": "在 CoREMOF 数据库中查找含 Zn 金属中心且有 BDC (1,4-苯二甲酸) 连接体的结构，并导出结构信息与能隙数据（以 URL 提供）",
     "expected_outcomes": [
       "筛选金属中心为 Zn 且连接体含 BDC 的 CoREMOF 条目",
       "提取带隙数据或计算属性（若可用）",
       "导出结构与能隙数据文件并提供 URL"
     ],
+    "initial_question": "在 CoREMOF 数据库中查找含 Zn 金属中心且有 BDC (1,4-苯二甲酸) 连接体的结构，并导出结构信息与能隙数据（以 URL 提供）",
     "success_criteria": [
       "返回包含 Zn-BDC 框架的结构列表",
       "每个结构包含：金属中心、配体、带隙或能量信息",
@@ -212,24 +212,24 @@
     ]
   },
   {
-    "initial_question": "检索 hMOF 数据库中 CO₂ 吸附量 > 3 mmol/g 的结构，并导出前 5 个候选结构与吸附等温线数据",
     "expected_outcomes": [
       "在 hMOF 数据库中根据 CO₂ 吸附性能筛选高性能 MOF",
       "导出前 5 个候选的结构，展示或导出吸附等温线数据",
       "所有结果以 URL 提供下载"
     ],
+    "initial_question": "检索 hMOF 数据库中 CO₂ 吸附量 > 3 mmol/g 的结构，并导出前 5 个候选结构与吸附等温线数据",
     "success_criteria": [
       "返回至少 5 个候选（或说明不足）",
       "每个候选包含 CO₂ 吸附量、温度、压力等信息"
     ]
   },
   {
-    "initial_question": "从所有数据库中联合筛选含 Cu 金属的 MOF，带隙在 1–2 eV 之间，用于光催化应用，并导出结构文件与性能摘要（以 URL 提供）",
     "expected_outcomes": [
       "跨数据库筛选含 Cu 的结构",
       "筛选带隙 1–2 eV 的候选（潜在光催化活性）",
       "输出结构文件和性能摘要表（包含比表面积, 孔径）"
     ],
+    "initial_question": "从所有数据库中联合筛选含 Cu 金属的 MOF，带隙在 1–2 eV 之间，用于光催化应用，并导出结构文件与性能摘要（以 URL 提供）",
     "success_criteria": [
       "成功从多库合并筛选结果，去重并返回候选清单",
       "每个候选包含：数据库来源、带隙、结构参数",
@@ -237,23 +237,23 @@
     ]
   },
   {
-    "initial_question": "查询 HKUST-1 的结构，输出结构文件（以 URL 提供）",
     "expected_outcomes": [
       "识别并提取 HKUST-1 (Cu-BTC) 的结构数据",
       "导出结构文件 URL"
     ],
+    "initial_question": "查询 HKUST-1 的结构，输出结构文件（以 URL 提供）",
     "success_criteria": [
       "正确识别 HKUST-1 并返回相关结构",
       "结构文件可通过 URL 下载"
     ]
   },
   {
-    "initial_question": "在 HMOF 数据库中检索比表面积 > 1500 m²/g 且 CH₄ 吸附选择性（CH₄/N₂）> 3 的结构，并导出性能比较表与结构文件（以 URL 提供）",
     "expected_outcomes": [
       "筛选 HMOF 数据库中满足条件的结构",
       "输出性能比较表（比表面积、选择性、能量）",
       "导出结构文件与性能表格以 URL 提供"
     ],
+    "initial_question": "在 HMOF 数据库中检索比表面积 > 1500 m²/g 且 CH₄ 吸附选择性（CH₄/N₂）> 3 的结构，并导出性能比较表与结构文件（以 URL 提供）",
     "success_criteria": [
       "列出符合筛选条件的 MOF 名称与性能参数",
       "提供带单位的性能对比表",
@@ -261,12 +261,12 @@
     ]
   },
   {
-    "initial_question": "查询 MOF 数据库中孔径小于 4 Å 的超微孔材料，用于 H₂ 吸附，并导出前 10 个结构的 CIF 与吸附数据（以 URL 提供）",
     "expected_outcomes": [
       "筛选孔径 < 4 Å 且 H₂ 吸附性能高的 MOF 结构",
       "导出前 10 个候选结构及其吸附数据",
       "提供结构文件与吸附性能表格"
     ],
+    "initial_question": "查询 MOF 数据库中孔径小于 4 Å 的超微孔材料，用于 H₂ 吸附，并导出前 10 个结构的 CIF 与吸附数据（以 URL 提供）",
     "success_criteria": [
       "返回 10 个候选结构（若不足则说明）",
       "每个结构包含：孔径、H₂ 吸附量、温度、压力",
@@ -274,12 +274,12 @@
     ]
   },
   {
-    "initial_question": "从 CoRE MOF 中筛选拓扑类型为 pcu 的结构，输出其节点数、配位数与框架维度信息，并导出结构文件 URL",
     "expected_outcomes": [
       "筛选 CoRE MOF 数据库中拓扑类型为 pcu 的条目",
       "解析每个结构的节点连接性与拓扑特征",
       "导出结构文件与分析结果（URL）"
     ],
+    "initial_question": "从 CoRE MOF 中筛选拓扑类型为 pcu 的结构，输出其节点数、配位数与框架维度信息，并导出结构文件 URL",
     "success_criteria": [
       "筛选出的结构拓扑均为 pcu 类型",
       "每个结构包含节点数与配位数等信息",
