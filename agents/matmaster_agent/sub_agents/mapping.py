@@ -378,7 +378,7 @@ ALL_TOOLS = {
     'finetune_dpa_model': {
         'belonging_agent': FinetuneDPAAgentName,
         'scene': [SceneEnum.Calculation],
-        'description': '',
+        'description': 'Fine tune dpa2 or dpa3 pretrained model with provided labeled data',
     },
     'HEA_params_calculator': {
         'belonging_agent': HEA_assistant_AgentName,
