@@ -76,7 +76,6 @@ def create_dynamic_plan_schema(available_tools: list):
     DynamicPlanSchema = create_model(
         'DynamicPlanSchema',
         steps=(List[DynamicPlanStepSchema], ...),
-        feasibility=(Literal['full', 'part', 'null'], ...),
         __base__=BaseModel,
     )
 

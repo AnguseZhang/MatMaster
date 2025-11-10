@@ -17,7 +17,6 @@ class PlanStepSchema(BaseModel):
 
 class PlanSchema(BaseModel):
     steps: List[PlanStepSchema]
-    feasibility: Literal['full', 'part', 'null']
 
 
 class FlowStatusEnum(str, Enum):

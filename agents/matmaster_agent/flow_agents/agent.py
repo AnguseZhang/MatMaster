@@ -25,9 +25,12 @@ from agents.matmaster_agent.flow_agents.expand_agent.schema import ExpandSchema
 from agents.matmaster_agent.flow_agents.plan_execution_check_agent.prompt import (
     PLAN_EXECUTION_CHECK_INSTRUCTION,
 )
+from agents.matmaster_agent.flow_agents.plan_make_agent.agent import PlanMakeAgent
+from agents.matmaster_agent.flow_agents.plan_make_agent.prompt import (
+    get_plan_make_instruction,
+)
 from agents.matmaster_agent.flow_agents.planner_agent.prompt import (
     PLAN_SUMMARY_INSTRUCTION,
-    get_plan_make_instruction,
 )
 from agents.matmaster_agent.flow_agents.scene_agent.prompt import SCENE_INSTRUCTION
 from agents.matmaster_agent.flow_agents.scene_agent.schema import SceneSchema
@@ -73,7 +76,7 @@ class MatMasterFlowAgent(HandleFileUploadLlmAgent):
             state_key='scene',
         )
 
-        self._plan_make_agent = SchemaAgent(
+        self._plan_make_agent = PlanMakeAgent(
             name='plan_make_agent',
             model=MatMasterLlmConfig.tool_schema_model,
             description='根据用户的问题依据现有工具执行计划，如果没有工具可用，告知用户，不要自己制造工具或幻想',
