@@ -11,7 +11,7 @@ from agents.matmaster_agent.base_agents.disallow_transfer_agent import (
     DisallowTransferLlmAgent,
 )
 from agents.matmaster_agent.base_agents.schema_agent import SchemaAgent
-from agents.matmaster_agent.base_callbacks.private_callback import remove_function_call
+from agents.matmaster_agent.constant import ModelRole
 from agents.matmaster_agent.flow_agents.analysis_agent.prompt import (
     get_analysis_instruction,
 )
@@ -21,6 +21,12 @@ from agents.matmaster_agent.flow_agents.execution_agent.agent import (
 from agents.matmaster_agent.flow_agents.expand_agent.agent import ExpandAgent
 from agents.matmaster_agent.flow_agents.expand_agent.prompt import EXPAND_INSTRUCTION
 from agents.matmaster_agent.flow_agents.expand_agent.schema import ExpandSchema
+from agents.matmaster_agent.flow_agents.plan_confirm_agent.prompt import (
+    PlanConfirmInstruction,
+)
+from agents.matmaster_agent.flow_agents.plan_confirm_agent.schema import (
+    PlanConfirmSchema,
+)
 from agents.matmaster_agent.flow_agents.plan_execution_check_agent.prompt import (
     PLAN_EXECUTION_CHECK_INSTRUCTION,
 )
@@ -28,7 +34,7 @@ from agents.matmaster_agent.flow_agents.plan_make_agent.agent import PlanMakeAge
 from agents.matmaster_agent.flow_agents.plan_make_agent.prompt import (
     get_plan_make_instruction,
 )
-from agents.matmaster_agent.flow_agents.planner_agent.prompt import (
+from agents.matmaster_agent.flow_agents.plan_summary_agent.prompt import (
     PLAN_SUMMARY_INSTRUCTION,
 )
 from agents.matmaster_agent.flow_agents.scene_agent.prompt import SCENE_INSTRUCTION
@@ -40,8 +46,10 @@ from agents.matmaster_agent.flow_agents.utils import (
     get_tools_list,
 )
 from agents.matmaster_agent.llm_config import DEFAULT_MODEL, MatMasterLlmConfig
+from agents.matmaster_agent.style import plan_ask_confirm_card
 from agents.matmaster_agent.sub_agents.mapping import AGENT_CLASS_MAPPING, ALL_TOOLS
 from agents.matmaster_agent.utils.event_utils import (
+    all_text_event,
     send_error_event,
     update_state_event,
 )
@@ -81,9 +89,19 @@ class MatMasterFlowAgent(LlmAgent):
             description='根据用户的问题依据现有工具执行计划，如果没有工具可用，告知用户，不要自己制造工具或幻想',
             disallow_transfer_to_parent=True,
             disallow_transfer_to_peers=True,
-            after_model_callback=remove_function_call,
             output_schema=PlanSchema,
             state_key='plan',
+        )
+
+        self._plan_confirm_agent = SchemaAgent(
+            name='plan_confirm_agent',
+            model=MatMasterLlmConfig.tool_schema_model,
+            description='判断用户对计划是否认可',
+            instruction=PlanConfirmInstruction,
+            disallow_transfer_to_parent=True,
+            disallow_transfer_to_peers=True,
+            output_schema=PlanConfirmSchema,
+            state_key='plan_confirm',
         )
 
         self._plan_summary_agent = DisallowTransferLlmAgent(
@@ -153,6 +171,11 @@ class MatMasterFlowAgent(LlmAgent):
 
     @computed_field
     @property
+    def plan_confirm_agent(self) -> LlmAgent:
+        return self._plan_confirm_agent
+
+    @computed_field
+    @property
     def execution_agent(self) -> LlmAgent:
         return self._execution_agent
 
@@ -175,8 +198,15 @@ class MatMasterFlowAgent(LlmAgent):
 
             scenes = list(set(ctx.session.state['scene']['type']))
 
+            # 计划是否确认
+            if not ctx.session.state['plan_confirm'].get('flag', False):
+                async for plan_confirm_event in self.plan_confirm_agent.run_async(ctx):
+                    yield plan_confirm_event
+
+            plan_confirm = ctx.session.state['plan_confirm'].get('flag', False)
+
             # 判断要不要制定计划
-            if check_plan(ctx) == FlowStatusEnum.NO_PLAN:
+            if check_plan(ctx) == FlowStatusEnum.NO_PLAN or not plan_confirm:
                 # 制定计划
                 available_tools = get_tools_list(scenes)
                 available_tools_with_description = {
@@ -212,6 +242,16 @@ class MatMasterFlowAgent(LlmAgent):
                         break
                 update_plan['steps'] = actual_steps
                 yield update_state_event(ctx, state_delta={'plan': update_plan})
+
+                # 询问用户是否确认计划
+                for plan_ask_confirm_event in all_text_event(
+                    ctx, self.name, plan_ask_confirm_card(), ModelRole
+                ):
+                    yield plan_ask_confirm_event
+
+            # 计划未确认，暂停往下执行
+            if not plan_confirm:
+                return
 
             # 执行计划
             if ctx.session.state['plan']['feasibility'] in ['full', 'part']:

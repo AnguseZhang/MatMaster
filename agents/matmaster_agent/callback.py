@@ -113,6 +113,10 @@ async def matmaster_prepare_state(
     callback_context.state['update_tool_args'] = callback_context.state.get(
         'update_tool_args', {}
     )
+    # 用户是否确认计划方案
+    callback_context.state['plan_confirm'] = callback_context.state.get(
+        'plan_confirm', {}
+    )
 
 
 async def matmaster_set_lang(
