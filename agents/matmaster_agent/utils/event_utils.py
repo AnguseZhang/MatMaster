@@ -422,3 +422,25 @@ async def display_failed_result_or_consume(
 
         async for consume_event in photon_consume_event(ctx, event, author):
             yield consume_event
+
+
+async def handle_upload_file_event(ctx: InvocationContext, author):
+    prompt = ''
+    if ctx.user_content and ctx.user_content.parts:
+        for part in ctx.user_content.parts:
+            if part.text:
+                prompt += part.text
+            elif part.inline_data:
+                pass  # Inline data is currently not processed
+            elif part.file_data:
+                prompt += f", file_url = {part.file_data.file_uri}"
+
+                # 包装成function_call，来避免在历史记录中展示
+                for event in context_function_event(
+                    ctx,
+                    author,
+                    'system_upload_file',
+                    {'prompt': prompt},
+                    ModelRole,
+                ):
+                    yield event
