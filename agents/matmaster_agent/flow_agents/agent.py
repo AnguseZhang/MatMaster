@@ -10,7 +10,6 @@ from pydantic import computed_field, model_validator
 from agents.matmaster_agent.base_agents.disallow_transfer_agent import (
     DisallowTransferLlmAgent,
 )
-from agents.matmaster_agent.base_agents.io_agent import HandleFileUploadLlmAgent
 from agents.matmaster_agent.base_agents.schema_agent import SchemaAgent
 from agents.matmaster_agent.base_callbacks.private_callback import remove_function_call
 from agents.matmaster_agent.flow_agents.analysis_agent.prompt import (
@@ -51,7 +50,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-class MatMasterFlowAgent(HandleFileUploadLlmAgent):
+class MatMasterFlowAgent(LlmAgent):
     @model_validator(mode='after')
     def after_init(self):
         self._expand_agent = ExpandAgent(
