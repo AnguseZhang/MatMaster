@@ -4,7 +4,11 @@ from enum import Enum
 class SceneEnum(str, Enum):
     STRUCTURE_GENERATE = 'structure_generate'
     DATABASE_SEARCH = 'database_search'
-    Calculation = 'calculation'
+    OPTIMIZE_STRUCTURE = 'optimize_structure'
+    MOLECULAR_DYNAMICS = 'molecular_dynamics'
+    PHONON = 'phonon'
+    CompositionOptimization = 'composition_optimization'
+    SMILES = 'smiles'
     JobResultRetrieval = 'job_result_retrieval'
     DPA = 'DPA'
     APEX = 'APEX'

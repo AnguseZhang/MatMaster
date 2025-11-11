@@ -187,127 +187,127 @@ AGENT_CLASS_MAPPING = {
 ALL_TOOLS = {
     'abacus_modify_input': {
         'belonging_agent': ABACUS_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.ABACUS],
         'description': '',
     },
     'abacus_modify_stru': {
         'belonging_agent': ABACUS_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.ABACUS],
         'description': '',
     },
     'abacus_collect_data': {
         'belonging_agent': ABACUS_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.ABACUS],
         'description': '',
     },
     'abacus_calculation_scf': {
         'belonging_agent': ABACUS_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.ABACUS],
         'description': '',
     },
     'abacus_badercharge_run': {
         'belonging_agent': ABACUS_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.ABACUS],
         'description': '',
     },
     'abacus_cal_band': {
         'belonging_agent': ABACUS_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.ABACUS],
         'description': '',
     },
     'abacus_cal_elf': {
         'belonging_agent': ABACUS_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.ABACUS],
         'description': '',
     },
     'abacus_cal_charge_density_difference': {
         'belonging_agent': ABACUS_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.ABACUS],
         'description': '',
     },
     'abacus_cal_spin_density': {
         'belonging_agent': ABACUS_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.ABACUS],
         'description': '',
     },
     'abacus_dos_run': {
         'belonging_agent': ABACUS_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.ABACUS],
         'description': '',
     },
     'abacus_cal_elastic': {
         'belonging_agent': ABACUS_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.ABACUS],
         'description': '',
     },
     'abacus_eos': {
         'belonging_agent': ABACUS_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.ABACUS],
         'description': '',
     },
     'abacus_phonon_dispersion': {
         'belonging_agent': ABACUS_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.ABACUS],
         'description': '',
     },
     'abacus_do_relax': {
         'belonging_agent': ABACUS_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.ABACUS],
         'description': '',
     },
     'abacus_vibration_analysis': {
         'belonging_agent': ABACUS_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.ABACUS],
         'description': '',
     },
     'abacus_run_md': {
         'belonging_agent': ABACUS_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.ABACUS],
         'description': '',
     },
     'run_abacus_calculation': {
         'belonging_agent': ABACUS_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.ABACUS],
         'description': '',
     },
     'apex_calculate_vacancy': {
         'belonging_agent': ApexAgentName,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.APEX],
         'description': '',
     },
     'apex_optimize_structure': {
         'belonging_agent': ApexAgentName,
-        'scene': [SceneEnum.Calculation, SceneEnum.APEX],
+        'scene': [SceneEnum.OPTIMIZE_STRUCTURE, SceneEnum.APEX],
         'description': 'Perform geometry optimization of a crystal(recommend alloy system), relaxing atomic positions and optionally the unit cell.',
     },
     'apex_calculate_interstitial': {
         'belonging_agent': ApexAgentName,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.APEX],
         'description': '',
     },
     'apex_calculate_elastic': {
         'belonging_agent': ApexAgentName,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.APEX],
         'description': '',
     },
     'apex_calculate_surface': {
         'belonging_agent': ApexAgentName,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.APEX],
         'description': '',
     },
     'apex_calculate_eos': {
         'belonging_agent': ApexAgentName,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.APEX],
         'description': '',
     },
     'apex_calculate_phonon': {
         'belonging_agent': ApexAgentName,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.APEX],
         'description': '',
     },
     'apex_calculate_gamma': {
         'belonging_agent': ApexAgentName,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.APEX],
         'description': '',
     },
     'get_target_info': {
@@ -317,7 +317,7 @@ ALL_TOOLS = {
     },
     'unielf_inference': {
         'belonging_agent': CHEMBRAIN_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [],
         'description': '',
     },
     'plan_and_visualize_reaction': {
@@ -327,22 +327,22 @@ ALL_TOOLS = {
     },
     'convert_smiles_to_png': {
         'belonging_agent': CHEMBRAIN_AGENT_NAME,
-        'scene': [],
+        'scene': [SceneEnum.SMILES],
         'description': '',
     },
     'convert_png_to_smiles': {
         'belonging_agent': CHEMBRAIN_AGENT_NAME,
-        'scene': [],
+        'scene': [SceneEnum.SMILES],
         'description': '',
     },
     'validate_smiles': {
         'belonging_agent': CHEMBRAIN_AGENT_NAME,
-        'scene': [],
+        'scene': [SceneEnum.SMILES],
         'description': '',
     },
     'run_ga': {
         'belonging_agent': COMPDART_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.CompositionOptimization],
         'description': '',
     },
     'extract_material_data_from_pdf': {
@@ -352,47 +352,47 @@ ALL_TOOLS = {
     },
     'optimize_structure': {
         'belonging_agent': DPACalulator_AGENT_NAME,
-        'scene': [SceneEnum.Calculation, SceneEnum.DPA],
+        'scene': [SceneEnum.OPTIMIZE_STRUCTURE, SceneEnum.DPA],
         'description': 'Perform geometry optimization of a crystal or molecular structure. Supports relaxation of atomic positions and optionally the unit cell.',
     },
     'run_molecular_dynamics': {
         'belonging_agent': DPACalulator_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.DPA, SceneEnum.MOLECULAR_DYNAMICS],
         'description': '',
     },
     'calculate_phonon': {
         'belonging_agent': DPACalulator_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.DPA, SceneEnum.PHONON],
         'description': 'Compute phonon properties. Generates displaced supercells, calculates interatomic forces, and derives phonon dispersion, thermal properties, and optional total/projected DOS. Outputs band structures, entropy, free energy, heat capacity, and maximum phonon frequencies. Requires optimized structure as input.',
     },
     'calculate_elastic_constants': {
         'belonging_agent': DPACalulator_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.DPA],
         'description': '',
     },
     'run_neb': {
         'belonging_agent': DPACalulator_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.DPA],
         'description': '',
     },
     'finetune_dpa_model': {
         'belonging_agent': FinetuneDPAAgentName,
-        'scene': [SceneEnum.Calculation],
+        'scene': [SceneEnum.DPA],
         'description': 'Fine tune dpa2 or dpa3 pretrained model with provided labeled data',
     },
     'HEA_params_calculator': {
         'belonging_agent': HEA_assistant_AgentName,
-        'scene': [SceneEnum.Calculation],
+        'scene': [],
         'description': '',
     },
     'HEA_predictor': {
         'belonging_agent': HEA_assistant_AgentName,
-        'scene': [SceneEnum.Calculation],
+        'scene': [],
         'description': '',
     },
     'generate_binary_phase_diagram': {
         'belonging_agent': HEACALCULATOR_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [],
         'description': '',
     },
     'fetch_structures_with_filter': {
@@ -427,7 +427,7 @@ ALL_TOOLS = {
     },
     'calculate_reaction_profile': {
         'belonging_agent': ORGANIC_REACTION_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [],
         'description': '',
     },
     'semantic_search': {
@@ -442,7 +442,7 @@ ALL_TOOLS = {
     },
     'run_piloteye': {
         'belonging_agent': PILOTEYE_ELECTRO_AGENT_NAME,
-        'scene': [SceneEnum.Calculation],
+        'scene': [],
         'description': '',
     },
     'deep_research_agent': {
@@ -527,67 +527,67 @@ ALL_TOOLS = {
     },
     'run_superconductor_optimization': {
         'belonging_agent': SuperconductorAgentName,
-        'scene': [SceneEnum.Calculation],
+        'scene': [],
         'description': '',
     },
     'calculate_superconductor_enthalpy': {
         'belonging_agent': SuperconductorAgentName,
-        'scene': [SceneEnum.Calculation],
+        'scene': [],
         'description': '',
     },
     'predict_superconductor_Tc': {
         'belonging_agent': SuperconductorAgentName,
-        'scene': [SceneEnum.Calculation],
+        'scene': [],
         'description': '',
     },
     'screen_superconductor': {
         'belonging_agent': SuperconductorAgentName,
-        'scene': [SceneEnum.Calculation],
+        'scene': [],
         'description': '',
     },
     'predict_thermoelectric_properties': {
         'belonging_agent': ThermoelectricAgentName,
-        'scene': [SceneEnum.Calculation],
+        'scene': [],
         'description': '',
     },
     'run_pressure_optimization': {
         'belonging_agent': ThermoelectricAgentName,
-        'scene': [SceneEnum.Calculation],
+        'scene': [],
         'description': '',
     },
     'calculate_thermoele_enthalp': {
         'belonging_agent': ThermoelectricAgentName,
-        'scene': [SceneEnum.Calculation],
+        'scene': [],
         'description': '',
     },
     'screen_thermoelectric_candidate': {
         'belonging_agent': ThermoelectricAgentName,
-        'scene': [SceneEnum.Calculation],
+        'scene': [],
         'description': '',
     },
     'traj_analysis_msd': {
         'belonging_agent': TrajAnalysisAgentName,
-        'scene': [SceneEnum.Calculation],
+        'scene': [],
         'description': '',
     },
     'traj_analysis_rdf': {
         'belonging_agent': TrajAnalysisAgentName,
-        'scene': [SceneEnum.Calculation],
+        'scene': [],
         'description': '',
     },
     'traj_analysis_solvation': {
         'belonging_agent': TrajAnalysisAgentName,
-        'scene': [SceneEnum.Calculation],
+        'scene': [],
         'description': '',
     },
     'traj_analysis_bond': {
         'belonging_agent': TrajAnalysisAgentName,
-        'scene': [SceneEnum.Calculation],
+        'scene': [],
         'description': '',
     },
     'traj_analysis_react': {
         'belonging_agent': TrajAnalysisAgentName,
-        'scene': [SceneEnum.Calculation],
+        'scene': [],
         'description': '',
     },
 }
