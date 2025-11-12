@@ -33,12 +33,12 @@ from agents.matmaster_agent.flow_agents.plan_confirm_agent.schema import (
 from agents.matmaster_agent.flow_agents.plan_execution_check_agent.prompt import (
     PLAN_EXECUTION_CHECK_INSTRUCTION,
 )
+from agents.matmaster_agent.flow_agents.plan_info_agent.prompt import (
+    PLAN_INFO_INSTRUCTION,
+)
 from agents.matmaster_agent.flow_agents.plan_make_agent.agent import PlanMakeAgent
 from agents.matmaster_agent.flow_agents.plan_make_agent.prompt import (
     get_plan_make_instruction,
-)
-from agents.matmaster_agent.flow_agents.plan_summary_agent.prompt import (
-    PLAN_SUMMARY_INSTRUCTION,
 )
 from agents.matmaster_agent.flow_agents.scene_agent.prompt import SCENE_INSTRUCTION
 from agents.matmaster_agent.flow_agents.scene_agent.schema import SceneSchema
@@ -122,11 +122,11 @@ class MatMasterFlowAgent(LlmAgent):
             state_key='plan_confirm',
         )
 
-        self._plan_summary_agent = DisallowTransferLlmAgent(
-            name='plan_summary_agent',
+        self._plan_info_agent = DisallowTransferLlmAgent(
+            name='plan_info_agent',
             model=MatMasterLlmConfig.default_litellm_model,
             description='根据 materials_plan 返回的计划进行总结',
-            instruction=PLAN_SUMMARY_INSTRUCTION,
+            instruction=PLAN_INFO_INSTRUCTION,
         )
 
         plan_execution_check_agent = DisallowTransferLlmAgent(
@@ -162,7 +162,7 @@ class MatMasterFlowAgent(LlmAgent):
             self.expand_agent,
             self.scene_agent,
             self.plan_make_agent,
-            self.plan_summary_agent,
+            self.plan_info_agent,
             self.plan_confirm_agent,
             self.execution_agent,
             self.analysis_agent,
@@ -197,8 +197,8 @@ class MatMasterFlowAgent(LlmAgent):
 
     @computed_field
     @property
-    def plan_summary_agent(self) -> LlmAgent:
-        return self._plan_summary_agent
+    def plan_info_agent(self) -> LlmAgent:
+        return self._plan_info_agent
 
     @computed_field
     @property
@@ -272,9 +272,7 @@ class MatMasterFlowAgent(LlmAgent):
                         yield plan_event
 
                     # 总结计划
-                    async for plan_summary_event in self.plan_summary_agent.run_async(
-                        ctx
-                    ):
+                    async for plan_summary_event in self.plan_info_agent.run_async(ctx):
                         yield plan_summary_event
 
                     # 更新计划为可执行的计划
