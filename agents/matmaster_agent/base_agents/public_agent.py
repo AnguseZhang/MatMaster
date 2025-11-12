@@ -9,6 +9,7 @@ from pydantic import Field, computed_field, model_validator
 
 from agents.matmaster_agent.base_agents.error_agent import (
     ErrorHandleBaseAgent,
+    ErrorHandleLlmAgent,
 )
 from agents.matmaster_agent.base_agents.job_agent import (
     ParamsCheckInfoAgent,
@@ -64,7 +65,7 @@ class BaseSyncAgent(SubordinateFeaturesMixin, SyncMCPAgent):
 
 
 class BaseSyncAgentWithToolValidator(
-    SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseAgent
+    SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleLlmAgent
 ):
     model: Union[str, BaseLlm]
     instruction: str
@@ -82,6 +83,7 @@ class BaseSyncAgentWithToolValidator(
             tools=self.tools,
             disallow_transfer_to_peers=True,
             disallow_transfer_to_parent=True,
+            after_model_callback=self.after_model_callback,
             enable_tgz_unpack=self.enable_tgz_unpack,
             cost_func=self.cost_func,
             render_tool_response=self.render_tool_response,

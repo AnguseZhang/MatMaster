@@ -2,7 +2,9 @@ from dp.agent.adapter.adk import CalculationMCPToolset
 from google.adk.agents import BaseAgent
 from google.adk.tools.mcp_tool.mcp_session_manager import SseServerParams
 
-from agents.matmaster_agent.base_agents.public_agent import BaseSyncAgent
+from agents.matmaster_agent.base_agents.public_agent import (
+    BaseSyncAgentWithToolValidator,
+)
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME, BohriumStorge
 from agents.matmaster_agent.llm_config import LLMConfig
 
@@ -16,7 +18,7 @@ document_parser_toolset = CalculationMCPToolset(
 )
 
 
-class DocumentParserAgentBase(BaseSyncAgent):
+class DocumentParserAgentBase(BaseSyncAgentWithToolValidator):
     def __init__(self, llm_config: LLMConfig):
         super().__init__(
             model=llm_config.default_litellm_model,
@@ -26,6 +28,7 @@ class DocumentParserAgentBase(BaseSyncAgent):
             tools=[document_parser_toolset],
             supervisor_agent=MATMASTER_AGENT_NAME,
             after_model_callback=validate_document_url,
+            render_tool_response=True,
         )
 
 
