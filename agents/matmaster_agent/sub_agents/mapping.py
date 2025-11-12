@@ -136,6 +136,13 @@ from agents.matmaster_agent.sub_agents.traj_analysis_agent.agent import (
 from agents.matmaster_agent.sub_agents.traj_analysis_agent.constant import (
     TrajAnalysisAgentName,
 )
+from agents.matmaster_agent.sub_agents.visualizer_agent.agent import (
+    VisualizerAgent,
+    visualizer_toolset,
+)
+from agents.matmaster_agent.sub_agents.visualizer_agent.constant import (
+    VisualizerAgentName,
+)
 
 ALL_TOOLSET_DICT = {
     'abacus_toolset': abacus_toolset,
@@ -160,6 +167,7 @@ ALL_TOOLSET_DICT = {
     'superconductor_toolset': superconductor_toolset,
     'thermoelectric_toolset': thermoelectric_toolset,
     'traj_analysis_toolset': traj_analysis_toolset,
+    'visualizer_toolset': visualizer_toolset,
 }
 
 AGENT_CLASS_MAPPING = {
@@ -182,6 +190,7 @@ AGENT_CLASS_MAPPING = {
     TASK_ORCHESTRATOR_AGENT_NAME: TaskOrchestratorAgent,
     ThermoelectricAgentName: ThermoAgent,
     TrajAnalysisAgentName: TrajAnalysisAgent,
+    VisualizerAgentName: VisualizerAgent,
 }
 
 ALL_TOOLS = {
@@ -590,6 +599,11 @@ ALL_TOOLS = {
         'scene': [],
         'description': '',
     },
+    'visualize_data': {
+        'belonging_agent': VisualizerAgentName,
+        'scene': [SceneEnum.VISUALIZE_DATA],
+        'description': 'Automatically analyze materials science data files (CSV, Excel, JSON, TXT, DAT), identify the data structure with regular expression, and visualize the data with plots.',
+    },
 }
 
 
@@ -613,6 +627,7 @@ class MatMasterSubAgentsEnum(str, Enum):
     TaskOrchestratorAgent = TASK_ORCHESTRATOR_AGENT_NAME
     TrajAnalysisAgent = TrajAnalysisAgentName
     FinetuneDPAAgent = FinetuneDPAAgentName
+    VisualizerAgent = VisualizerAgentName
 
 
 ALL_AGENT_TOOLS_LIST = list(ALL_TOOLS.keys())

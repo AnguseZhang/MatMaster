@@ -14,3 +14,4 @@ class SceneEnum(str, Enum):
     DPA = 'DPA'
     APEX = 'APEX'
     ABACUS = 'ABACUS'
+    VISUALIZE_DATA = 'visualize_data'
