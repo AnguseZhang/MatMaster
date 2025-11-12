@@ -136,6 +136,13 @@ from agents.matmaster_agent.sub_agents.traj_analysis_agent.agent import (
 from agents.matmaster_agent.sub_agents.traj_analysis_agent.constant import (
     TrajAnalysisAgentName,
 )
+from agents.matmaster_agent.sub_agents.visualizer_agent.agent import (
+    VisualizerAgent,
+    visualizer_toolset,
+)
+from agents.matmaster_agent.sub_agents.visualizer_agent.constant import (
+    VisualizerAgentName,
+)
 
 ALL_TOOLSET_DICT = {
     'abacus_toolset': abacus_toolset,
@@ -613,6 +620,7 @@ class MatMasterSubAgentsEnum(str, Enum):
     TaskOrchestratorAgent = TASK_ORCHESTRATOR_AGENT_NAME
     TrajAnalysisAgent = TrajAnalysisAgentName
     FinetuneDPAAgent = FinetuneDPAAgentName
+    VisualizerAgent = VisualizerAgentName
 
 
 ALL_AGENT_TOOLS_LIST = list(ALL_TOOLS.keys())
