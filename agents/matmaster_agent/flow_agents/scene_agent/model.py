@@ -9,6 +9,7 @@ class SceneEnum(str, Enum):
     PHONON = 'phonon'
     CompositionOptimization = 'composition_optimization'
     SMILES = 'smiles'
+    LITERATURE = 'literature'
     JobResultRetrieval = 'job_result_retrieval'
     DPA = 'DPA'
     APEX = 'APEX'

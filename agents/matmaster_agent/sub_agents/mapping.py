@@ -347,8 +347,8 @@ ALL_TOOLS = {
     },
     'extract_material_data_from_pdf': {
         'belonging_agent': DocumentParserAgentName,
-        'scene': [],
-        'description': '',
+        'scene': [SceneEnum.LITERATURE],
+        'description': 'Read and extract contents from PDF-formatted document files. Outputs information of materials involved and methodologies, supporting additional information required by users.',
     },
     'optimize_structure': {
         'belonging_agent': DPACalulator_AGENT_NAME,
