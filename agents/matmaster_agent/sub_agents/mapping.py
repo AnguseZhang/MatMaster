@@ -473,7 +473,7 @@ ALL_TOOLS = {
     'build_bulk_structure_by_template': {
         'belonging_agent': StructureGenerateAgentName,
         'scene': [SceneEnum.STRUCTURE_GENERATE],
-        'description': '',
+        'description': 'Build bulk crystal structures based on elemental or compound inputs using packing templates.',
     },
     'build_molecule_structure_from_g2database': {
         'belonging_agent': StructureGenerateAgentName,
@@ -503,7 +503,7 @@ ALL_TOOLS = {
     'build_bulk_structure_by_wyckoff': {
         'belonging_agent': StructureGenerateAgentName,
         'scene': [SceneEnum.STRUCTURE_GENERATE],
-        'description': '',
+        'description': 'Build bulk crystal structures using lattice parameters, space group, and Wyckoff positions. Output as CIF or other structure files.',
     },
     'build_molecule_structures_from_smiles': {
         'belonging_agent': StructureGenerateAgentName,

@@ -219,7 +219,7 @@ class MatMasterFlowAgent(LlmAgent):
         self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
         try:
-            # 用户意图识别
+            # 用户意图识别（一旦进入 research 模式，暂时无法退出）
             if ctx.session.state['intent'].get('type', None) != IntentEnum.RESEARCH:
                 async for intent_event in self.intent_agent.run_async(ctx):
                     yield intent_event
@@ -240,8 +240,10 @@ class MatMasterFlowAgent(LlmAgent):
 
                 scenes = list(set(ctx.session.state['scene']['type']))
 
-                # 计划是否确认
-                if not ctx.session.state['plan_confirm'].get('flag', False):
+                # 计划是否确认（1. 上一步计划完成；2. 用户未确认计划）
+                if check_plan(ctx) == FlowStatusEnum.COMPLETE or not ctx.session.state[
+                    'plan_confirm'
+                ].get('flag', False):
                     async for plan_confirm_event in self.plan_confirm_agent.run_async(
                         ctx
                     ):
@@ -249,8 +251,11 @@ class MatMasterFlowAgent(LlmAgent):
 
                 plan_confirm = ctx.session.state['plan_confirm'].get('flag', False)
 
-                # 判断要不要制定计划
-                if check_plan(ctx) == FlowStatusEnum.NO_PLAN or not plan_confirm:
+                # 判断要不要制定计划（1. 无计划；2. 计划未通过；3. 计划已完成）
+                if (
+                    check_plan(ctx) in [FlowStatusEnum.NO_PLAN, FlowStatusEnum.COMPLETE]
+                    or not plan_confirm
+                ):
                     # 制定计划
                     available_tools = get_tools_list(scenes)
                     available_tools_with_description = {

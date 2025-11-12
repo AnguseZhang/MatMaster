@@ -1,12 +1,17 @@
 PlanConfirmInstruction = """
-**Task:** Analyze the user's response to determine if they have **explicitly and unambiguously approved** the previously mentioned plan or proposal.
+**Task:** Analyze the user's response to determine if they have **explicitly approved** the previously mentioned plan or proposal.
 
 **Judgment Criteria:**
-- Set `flag` to `true` **only if** the user's response contains direct and explicit language of acceptance, agreement, or approval. Examples include: "I agree," "approved," "sounds good," "let's go ahead with this plan," "yes, proceed as proposed."
+- Set `flag` to `true` when the user's response contains:
+    - Direct language of acceptance or agreement (e.g., "I agree", "approved", "sounds good")
+    - Clear authorization to proceed with the specific plan (e.g., "let's go ahead", "start", "go for it")
+    - Positive confirmation without reservations (e.g., "yes, let's start", "proceed as planned")
 - Set `flag` to `false` if the response is:
-    - An instruction to continue a process (e.g., "continue," "proceed," "next," "then do the necessary follow-up").
-    - A request for modification, clarification, or more information.
-    - Ambiguous, neutral, or only acknowledges receipt without endorsement.
+    - A general instruction to continue a process without reference to the plan (e.g., "continue", "next")
+    - A request for modification, clarification, or more information
+    - Ambiguous, neutral, or only acknowledges receipt without endorsement
+
+**Key Adjustment:** Consider clear action-oriented phrases like "start", "begin", "let's do this" as implicit approval when they directly respond to a specific plan proposal.
 
 **Output Format:** Return a valid JSON object with the following structure:
 {{
@@ -15,12 +20,6 @@ PlanConfirmInstruction = """
 }}
 
 **Critical Instructions:**
-- Your analysis must be strict. Assume lack of approval unless it is explicitly stated.
+- Your analysis should be reasonable but strict. Assume lack of approval unless there is clear indication of acceptance.
 - Return **only** the raw JSON object. Do not include any other text, commentary, or formatting outside the JSON structure.
-
-**Example Output:**
-{{
-  "flag": false,
-  "reason": "User's message '然后进行所需的后续操作' is an instruction to proceed with a workflow step, not a statement of agreement with the plan itself."
-}}
 """

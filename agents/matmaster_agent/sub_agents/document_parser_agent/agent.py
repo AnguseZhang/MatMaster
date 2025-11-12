@@ -28,7 +28,7 @@ class DocumentParserAgentBase(BaseSyncAgentWithToolValidator):
             tools=[document_parser_toolset],
             supervisor_agent=MATMASTER_AGENT_NAME,
             after_model_callback=validate_document_url,
-            render_tool_response=True,
+            render_tool_response=False,
         )
 
 
