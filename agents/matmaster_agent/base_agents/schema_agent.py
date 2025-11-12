@@ -43,7 +43,7 @@ class SchemaAgent(ErrorHandleLlmAgent):
                         for system_job_result_event in context_function_event(
                             ctx,
                             self.name,
-                            'materials_schema',
+                            f'{self.name.replace('_agent', '')}_schema',
                             schema_info,
                             ModelRole,
                         ):

@@ -291,10 +291,12 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
 
             tool_call_info = {}
             async for tool_call_info_event in self.tool_call_info_agent.run_async(ctx):
-                if (
-                    is_function_response(tool_call_info_event)
-                    and tool_call_info_event.content.parts[0].function_response.name
-                    == 'materials_schema'
+                if is_function_response(
+                    tool_call_info_event
+                ) and tool_call_info_event.content.parts[
+                    0
+                ].function_response.name.endswith(
+                    'schema'
                 ):
                     tool_call_info = tool_call_info_event.content.parts[
                         0
