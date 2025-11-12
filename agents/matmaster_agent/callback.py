@@ -117,6 +117,8 @@ async def matmaster_prepare_state(
     callback_context.state['plan_confirm'] = callback_context.state.get(
         'plan_confirm', {}
     )
+    # 用户意图
+    callback_context.state['intent'] = callback_context.state.get('intent', {})
 
 
 async def matmaster_set_lang(

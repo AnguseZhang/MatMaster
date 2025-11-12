@@ -21,6 +21,9 @@ from agents.matmaster_agent.flow_agents.execution_agent.agent import (
 from agents.matmaster_agent.flow_agents.expand_agent.agent import ExpandAgent
 from agents.matmaster_agent.flow_agents.expand_agent.prompt import EXPAND_INSTRUCTION
 from agents.matmaster_agent.flow_agents.expand_agent.schema import ExpandSchema
+from agents.matmaster_agent.flow_agents.intent_agent.model import IntentEnum
+from agents.matmaster_agent.flow_agents.intent_agent.prompt import INTENT_INSTRUCTION
+from agents.matmaster_agent.flow_agents.intent_agent.schema import IntentSchema
 from agents.matmaster_agent.flow_agents.plan_confirm_agent.prompt import (
     PlanConfirmInstruction,
 )
@@ -61,6 +64,21 @@ logger.setLevel(logging.INFO)
 class MatMasterFlowAgent(LlmAgent):
     @model_validator(mode='after')
     def after_init(self):
+        self._chat_agent = DisallowTransferLlmAgent(
+            name='chat_agent', model=MatMasterLlmConfig.deepseek_chat
+        )
+
+        self._intent_agent = SchemaAgent(
+            name='intent_agent',
+            model=MatMasterLlmConfig.tool_schema_model,
+            description='识别用户的意图',
+            instruction=INTENT_INSTRUCTION,
+            disallow_transfer_to_parent=True,
+            disallow_transfer_to_peers=True,
+            output_schema=IntentSchema,
+            state_key='intent',
+        )
+
         self._expand_agent = ExpandAgent(
             name='expand_agent',
             model=MatMasterLlmConfig.tool_schema_model,
@@ -139,15 +157,28 @@ class MatMasterFlowAgent(LlmAgent):
         )
 
         self.sub_agents = [
+            self.chat_agent,
+            self.intent_agent,
             self.expand_agent,
             self.scene_agent,
             self.plan_make_agent,
             self.plan_summary_agent,
+            self.plan_confirm_agent,
             self.execution_agent,
             self.analysis_agent,
         ]
 
         return self
+
+    @computed_field
+    @property
+    def chat_agent(self) -> LlmAgent:
+        return self._chat_agent
+
+    @computed_field
+    @property
+    def intent_agent(self) -> LlmAgent:
+        return self._intent_agent
 
     @computed_field
     @property
@@ -188,86 +219,101 @@ class MatMasterFlowAgent(LlmAgent):
         self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
         try:
-            # 扩写用户问题
-            async for expand_event in self.expand_agent.run_async(ctx):
-                yield expand_event
+            # 用户意图识别
+            if ctx.session.state['intent'].get('type', None) != IntentEnum.RESEARCH:
+                async for intent_event in self.intent_agent.run_async(ctx):
+                    yield intent_event
 
-            # 划分问题场景
-            async for scene_event in self.scene_agent.run_async(ctx):
-                yield scene_event
+            # chat 模式
+            if ctx.session.state['intent']['type'] == IntentEnum.CHAT:
+                async for chat_event in self.chat_agent.run_async(ctx):
+                    yield chat_event
+            # research 模式
+            else:
+                # 扩写用户问题
+                async for expand_event in self.expand_agent.run_async(ctx):
+                    yield expand_event
 
-            scenes = list(set(ctx.session.state['scene']['type']))
+                # 划分问题场景
+                async for scene_event in self.scene_agent.run_async(ctx):
+                    yield scene_event
 
-            # 计划是否确认
-            if not ctx.session.state['plan_confirm'].get('flag', False):
-                async for plan_confirm_event in self.plan_confirm_agent.run_async(ctx):
-                    yield plan_confirm_event
+                scenes = list(set(ctx.session.state['scene']['type']))
 
-            plan_confirm = ctx.session.state['plan_confirm'].get('flag', False)
+                # 计划是否确认
+                if not ctx.session.state['plan_confirm'].get('flag', False):
+                    async for plan_confirm_event in self.plan_confirm_agent.run_async(
+                        ctx
+                    ):
+                        yield plan_confirm_event
 
-            # 判断要不要制定计划
-            if check_plan(ctx) == FlowStatusEnum.NO_PLAN or not plan_confirm:
-                # 制定计划
-                available_tools = get_tools_list(scenes)
-                available_tools_with_description = {
-                    item: ALL_TOOLS[item]['description'] for item in available_tools
-                }
-                available_tools_with_description_str = '\n'.join(
-                    [
-                        f"{key}:{value}"
-                        for key, value in available_tools_with_description.items()
-                    ]
-                )
-                self.plan_make_agent.instruction = get_plan_make_instruction(
-                    available_tools_with_description_str
-                )
-                self.plan_make_agent.output_schema = create_dynamic_plan_schema(
-                    available_tools
-                )
-                async for plan_event in self.plan_make_agent.run_async(ctx):
-                    yield plan_event
+                plan_confirm = ctx.session.state['plan_confirm'].get('flag', False)
 
-                # 总结计划
-                async for plan_summary_event in self.plan_summary_agent.run_async(ctx):
-                    yield plan_summary_event
+                # 判断要不要制定计划
+                if check_plan(ctx) == FlowStatusEnum.NO_PLAN or not plan_confirm:
+                    # 制定计划
+                    available_tools = get_tools_list(scenes)
+                    available_tools_with_description = {
+                        item: ALL_TOOLS[item]['description'] for item in available_tools
+                    }
+                    available_tools_with_description_str = '\n'.join(
+                        [
+                            f"{key}:{value}"
+                            for key, value in available_tools_with_description.items()
+                        ]
+                    )
+                    self.plan_make_agent.instruction = get_plan_make_instruction(
+                        available_tools_with_description_str
+                    )
+                    self.plan_make_agent.output_schema = create_dynamic_plan_schema(
+                        available_tools
+                    )
+                    async for plan_event in self.plan_make_agent.run_async(ctx):
+                        yield plan_event
 
-                # 更新计划为可执行的计划
-                update_plan = copy.deepcopy(ctx.session.state['plan'])
-                origin_steps = ctx.session.state['plan']['steps']
-                actual_steps = []
-                for step in origin_steps:
-                    if step.get('tool_name'):
-                        actual_steps.append(step)
-                    else:
-                        break
-                update_plan['steps'] = actual_steps
-                yield update_state_event(ctx, state_delta={'plan': update_plan})
+                    # 总结计划
+                    async for plan_summary_event in self.plan_summary_agent.run_async(
+                        ctx
+                    ):
+                        yield plan_summary_event
 
-                # 询问用户是否确认计划
-                for plan_ask_confirm_event in all_text_event(
-                    ctx, self.name, plan_ask_confirm_card(), ModelRole
+                    # 更新计划为可执行的计划
+                    update_plan = copy.deepcopy(ctx.session.state['plan'])
+                    origin_steps = ctx.session.state['plan']['steps']
+                    actual_steps = []
+                    for step in origin_steps:
+                        if step.get('tool_name'):
+                            actual_steps.append(step)
+                        else:
+                            break
+                    update_plan['steps'] = actual_steps
+                    yield update_state_event(ctx, state_delta={'plan': update_plan})
+
+                    # 询问用户是否确认计划
+                    for plan_ask_confirm_event in all_text_event(
+                        ctx, self.name, plan_ask_confirm_card(), ModelRole
+                    ):
+                        yield plan_ask_confirm_event
+
+                # 计划未确认，暂停往下执行
+                if not plan_confirm:
+                    return
+
+                # 执行计划
+                if ctx.session.state['plan']['feasibility'] in ['full', 'part']:
+                    async for execution_event in self.execution_agent.run_async(ctx):
+                        yield execution_event
+
+                # 全部执行完毕，总结执行情况
+                if (
+                    check_plan(ctx) == FlowStatusEnum.COMPLETE
+                    or ctx.session.state['plan']['feasibility'] == 'null'
                 ):
-                    yield plan_ask_confirm_event
-
-            # 计划未确认，暂停往下执行
-            if not plan_confirm:
-                return
-
-            # 执行计划
-            if ctx.session.state['plan']['feasibility'] in ['full', 'part']:
-                async for execution_event in self.execution_agent.run_async(ctx):
-                    yield execution_event
-
-            # 全部执行完毕，总结执行情况
-            if (
-                check_plan(ctx) == FlowStatusEnum.COMPLETE
-                or ctx.session.state['plan']['feasibility'] == 'null'
-            ):
-                self._analysis_agent.instruction = get_analysis_instruction(
-                    ctx.session.state['plan']
-                )
-                async for analysis_event in self.analysis_agent.run_async(ctx):
-                    yield analysis_event
+                    self._analysis_agent.instruction = get_analysis_instruction(
+                        ctx.session.state['plan']
+                    )
+                    async for analysis_event in self.analysis_agent.run_async(ctx):
+                        yield analysis_event
         except BaseException as err:
             async for error_event in send_error_event(err, ctx, self.name):
                 yield error_event
