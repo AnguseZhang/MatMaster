@@ -167,6 +167,7 @@ ALL_TOOLSET_DICT = {
     'superconductor_toolset': superconductor_toolset,
     'thermoelectric_toolset': thermoelectric_toolset,
     'traj_analysis_toolset': traj_analysis_toolset,
+    'visualizer_toolset': visualizer_toolset,
 }
 
 AGENT_CLASS_MAPPING = {
@@ -597,6 +598,11 @@ ALL_TOOLS = {
         'scene': [],
         'description': '',
     },
+    'visualize_data': {
+        'belonging_agent': VisualizerAgentName,
+        'scene': [SceneEnum.VISUALIZE_DATA],
+        'description': 'Automatically analyze materials science data files (CSV, Excel, JSON, TXT, DAT), identify the data structure with regular expression, and visualize the data with plots.',
+    }
 }
 
 
