@@ -25,7 +25,7 @@ Core Functionality:
 MCP Tools:
 Visualizer Tool:
   - Purpose: Generate visual representations of materials science data files
-  - Input: 
+  - Input:
     * Path to data file (CSV, Excel, JSON, TXT, DAT)
     * Description of the desired plot (e.g., "create a scatter plot of temperature vs pressure")
   - Capabilities:

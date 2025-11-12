@@ -137,7 +137,6 @@ from agents.matmaster_agent.sub_agents.traj_analysis_agent.constant import (
     TrajAnalysisAgentName,
 )
 from agents.matmaster_agent.sub_agents.visualizer_agent.agent import (
-    VisualizerAgent,
     visualizer_toolset,
 )
 from agents.matmaster_agent.sub_agents.visualizer_agent.constant import (
@@ -602,7 +601,7 @@ ALL_TOOLS = {
         'belonging_agent': VisualizerAgentName,
         'scene': [SceneEnum.VISUALIZE_DATA],
         'description': 'Automatically analyze materials science data files (CSV, Excel, JSON, TXT, DAT), identify the data structure with regular expression, and visualize the data with plots.',
-    }
+    },
 }
 
 
