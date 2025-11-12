@@ -137,6 +137,7 @@ from agents.matmaster_agent.sub_agents.traj_analysis_agent.constant import (
     TrajAnalysisAgentName,
 )
 from agents.matmaster_agent.sub_agents.visualizer_agent.agent import (
+    VisualizerAgent,
     visualizer_toolset,
 )
 from agents.matmaster_agent.sub_agents.visualizer_agent.constant import (
@@ -189,6 +190,7 @@ AGENT_CLASS_MAPPING = {
     TASK_ORCHESTRATOR_AGENT_NAME: TaskOrchestratorAgent,
     ThermoelectricAgentName: ThermoAgent,
     TrajAnalysisAgentName: TrajAnalysisAgent,
+    VisualizerAgentName: VisualizerAgent,
 }
 
 ALL_TOOLS = {
