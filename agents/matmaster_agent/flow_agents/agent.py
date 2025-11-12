@@ -40,6 +40,7 @@ from agents.matmaster_agent.flow_agents.plan_make_agent.agent import PlanMakeAge
 from agents.matmaster_agent.flow_agents.plan_make_agent.prompt import (
     get_plan_make_instruction,
 )
+from agents.matmaster_agent.flow_agents.scene_agent.model import SceneEnum
 from agents.matmaster_agent.flow_agents.scene_agent.prompt import SCENE_INSTRUCTION
 from agents.matmaster_agent.flow_agents.scene_agent.schema import SceneSchema
 from agents.matmaster_agent.flow_agents.schema import FlowStatusEnum, PlanSchema
@@ -49,12 +50,15 @@ from agents.matmaster_agent.flow_agents.utils import (
     get_tools_list,
 )
 from agents.matmaster_agent.llm_config import DEFAULT_MODEL, MatMasterLlmConfig
-from agents.matmaster_agent.style import plan_ask_confirm_card
+from agents.matmaster_agent.style import plan_ask_confirm_card, running_job_card
 from agents.matmaster_agent.sub_agents.mapping import AGENT_CLASS_MAPPING, ALL_TOOLS
 from agents.matmaster_agent.utils.event_utils import (
     all_text_event,
     send_error_event,
     update_state_event,
+)
+from agents.matmaster_agent.utils.job_utils import (
+    has_job_running,
 )
 
 logger = logging.getLogger(__name__)
@@ -239,6 +243,19 @@ class MatMasterFlowAgent(LlmAgent):
                     yield scene_event
 
                 scenes = list(set(ctx.session.state['scene']['type']))
+                if (
+                    jobs_dict := ctx.session.state['long_running_jobs']
+                ) and has_job_running(
+                    jobs_dict
+                ):  # 确认当前有在运行中的任务
+                    for job_running_event in all_text_event(
+                        ctx, self.name, running_job_card(), ModelRole
+                    ):
+                        yield job_running_event
+
+                    update_scenes = copy.deepcopy(ctx.session.state['scene'])
+                    update_scenes['type'].insert(0, SceneEnum.JobResultRetrieval)
+                    yield update_state_event(ctx, state_delta={'scene': update_scenes})
 
                 # 计划是否确认（1. 上一步计划完成；2. 用户未确认计划）
                 if check_plan(ctx) == FlowStatusEnum.COMPLETE or not ctx.session.state[
