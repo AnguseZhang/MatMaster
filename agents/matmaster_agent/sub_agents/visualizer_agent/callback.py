@@ -58,18 +58,18 @@ def validate_visualization_url(
 def _is_valid_png_url(url: str) -> bool:
     """
     Check if the URL has a valid PNG extension.
-    
+
     Args:
         url: URL to validate
-        
+
     Returns:
         True if URL ends with .png (case insensitive), False otherwise
     """
     if not url:
         return False
-        
+
     parsed_url = urlparse(url)
     path = parsed_url.path.lower()
-    
+
     # Check if the path ends with .png
     return path.endswith('.png')
