@@ -387,7 +387,7 @@ ALL_TOOLS = {
     'generate_calypso_structures': {
         'belonging_agent': StructureGenerateAgentName,
         'scene': [SceneEnum.STRUCTURE_GENERATE],
-        'description': '',
+        'description': 'Generate candidate crystal structures based on specified chemical species and number of configurations. Employs particle-swarm algorithms to produce stable crystal candidates. Requires valid element inputs and accessible CALYPSO environment',
     },
     'generate_crystalformer_structures': {
         'belonging_agent': StructureGenerateAgentName,
@@ -397,7 +397,7 @@ ALL_TOOLS = {
     'make_supercell_structure': {
         'belonging_agent': StructureGenerateAgentName,
         'scene': [SceneEnum.STRUCTURE_GENERATE],
-        'description': '',
+        'description': 'Make supercell expansion based on structure file.',
     },
     'build_bulk_structure_by_template': {
         'belonging_agent': StructureGenerateAgentName,
@@ -407,27 +407,27 @@ ALL_TOOLS = {
     'build_molecule_structure_from_g2database': {
         'belonging_agent': StructureGenerateAgentName,
         'scene': [SceneEnum.STRUCTURE_GENERATE],
-        'description': '',
+        'description': 'Build molecule structure from g2 database.',
     },
     'build_surface_slab': {
         'belonging_agent': StructureGenerateAgentName,
         'scene': [SceneEnum.STRUCTURE_GENERATE],
-        'description': '',
+        'description': 'Build surface slabs based on bulk structure file miller indices',
     },
     'build_surface_adsorbate': {
         'belonging_agent': StructureGenerateAgentName,
         'scene': [SceneEnum.STRUCTURE_GENERATE],
-        'description': '',
+        'description': 'Build a surface–adsorbate structure by placing a molecular adsorbate onto a given surface slab at a specified lateral position (fractional coordinates or site keyword) and height above the surface. Outputs a combined CIF file. Requires valid surface and adsorbate structure files',
     },
     'build_surface_interface': {
         'belonging_agent': StructureGenerateAgentName,
         'scene': [SceneEnum.STRUCTURE_GENERATE],
-        'description': '',
+        'description': 'Build a heterointerface by stacking two slab structures along a chosen axis with specified interlayer distance and lattice-matching tolerance. Performs basic in-plane strain checking and outputs the combined interface as a CIF file. Requires pre-constructed slab inputs.',
     },
     'add_cell_for_molecules': {
         'belonging_agent': StructureGenerateAgentName,
         'scene': [SceneEnum.STRUCTURE_GENERATE],
-        'description': '',
+        'description': 'Add a periodic simulation cell to a molecular structure for isolated-molecule calculations.',
     },
     'build_bulk_structure_by_wyckoff': {
         'belonging_agent': StructureGenerateAgentName,
@@ -437,22 +437,22 @@ ALL_TOOLS = {
     'build_molecule_structures_from_smiles': {
         'belonging_agent': StructureGenerateAgentName,
         'scene': [SceneEnum.STRUCTURE_GENERATE],
-        'description': '',
+        'description': 'Build a 3D molecular structure from a SMILES string.',
     },
     'make_doped_structure': {
         'belonging_agent': StructureGenerateAgentName,
         'scene': [SceneEnum.STRUCTURE_GENERATE],
-        'description': '',
+        'description': 'Generate doped crystal structures by randomly substituting selected atomic sites with specified dopant species at given concentrations.',
     },
     'make_amorphous_structure': {
         'belonging_agent': StructureGenerateAgentName,
         'scene': [SceneEnum.STRUCTURE_GENERATE],
-        'description': '',
+        'description': 'Generate amorphous molecular structures by randomly filling molecules into a periodic box based on specified box size, density, or molecule count. Supports automatic calculation of missing parameters and avoids overlaps during placement. Produces an initial amorphous configuration for further relaxation or molecular dynamics simulations.',
     },
     'get_structure_info': {
         'belonging_agent': StructureGenerateAgentName,
         'scene': [],
-        'description': '',
+        'description': 'Extract key structural descriptors from a given crystal or molecular structure file, including lattice parameters, chemical formula, atomic composition, cell volume, crystallographic density, and molar mass.',
     },
     'run_superconductor_optimization': {
         'belonging_agent': SuperconductorAgentName,
