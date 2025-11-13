@@ -201,8 +201,8 @@ ALL_TOOLS = {
     },
     'apex_calculate_vacancy': {
         'belonging_agent': ApexAgentName,
-        'scene': [SceneEnum.APEX],
-        'description': '',
+        'scene': [SceneEnum.APEX, SceneEnum.VACANCY_FORMATION_ENERGY],
+        'description': 'Evaluate vacancy formation energies by relaxing supercells with one atom removed',
     },
     'apex_optimize_structure': {
         'belonging_agent': ApexAgentName,
@@ -211,33 +211,33 @@ ALL_TOOLS = {
     },
     'apex_calculate_interstitial': {
         'belonging_agent': ApexAgentName,
-        'scene': [SceneEnum.APEX],
-        'description': '',
+        'scene': [SceneEnum.APEX, SceneEnum.INTERSTITIAL_FORMATION_ENERGY],
+        'description': 'Insert interstitial atoms into a host lattice to compute formation energies across candidate sites.',
     },
     'apex_calculate_elastic': {
         'belonging_agent': ApexAgentName,
-        'scene': [SceneEnum.APEX],
-        'description': '',
+        'scene': [SceneEnum.APEX, SceneEnum.ELASTIC_CONSTANT],
+        'description': 'Apply small strains to the lattice to extract elastic constants and derived moduli.',
     },
     'apex_calculate_surface': {
         'belonging_agent': ApexAgentName,
-        'scene': [SceneEnum.APEX],
-        'description': '',
+        'scene': [SceneEnum.APEX, SceneEnum.SURFACE_ENERGY],
+        'description': 'Generate slab models, relax surface layers, and report surface energies for selected Miller indices.',
     },
     'apex_calculate_eos': {
         'belonging_agent': ApexAgentName,
-        'scene': [SceneEnum.APEX],
-        'description': '',
+        'scene': [SceneEnum.APEX, SceneEnum.EOS],
+        'description': 'Scan volumes around equilibrium, relax internal coordinates, and build an equation-of-state energy–volume curve.',
     },
     'apex_calculate_phonon': {
         'belonging_agent': ApexAgentName,
-        'scene': [SceneEnum.APEX],
-        'description': '',
+        'scene': [SceneEnum.APEX, SceneEnum.PHONON],
+        'description': 'Perform supercell finite-displacement calculations, relax configurations, and assemble phonon spectra',
     },
     'apex_calculate_gamma': {
         'belonging_agent': ApexAgentName,
-        'scene': [SceneEnum.APEX],
-        'description': '',
+        'scene': [SceneEnum.APEX, SceneEnum.STACKING_FAULT_ENERGY],
+        'description': 'Construct and relax sliding slabs to map generalized stacking-fault energies along specified slip paths.',
     },
     'get_target_info': {
         'belonging_agent': CHEMBRAIN_AGENT_NAME,
