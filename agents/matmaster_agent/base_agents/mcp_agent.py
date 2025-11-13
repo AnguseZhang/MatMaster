@@ -51,6 +51,7 @@ from agents.matmaster_agent.utils.event_utils import (
 )
 from agents.matmaster_agent.utils.frontend import get_frontend_job_result_data
 from agents.matmaster_agent.utils.helper_func import (
+    get_markdown_image_result,
     is_mcp_result,
     load_tool_response,
     parse_result,
@@ -201,6 +202,7 @@ class MCPRunEventsMixin(BaseMixin):
                         raise
 
                     job_result = await parse_result(dict_result)
+                    markdown_image_result = get_markdown_image_result(job_result)
                     job_result_comp_data = get_frontend_job_result_data(job_result)
 
                     # 包装成function_call，来避免在历史记录中展示；同时模型可以在上下文中感知
@@ -222,6 +224,13 @@ class MCPRunEventsMixin(BaseMixin):
                             ModelRole,
                         ):
                             yield result_event
+
+                    if markdown_image_result:
+                        for item in markdown_image_result:
+                            for markdown_image_event in all_text_event(
+                                ctx, self.name, item['data'], ModelRole
+                            ):
+                                yield markdown_image_event
 
                 if is_text(event):
                     if not event.partial:

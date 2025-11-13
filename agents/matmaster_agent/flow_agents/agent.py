@@ -18,6 +18,9 @@ from agents.matmaster_agent.flow_agents.analysis_agent.prompt import (
 from agents.matmaster_agent.flow_agents.execution_agent.agent import (
     MatMasterSupervisorAgent,
 )
+from agents.matmaster_agent.flow_agents.execution_result_agent.prompt import (
+    PLAN_EXECUTION_CHECK_INSTRUCTION,
+)
 from agents.matmaster_agent.flow_agents.expand_agent.agent import ExpandAgent
 from agents.matmaster_agent.flow_agents.expand_agent.prompt import EXPAND_INSTRUCTION
 from agents.matmaster_agent.flow_agents.expand_agent.schema import ExpandSchema
@@ -29,9 +32,6 @@ from agents.matmaster_agent.flow_agents.plan_confirm_agent.prompt import (
 )
 from agents.matmaster_agent.flow_agents.plan_confirm_agent.schema import (
     PlanConfirmSchema,
-)
-from agents.matmaster_agent.flow_agents.plan_execution_check_agent.prompt import (
-    PLAN_EXECUTION_CHECK_INSTRUCTION,
 )
 from agents.matmaster_agent.flow_agents.plan_info_agent.prompt import (
     PLAN_INFO_INSTRUCTION,
@@ -133,8 +133,8 @@ class MatMasterFlowAgent(LlmAgent):
             instruction=PLAN_INFO_INSTRUCTION,
         )
 
-        plan_execution_check_agent = DisallowTransferLlmAgent(
-            name='plan_execution_check_agent',
+        execution_result_agent = DisallowTransferLlmAgent(
+            name='execution_result_agent',
             model=MatMasterLlmConfig.default_litellm_model,
             description='汇总计划的执行情况，并根据计划提示下一步的动作',
             instruction=PLAN_EXECUTION_CHECK_INSTRUCTION,
@@ -149,7 +149,7 @@ class MatMasterFlowAgent(LlmAgent):
                 sub_agent(MatMasterLlmConfig)
                 for sub_agent in AGENT_CLASS_MAPPING.values()
             ]
-            + [plan_execution_check_agent],
+            + [execution_result_agent],
         )
 
         self._analysis_agent = DisallowTransferLlmAgent(

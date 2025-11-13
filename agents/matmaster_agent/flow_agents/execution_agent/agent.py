@@ -90,10 +90,10 @@ class MatMasterSupervisorAgent(DisallowTransferLlmAgent):
                         FlowStatusEnum.NEW_PLAN,
                     ]:
                         # 检查之前的计划执行情况
-                        async for plan_execution_check_event in self.sub_agents[
+                        async for execution_result_event in self.sub_agents[
                             -1
                         ].run_async(ctx):
-                            yield plan_execution_check_event
+                            yield execution_result_event
 
                     current_steps = ctx.session.state['plan']['steps']
                     if (
