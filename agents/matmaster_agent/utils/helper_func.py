@@ -257,7 +257,11 @@ async def parse_result(result: dict) -> List[dict]:
 
 
 def get_markdown_image_result(job_result: List[dict]) -> List[dict]:
-    return [item for item in job_result if item['name'].startswith('markdown_image')]
+    return [
+        item
+        for item in job_result
+        if item.get('name') and item['name'].startswith('markdown_image')
+    ]
 
 
 def is_same_function_call(

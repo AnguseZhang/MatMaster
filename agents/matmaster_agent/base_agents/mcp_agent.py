@@ -32,6 +32,7 @@ from agents.matmaster_agent.constant import (
     LOADING_START,
     LOADING_STATE_KEY,
     LOADING_TITLE,
+    MATMASTER_AGENT_NAME,
     TMP_FRONTEND_STATE_KEY,
     ModelRole,
 )
@@ -202,6 +203,9 @@ class MCPRunEventsMixin(BaseMixin):
                         raise
 
                     job_result = await parse_result(dict_result)
+                    logger.info(
+                        f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} job_result = {job_result}'
+                    )
                     markdown_image_result = get_markdown_image_result(job_result)
                     job_result_comp_data = get_frontend_job_result_data(job_result)
 
