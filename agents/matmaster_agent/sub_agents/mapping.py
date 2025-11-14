@@ -197,7 +197,7 @@ ALL_TOOLS = {
     'run_abacus_calculation': {
         'belonging_agent': ABACUS_AGENT_NAME,
         'scene': [SceneEnum.ABACUS],
-        'description': '',
+        'description': 'Use a structure file in cif/VASP-POSCAR/ABACUS-STRU format as input to calculate selected property at DFT level, **distinguished from** deep-learning potential (DPA). DFT parameters including DFT functional, spin polarization, DFT+U settings and initial magnetic moment and whether to do relax before property calculation can be setted. Supported properties including electronic band, (projected) density of state (DOS/PDOS), phonon dispersion curve, Bader charge, ab-initio molecular dynamics trajectories, electron localization function, elastic properties, equation of state, work function and vacancy formation energy. ',
     },
     'apex_calculate_vacancy': {
         'belonging_agent': ApexAgentName,
