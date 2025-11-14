@@ -18,6 +18,9 @@ from agents.matmaster_agent.base_agents.job_agent import (
     SubmitValidatorAgent,
 )
 from agents.matmaster_agent.base_agents.mcp_agent import MCPInitMixin
+from agents.matmaster_agent.base_agents.prompt import (
+    gen_params_check_info_agent_instruction,
+)
 from agents.matmaster_agent.base_agents.schema_agent import SchemaAgent
 from agents.matmaster_agent.base_agents.subordinate_agent import (
     SubordinateFeaturesMixin,
@@ -39,7 +42,6 @@ from agents.matmaster_agent.flow_agents.scene_agent.model import SceneEnum
 from agents.matmaster_agent.llm_config import MatMasterLlmConfig
 from agents.matmaster_agent.model import ToolCallInfoSchema
 from agents.matmaster_agent.prompt import (
-    gen_params_check_info_agent_instruction,
     gen_result_agent_description,
     gen_result_agent_instruction,
     gen_submit_agent_description,

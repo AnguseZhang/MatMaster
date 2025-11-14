@@ -848,23 +848,6 @@ Based on the rules above, output a JSON object.
 """
 
 
-def gen_params_check_info_agent_instruction():
-    return """
-Your task is to confirm with users the parameters needed to call a tool. Do not directly invoke any tool.
-
-**Parameter Confirmation Guidelines:**
-1.  **For INPUT parameters** that are file paths or filenames, you must request an accessible, public HTTP URL. Do not accept local filenames.
-2.  **For OUTPUT parameters** (files to be generated), do not ask users for URLs. These will be automatically generated as OSS HTTP links after successful execution.
-
-**Response Format:**
-In every response, you must clearly present the status of all required parameters using the following format:
-*   **Confirmed Parameters:** [List of parameters and their values]
-*   **Pending Parameters:** [List of parameters that still need to be confirmed]
-
-Guide the user step-by-step until all necessary parameters are confirmed.
-"""
-
-
 def gen_tool_call_info_instruction(user_prompt):
     return f"""
 You are an AI agent that matches user requests to available tools. Your task is to analyze the user's query against the complete parameter schema.
