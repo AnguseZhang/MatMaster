@@ -63,6 +63,7 @@ from agents.matmaster_agent.utils.event_utils import (
 )
 from agents.matmaster_agent.utils.frontend import get_frontend_job_result_data
 from agents.matmaster_agent.utils.helper_func import (
+    get_markdown_image_result,
     is_mcp_result,
     is_validation_error,
     load_tool_response,
@@ -204,13 +205,15 @@ class ResultMCPAgent(MCPAgent):
                     update_long_running_jobs = copy.deepcopy(
                         ctx.session.state['long_running_jobs']
                     )
-                    update_long_running_jobs[origin_job_id]['job_result'] = (
-                        await parse_result(new_tool_result)
-                    )
+                    parsed_result = await parse_result(new_tool_result)
+                    update_long_running_jobs[origin_job_id][
+                        'job_result'
+                    ] = parsed_result
                     yield update_state_event(
                         ctx,
                         state_delta={'long_running_jobs': update_long_running_jobs},
                     )
+                    markdown_image_result = get_markdown_image_result(parsed_result)
                     job_result_comp_data = get_frontend_job_result_data(
                         ctx.session.state['long_running_jobs'][origin_job_id][
                             'job_result'
@@ -234,6 +237,13 @@ class ResultMCPAgent(MCPAgent):
                             ModelRole,
                         ):
                             yield event
+
+                        if markdown_image_result:
+                            for item in markdown_image_result:
+                                for markdown_image_event in all_text_event(
+                                    ctx, self.name, item['data'], ModelRole
+                                ):
+                                    yield markdown_image_event
 
                         # Only for debug
                         if os.getenv('MODE', None) == 'debug':
@@ -365,6 +375,7 @@ class SubmitCoreMCPAgent(MCPAgent):
                 else:
                     new_tool_result = dict_result
                 parsed_result = await parse_result(new_tool_result)
+                markdown_image_result = get_markdown_image_result(parsed_result)
                 job_result_comp_data = get_frontend_job_result_data(parsed_result)
 
                 for frontend_job_result_event in all_text_event(
@@ -374,6 +385,13 @@ class SubmitCoreMCPAgent(MCPAgent):
                     ModelRole,
                 ):
                     yield frontend_job_result_event
+
+                if markdown_image_result:
+                    for item in markdown_image_result:
+                        for markdown_image_event in all_text_event(
+                            ctx, self.name, item['data'], ModelRole
+                        ):
+                            yield markdown_image_event
 
                 # 包装成function_call，来避免在历史记录中展示；同时模型可以在上下文中感知
                 for db_job_result_event in context_function_event(
