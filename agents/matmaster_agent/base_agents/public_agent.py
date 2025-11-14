@@ -361,15 +361,14 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
                     params_check_info_event
                 ) in self.params_check_info_agent.run_async(ctx):
                     yield params_check_info_event
-            else:
-                # 前置 tool_hallucination 为 False
-                yield update_state_event(ctx, state_delta={'tool_hallucination': False})
-                for _ in range(2):
-                    async for submit_event in self.submit_agent.run_async(ctx):
-                        yield submit_event
+            # 前置 tool_hallucination 为 False
+            yield update_state_event(ctx, state_delta={'tool_hallucination': False})
+            for _ in range(2):
+                async for submit_event in self.submit_agent.run_async(ctx):
+                    yield submit_event
 
-                    if not ctx.session.state['tool_hallucination']:
-                        break
+                if not ctx.session.state['tool_hallucination']:
+                    break
 
             # cherry_pick_parts = cherry_pick_events(ctx)[-5:]
             # context_messages = '\n'.join(

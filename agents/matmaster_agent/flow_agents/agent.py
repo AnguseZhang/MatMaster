@@ -328,16 +328,8 @@ class MatMasterFlowAgent(LlmAgent):
 
                 # 执行计划
                 if ctx.session.state['plan']['feasibility'] in ['full', 'part']:
-                    yield update_state_event(
-                        ctx, state_delta={'validation_error': False}
-                    )
-                    for _ in range(2):
-                        async for execution_event in self.execution_agent.run_async(
-                            ctx
-                        ):
-                            yield execution_event
-                        if not ctx.session.state['validation_error']:
-                            break
+                    async for execution_event in self.execution_agent.run_async(ctx):
+                        yield execution_event
 
                 # 全部执行完毕，总结执行情况
                 if (
