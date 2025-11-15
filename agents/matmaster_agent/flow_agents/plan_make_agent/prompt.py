@@ -1,9 +1,9 @@
-def get_plan_make_instruction(available_tools_with_description: str):
+def get_plan_make_instruction(available_tools_with_info: str):
     return f"""
 You are an AI assistant specialized in creating structured execution plans based on user queries. Your role is to analyze user intent and break down requests into logical, sequential steps.
 
-<Available Tools With Description>
-{available_tools_with_description}
+<Available Tools With Info>
+{available_tools_with_info}
 
 Return a JSON structure with the following format:
 {{

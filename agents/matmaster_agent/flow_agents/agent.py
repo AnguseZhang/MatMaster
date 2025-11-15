@@ -281,17 +281,21 @@ class MatMasterFlowAgent(LlmAgent):
                     available_tools = get_tools_list(scenes)
                     if not available_tools:
                         available_tools = ALL_AGENT_TOOLS_LIST
-                    available_tools_with_description = {
-                        item: ALL_TOOLS[item]['description'] for item in available_tools
+                    available_tools_with_info = {
+                        item: {
+                            'scene': ALL_TOOLS[item]['scene'],
+                            'description': ALL_TOOLS[item]['description'],
+                        }
+                        for item in available_tools
                     }
-                    available_tools_with_description_str = '\n'.join(
+                    available_tools_with_info_str = '\n'.join(
                         [
-                            f"{key}:{value}"
-                            for key, value in available_tools_with_description.items()
+                            f"{key}\n    scene: {', '.join(value['scene'])}\n    description: {value['description']}"
+                            for key, value in available_tools_with_info.items()
                         ]
                     )
                     self.plan_make_agent.instruction = get_plan_make_instruction(
-                        available_tools_with_description_str
+                        available_tools_with_info_str
                     )
                     self.plan_make_agent.output_schema = create_dynamic_plan_schema(
                         available_tools
@@ -329,7 +333,7 @@ class MatMasterFlowAgent(LlmAgent):
                         )
 
                 # 计划未确认，暂停往下执行
-                if not plan_confirm:
+                if not ctx.session.state['plan_confirm']['flag']:
                     return
 
                 # 执行计划
