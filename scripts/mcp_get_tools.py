@@ -12,7 +12,7 @@ async def get_tools(type='mcphub'):
         # url = 'https://cystalformer-uuid1754551471.app-space.dplink.cc/sse?token=1750cd294e6c4270946ae37107a725ff'
         url = 'https://dpa-uuid1750659890.app-space.dplink.cc/sse?token=7c2e8de61ec94f4e80ebcef1ac17c92e'
     else:
-        url = 'http://pfmx1355864.bohrium.tech:50003/sse'
+        url = 'http://qpus1389933.bohrium.tech:50003/sse'
     async with sse_client(url) as (read, write):
         async with ClientSession(read, write) as session:
             # 初始化

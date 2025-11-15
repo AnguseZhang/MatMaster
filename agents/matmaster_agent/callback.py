@@ -119,6 +119,10 @@ async def matmaster_prepare_state(
     )
     # 用户意图
     callback_context.state['intent'] = callback_context.state.get('intent', {})
+    # 参数验证错误
+    callback_context.state['validation_error'] = callback_context.state.get(
+        'validation_error', False
+    )
 
 
 async def matmaster_set_lang(

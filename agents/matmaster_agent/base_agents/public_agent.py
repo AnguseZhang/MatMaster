@@ -6,12 +6,15 @@ from google.adk.events import Event
 from google.adk.models import BaseLlm
 from pydantic import Field, computed_field, model_validator
 
+from agents.matmaster_agent.base_agents.disallow_transfer_agent import (
+    DisallowTransferLlmAgent,
+)
 from agents.matmaster_agent.base_agents.error_agent import (
     ErrorHandleBaseAgent,
     ErrorHandleLlmAgent,
 )
 from agents.matmaster_agent.base_agents.job_agent import (
-    ParamsCheckInfoAgent,
+    RecommendParamsAgent,
     ResultMCPAgent,
     SubmitCoreMCPAgent,
     SubmitRenderAgent,
@@ -19,8 +22,9 @@ from agents.matmaster_agent.base_agents.job_agent import (
 )
 from agents.matmaster_agent.base_agents.mcp_agent import MCPInitMixin
 from agents.matmaster_agent.base_agents.prompt import (
-    gen_params_check_info_agent_instruction,
+    gen_recommend_params_agent_instruction,
 )
+from agents.matmaster_agent.base_agents.schema import create_tool_args_schema
 from agents.matmaster_agent.base_agents.schema_agent import SchemaAgent
 from agents.matmaster_agent.base_agents.subordinate_agent import (
     SubordinateFeaturesMixin,
@@ -190,15 +194,19 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
             sub_agents=[result_core_agent],
         )
 
-        # Create validation and information agents
-        self._params_check_info_agent = ParamsCheckInfoAgent(
+        self._recommend_params_agent = RecommendParamsAgent(
             model=self.model,
-            name=f"{agent_prefix}_params_check_info_agent",
-            instruction=gen_params_check_info_agent_instruction(),
+            name=f"{agent_prefix}_recommend_params_agent",
+            instruction=gen_recommend_params_agent_instruction(),
             tools=self.mcp_tools,
-            disallow_transfer_to_parent=True,
-            disallow_transfer_to_peers=True,
             after_model_callback=remove_function_call,
+        )
+
+        self._recommend_params_schema_agent = SchemaAgent(
+            model=MatMasterLlmConfig.tool_schema_model,
+            name=f"{agent_prefix}_recommend_params_schema_agent",
+            instruction=gen_recommend_params_agent_instruction(),
+            state_key='recommend_params',
         )
 
         self._tool_call_info_agent = SchemaAgent(
@@ -222,11 +230,20 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
             state_key='tool_call_info',
         )
 
+        self._execution_summary_agent = DisallowTransferLlmAgent(
+            name=f"{agent_prefix}_execution_summary_agent",
+            model=MatMasterLlmConfig.default_litellm_model,
+            global_instruction='使用 {target_language} 回答',
+            description='总结本轮的计划执行情况',
+            instruction='',
+        )
+
         self.sub_agents = [
             self.submit_agent,
             self.result_agent,
-            self.params_check_info_agent,
+            self.recommend_params_agent,
             self.tool_call_info_agent,
+            self.execution_summary_agent,
         ]
 
         return self
@@ -243,8 +260,13 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
 
     @computed_field
     @property
-    def params_check_info_agent(self) -> ParamsCheckInfoAgent:
-        return self._params_check_info_agent
+    def recommend_params_agent(self) -> RecommendParamsAgent:
+        return self._recommend_params_agent
+
+    @computed_field
+    @property
+    def recommend_params_schema_agent(self) -> SchemaAgent:
+        return self._recommend_params_schema_agent
 
     @computed_field
     @property
@@ -255,6 +277,11 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
     @property
     def auto_add_params_agent(self) -> SchemaAgent:
         return self._auto_add_params_agent
+
+    @computed_field
+    @property
+    def execution_summary_agent(self) -> DisallowTransferLlmAgent:
+        return self._execution_summary_agent
 
     @override
     async def _run_events(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
@@ -313,28 +340,31 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
                 yield tool_call_info_event
             tool_call_info = ctx.session.state['tool_call_info']
 
+            function_declaration = [
+                item
+                for item in ctx.session.state['function_declarations']
+                if item['name'] == tool_call_info['tool_name']
+            ]
+            required_params = function_declaration[0]['parameters']['required']
+
+            for param in required_params:
+                if (
+                    param in tool_call_info['tool_args'].keys()
+                    or param in tool_call_info['missing_tool_args']
+                ):
+                    continue
+                else:
+                    tool_call_info['missing_tool_args'].append(param)
+
+            yield update_state_event(
+                ctx, state_delta={'tool_call_info': tool_call_info}
+            )
+
             logger.info(
                 f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} tool_call_info = {tool_call_info}'
             )
             if not tool_call_info:
                 return
-
-            # function_declaration = [
-            #     item
-            #     for item in ctx.session.state['function_declarations']
-            #     if item['name'] == tool_call_info['tool_name']
-            # ]
-            # required_params = function_declaration[0]['parameters']['required']
-            #
-            # update_tool_call_info = copy.deepcopy(tool_call_info)
-            # for param in required_params:
-            #     if (
-            #         param in tool_call_info['tool_args'].keys()
-            #         or param in tool_call_info['missing_tool_args']
-            #     ):
-            #         continue
-            #     else:
-            #         update_tool_call_info['missing_tool_args'].append(param)
 
             # prompt = gen_params_check_completed_agent_instruction().format(
             #     context_messages=context_messages
@@ -358,17 +388,44 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
 
             if missing_tool_args:
                 async for (
-                    params_check_info_event
-                ) in self.params_check_info_agent.run_async(ctx):
-                    yield params_check_info_event
+                    recommend_params_event
+                ) in self.recommend_params_agent.run_async(ctx):
+                    yield recommend_params_event
+
+                self.recommend_params_schema_agent.output_schema = (
+                    create_tool_args_schema(missing_tool_args, function_declaration)
+                )
+                async for (
+                    recommend_params_schema_event
+                ) in self.recommend_params_schema_agent.run_async(ctx):
+                    yield recommend_params_schema_event
+
             # 前置 tool_hallucination 为 False
             yield update_state_event(ctx, state_delta={'tool_hallucination': False})
+            yield update_state_event(ctx, state_delta={'validation_error': False})
             for _ in range(2):
                 async for submit_event in self.submit_agent.run_async(ctx):
                     yield submit_event
 
                 if not ctx.session.state['tool_hallucination']:
                     break
+
+            if ctx.session.state['validation_error']:
+                async for (
+                    recommend_params_event
+                ) in self.recommend_params_agent.run_async(ctx):
+                    yield recommend_params_event
+
+                self.recommend_params_schema_agent.output_schema = (
+                    create_tool_args_schema(function_declaration)
+                )
+                async for (
+                    recommend_params_schema_event
+                ) in self.recommend_params_schema_agent.run_async(ctx):
+                    yield recommend_params_schema_event
+
+                async for submit_event in self.submit_agent.run_async(ctx):
+                    yield submit_event
 
             # cherry_pick_parts = cherry_pick_events(ctx)[-5:]
             # context_messages = '\n'.join(

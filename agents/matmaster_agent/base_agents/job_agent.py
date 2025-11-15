@@ -9,6 +9,9 @@ from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events import Event
 from pydantic import model_validator
 
+from agents.matmaster_agent.base_agents.disallow_transfer_agent import (
+    DisallowTransferLlmAgent,
+)
 from agents.matmaster_agent.base_agents.error_agent import (
     ErrorHandleBaseAgent,
     ErrorHandleLlmAgent,
@@ -288,7 +291,7 @@ class ResultMCPAgent(MCPAgent):
         yield Event(author=self.name, invocation_id=ctx.invocation_id)
 
 
-class ParamsCheckInfoAgent(ErrorHandleLlmAgent):
+class RecommendParamsAgent(DisallowTransferLlmAgent):
     pass
 
 
