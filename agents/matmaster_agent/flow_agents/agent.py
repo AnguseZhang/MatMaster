@@ -51,7 +51,11 @@ from agents.matmaster_agent.flow_agents.utils import (
 )
 from agents.matmaster_agent.llm_config import DEFAULT_MODEL, MatMasterLlmConfig
 from agents.matmaster_agent.style import plan_ask_confirm_card, running_job_card
-from agents.matmaster_agent.sub_agents.mapping import AGENT_CLASS_MAPPING, ALL_TOOLS
+from agents.matmaster_agent.sub_agents.mapping import (
+    AGENT_CLASS_MAPPING,
+    ALL_AGENT_TOOLS_LIST,
+    ALL_TOOLS,
+)
 from agents.matmaster_agent.utils.event_utils import (
     all_text_event,
     send_error_event,
@@ -275,6 +279,8 @@ class MatMasterFlowAgent(LlmAgent):
                 ):
                     # 制定计划
                     available_tools = get_tools_list(scenes)
+                    if not available_tools:
+                        available_tools = ALL_AGENT_TOOLS_LIST
                     available_tools_with_description = {
                         item: ALL_TOOLS[item]['description'] for item in available_tools
                     }
