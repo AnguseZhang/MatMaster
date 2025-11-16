@@ -13,17 +13,16 @@ from agents.matmaster_agent.base_agents.error_agent import (
     ErrorHandleBaseAgent,
     ErrorHandleLlmAgent,
 )
-from agents.matmaster_agent.base_agents.job_agent import (
-    RecommendParamsAgent,
+from agents.matmaster_agent.base_agents.job_agents.job_agent import (
     ResultMCPAgent,
     SubmitCoreMCPAgent,
     SubmitRenderAgent,
     SubmitValidatorAgent,
 )
-from agents.matmaster_agent.base_agents.mcp_agent import MCPInitMixin
-from agents.matmaster_agent.base_agents.prompt import (
+from agents.matmaster_agent.base_agents.job_agents.recommend_params_agent.prompt import (
     gen_recommend_params_agent_instruction,
 )
+from agents.matmaster_agent.base_agents.mcp_agent import MCPInitMixin
 from agents.matmaster_agent.base_agents.schema import create_tool_args_schema
 from agents.matmaster_agent.base_agents.schema_agent import SchemaAgent
 from agents.matmaster_agent.base_agents.subordinate_agent import (
@@ -201,7 +200,7 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
             sub_agents=[result_core_agent],
         )
 
-        self._recommend_params_agent = RecommendParamsAgent(
+        self._recommend_params_agent = DisallowTransferLlmAgent(
             model=self.model,
             name=f"{agent_prefix}_recommend_params_agent",
             instruction=gen_recommend_params_agent_instruction(),
@@ -212,7 +211,6 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
         self._recommend_params_schema_agent = SchemaAgent(
             model=MatMasterLlmConfig.tool_schema_model,
             name=f"{agent_prefix}_recommend_params_schema_agent",
-            instruction=gen_recommend_params_agent_instruction(),
             state_key='recommend_params',
         )
 
@@ -267,7 +265,7 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
 
     @computed_field
     @property
-    def recommend_params_agent(self) -> RecommendParamsAgent:
+    def recommend_params_agent(self) -> DisallowTransferLlmAgent:
         return self._recommend_params_agent
 
     @computed_field
@@ -316,7 +314,7 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
             ]
         )
         logger.info(
-            f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} has_origin_job_id = {has_origin_job_id}, has_matching_job = {has_matching_job}, {ctx.invocation_id}, {session_state['long_running_jobs']}'
+            f'{ctx.session.id} has_origin_job_id = {has_origin_job_id}, has_matching_job = {has_matching_job}, {ctx.invocation_id}, {session_state['long_running_jobs']}'
         )
 
         if (
@@ -358,7 +356,7 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
             )
 
             logger.info(
-                f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} tool_call_info_with_function_declarations = {tool_call_info}'
+                f'{ctx.session.id} tool_call_info_with_function_declarations = {tool_call_info}'
             )
 
             missing_tool_args = tool_call_info.get('missing_tool_args', None)
@@ -386,7 +384,7 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
                     ctx, state_delta={'tool_call_info': tool_call_info}
                 )
                 logger.info(
-                    f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} tool_call_info_with_recommend_params = {ctx.session.state['tool_call_info']}'
+                    f'{ctx.session.id} tool_call_info_with_recommend_params = {ctx.session.state['tool_call_info']}'
                 )
 
             # 前置 tool_hallucination 为 False
