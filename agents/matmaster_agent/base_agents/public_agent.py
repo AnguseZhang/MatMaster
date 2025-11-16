@@ -33,6 +33,10 @@ from agents.matmaster_agent.base_agents.sync_agent import (
     SyncMCPAgent,
     ToolValidatorAgent,
 )
+from agents.matmaster_agent.base_agents.utils import (
+    update_tool_call_info_with_function_declarations,
+    update_tool_call_info_with_recommend_params,
+)
 from agents.matmaster_agent.base_callbacks.private_callback import (
     default_before_model_callback,
     remove_function_call,
@@ -44,6 +48,7 @@ from agents.matmaster_agent.constant import (
 )
 from agents.matmaster_agent.flow_agents.scene_agent.model import SceneEnum
 from agents.matmaster_agent.llm_config import MatMasterLlmConfig
+from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.model import ToolCallInfoSchema
 from agents.matmaster_agent.prompt import (
     gen_result_agent_description,
@@ -62,6 +67,8 @@ from agents.matmaster_agent.utils.helper_func import (
 )
 
 logger = logging.getLogger(__name__)
+logger.addFilter(PrefixFilter(MATMASTER_AGENT_NAME))
+logger.setLevel(logging.INFO)
 
 
 # 同步计算 Agent，可自动 transfer 回主 Agent
@@ -339,53 +346,22 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
             async for tool_call_info_event in self.tool_call_info_agent.run_async(ctx):
                 yield tool_call_info_event
             tool_call_info = ctx.session.state['tool_call_info']
-
-            function_declaration = [
-                item
-                for item in ctx.session.state['function_declarations']
-                if item['name'] == tool_call_info['tool_name']
-            ]
-            required_params = function_declaration[0]['parameters']['required']
-
-            for param in required_params:
-                if (
-                    param in tool_call_info['tool_args'].keys()
-                    or param in tool_call_info['missing_tool_args']
-                ):
-                    continue
-                else:
-                    tool_call_info['missing_tool_args'].append(param)
+            function_declarations = ctx.session.state['function_declarations']
+            tool_call_info, current_function_declaration = (
+                update_tool_call_info_with_function_declarations(
+                    tool_call_info, function_declarations
+                )
+            )
 
             yield update_state_event(
                 ctx, state_delta={'tool_call_info': tool_call_info}
             )
 
             logger.info(
-                f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} tool_call_info = {tool_call_info}'
+                f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} tool_call_info_with_function_declarations = {tool_call_info}'
             )
-            if not tool_call_info:
-                return
-
-            # prompt = gen_params_check_completed_agent_instruction().format(
-            #     context_messages=context_messages
-            # )
-            # response = litellm.completion(
-            #     model='azure/gpt-4o',
-            #     messages=[{'role': 'user', 'content': prompt}],
-            #     response_format=ParamsCheckComplete,
-            # )
-
-            # self.auto_add_params_agent.instruction = gen_auto_add_params_instruction(
-            #     update_tool_call_info
-            # )
-            # async for auto_add_params_event in self.auto_add_params_agent.run_async(
-            #     ctx
-            # ):
-            #     yield auto_add_params_event
-            # tool_call_info = ctx.session.state['tool_call_info']
 
             missing_tool_args = tool_call_info.get('missing_tool_args', None)
-
             if missing_tool_args:
                 async for (
                     recommend_params_event
@@ -393,12 +369,25 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
                     yield recommend_params_event
 
                 self.recommend_params_schema_agent.output_schema = (
-                    create_tool_args_schema(missing_tool_args, function_declaration)
+                    create_tool_args_schema(
+                        missing_tool_args, current_function_declaration
+                    )
                 )
                 async for (
                     recommend_params_schema_event
                 ) in self.recommend_params_schema_agent.run_async(ctx):
                     yield recommend_params_schema_event
+
+                recommend_params = ctx.session.state['recommend_params']
+                tool_call_info = update_tool_call_info_with_recommend_params(
+                    tool_call_info, recommend_params
+                )
+                yield update_state_event(
+                    ctx, state_delta={'tool_call_info': tool_call_info}
+                )
+                logger.info(
+                    f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} tool_call_info_with_recommend_params = {ctx.session.state['tool_call_info']}'
+                )
 
             # 前置 tool_hallucination 为 False
             yield update_state_event(ctx, state_delta={'tool_hallucination': False})
@@ -409,23 +398,6 @@ class BaseAsyncJobAgent(SubordinateFeaturesMixin, MCPInitMixin, ErrorHandleBaseA
 
                 if not ctx.session.state['tool_hallucination']:
                     break
-
-            if ctx.session.state['validation_error']:
-                async for (
-                    recommend_params_event
-                ) in self.recommend_params_agent.run_async(ctx):
-                    yield recommend_params_event
-
-                self.recommend_params_schema_agent.output_schema = (
-                    create_tool_args_schema(function_declaration)
-                )
-                async for (
-                    recommend_params_schema_event
-                ) in self.recommend_params_schema_agent.run_async(ctx):
-                    yield recommend_params_schema_event
-
-                async for submit_event in self.submit_agent.run_async(ctx):
-                    yield submit_event
 
             # cherry_pick_parts = cherry_pick_events(ctx)[-5:]
             # context_messages = '\n'.join(
