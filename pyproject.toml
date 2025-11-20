@@ -13,7 +13,7 @@ dependencies = [
     "anyio>=4.10.0",
     "pytest-asyncio>=1.1.0",
     "litellm>=1.76.1",
-    "google-adk[a2a,eval,extensions,test]==1.16.0",
+    "google-adk[a2a,eval,extensions,test]==1.18.0",
     "pre-commit>=4.3.0",
     "bohrium-sdk>=0.14.0",
     "toolsy>=0.1.2",
