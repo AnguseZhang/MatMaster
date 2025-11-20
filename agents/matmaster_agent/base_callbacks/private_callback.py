@@ -31,6 +31,7 @@ from agents.matmaster_agent.constant import (
 from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.model import CostFuncType
+from agents.matmaster_agent.patch import patch_CalculationMCPTool_run_async
 from agents.matmaster_agent.utils.auth import ak_to_ticket, ak_to_username
 from agents.matmaster_agent.utils.finance import get_user_photon_balance
 from agents.matmaster_agent.utils.helper_func import (
@@ -577,7 +578,8 @@ def catch_before_tool_callback_error(func: BeforeToolCallback) -> BeforeToolCall
             # return await tool.run_async(
             #     args=tool_context.state['update_tool_args'], tool_context=tool_context
             # )
-            return await tool.run_async(args=args, tool_context=tool_context)
+            with patch_CalculationMCPTool_run_async():
+                return await tool.run_async(args=args, tool_context=tool_context)
         except Exception as e:
             return {
                 'status': 'error',
