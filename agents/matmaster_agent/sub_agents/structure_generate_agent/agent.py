@@ -24,7 +24,7 @@ StructureGenerateBohriumExecutor = copy.deepcopy(BohriumExecutor)
 StructureGenerateBohriumStorge = copy.deepcopy(BohriumStorge)
 StructureGenerateBohriumExecutor['machine']['remote_profile'][
     'image_address'
-] = 'registry.dp.tech/dptech/dp/native/prod-788025/structure-generate-agent:small'
+] = 'registry.dp.tech/dptech/dpa-calculator:c477521f'
 StructureGenerateBohriumExecutor['machine']['remote_profile'][
     'machine_type'
 ] = 'c8_m32_1 * NVIDIA 4090'
