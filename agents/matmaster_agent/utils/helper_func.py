@@ -183,10 +183,12 @@ def get_new_function_call_indices(
 
 
 def get_current_step_function_call(current_function_calls, ctx):
-    current_step = ctx.state['plan']['steps'][ctx.state['plan_index']]
+    current_step_tool = ctx.state['plan']['steps'][ctx.state['plan_index']]['tools'][
+        ctx.state['tool_index']
+    ]
     current_step_tool_name, current_step_satus = (
-        current_step['tool_name'],
-        current_step['status'],
+        current_step_tool['tool_name'],
+        current_step_tool['status'],
     )
 
     update_current_function_calls = [

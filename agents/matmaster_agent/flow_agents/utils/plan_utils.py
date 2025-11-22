@@ -4,14 +4,18 @@ from typing import List, Literal, Optional
 from google.adk.agents import InvocationContext
 from pydantic import BaseModel, create_model
 
+from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
 from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
 from agents.matmaster_agent.flow_agents.scene_agent.model import SceneEnum
 from agents.matmaster_agent.flow_agents.schema import FlowStatusEnum
+from agents.matmaster_agent.flow_agents.utils.step_utils import get_step_status
+from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.state import UPLOAD_FILE
 from agents.matmaster_agent.sub_agents.mapping import ALL_AGENT_TOOLS_LIST
 from agents.matmaster_agent.sub_agents.tools import ALL_TOOLS
 
 logger = logging.getLogger(__name__)
+logger.addFilter(PrefixFilter(MATMASTER_AGENT_NAME))
 logger.setLevel(logging.INFO)
 
 
@@ -60,16 +64,17 @@ def check_plan(ctx: InvocationContext):
     failed_step_count = 0
     total_steps = len(plan_json['steps'])
     for step in plan_json['steps']:
-        if step['status'] == PlanStepStatusEnum.PLAN:
+        step_status = get_step_status(step)
+        if step_status == PlanStepStatusEnum.PLAN:
             plan_step_count += 1
-        elif step['status'] in [
-            PlanStepStatusEnum.PROCESS,
-            PlanStepStatusEnum.SUBMITTED,
-        ]:
+        elif step_status == PlanStepStatusEnum.PROCESS:
             process_step_count += 1
-        elif step['status'] == PlanStepStatusEnum.FAILED:
+        elif step_status == PlanStepStatusEnum.FAILED:
             failed_step_count += 1
 
+    logger.info(
+        f'{ctx.session.id} plan_step_count = {plan_step_count}, process_step_count = {process_step_count}, failed_step_count = {failed_step_count}, total_steps = {total_steps}'
+    )
     if (not plan_step_count and not process_step_count) or failed_step_count:
         return FlowStatusEnum.COMPLETE
     elif plan_step_count == total_steps:

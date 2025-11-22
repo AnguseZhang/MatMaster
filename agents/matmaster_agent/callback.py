@@ -103,6 +103,10 @@ async def matmaster_prepare_state(
     callback_context.state['plan_index'] = callback_context.state.get(
         'plan_index', None
     )
+    # 当前 step 调用的第几个 tool
+    callback_context.state['tool_index'] = callback_context.state.get(
+        'tool_index', None
+    )
     callback_context.state['tool_call_info'] = callback_context.state.get(
         'tool_call_info', {}
     )

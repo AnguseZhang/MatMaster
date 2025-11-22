@@ -8,6 +8,7 @@ from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
 from agents.matmaster_agent.core_agents.base_agents.schema_agent import (
     DisallowTransferAndContentLimitSchemaAgent,
 )
+from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.utils.event_utils import update_state_event
 
@@ -36,9 +37,9 @@ class PlanMakeAgent(DisallowTransferAndContentLimitSchemaAgent):
         update_plan['steps'] = update_plan_steps
 
         for index, step in enumerate(update_plan['steps']):
-            if index == 0 and not step['tool_name']:
+            if index == 0 and not step['tools'][0]['tool_name']:
                 break
-            if step['tool_name']:
+            if step['tools'][0]['tool_name']:
                 exist_step += 1
             else:
                 break

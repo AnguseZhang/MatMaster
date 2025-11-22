@@ -54,15 +54,17 @@ from agents.matmaster_agent.flow_agents.plan_make_agent.agent import PlanMakeAge
 from agents.matmaster_agent.flow_agents.plan_make_agent.prompt import (
     get_plan_make_instruction,
 )
+from agents.matmaster_agent.flow_agents.plan_make_agent.schema import (
+    create_dynamic_plan_schema,
+)
 from agents.matmaster_agent.flow_agents.scene_agent.prompt import SCENE_INSTRUCTION
 from agents.matmaster_agent.flow_agents.scene_agent.schema import SceneSchema
 from agents.matmaster_agent.flow_agents.schema import FlowStatusEnum, PlanSchema
 from agents.matmaster_agent.flow_agents.style import (
     all_summary_card,
 )
-from agents.matmaster_agent.flow_agents.utils import (
+from agents.matmaster_agent.flow_agents.utils.plan_utils import (
     check_plan,
-    create_dynamic_plan_schema,
     get_tools_list,
     should_bypass_confirmation,
 )
@@ -344,6 +346,7 @@ class MatMasterFlowAgent(LlmAgent):
 
                 plan_confirm = ctx.session.state['plan_confirm'].get('flag', False)
 
+                logger.info(f'{ctx.session.id} check_plan(ctx) = {check_plan(ctx)}')
                 # 判断要不要制定计划（1. 无计划；2. 计划未通过；3. 计划已完成）
                 if (
                     check_plan(ctx) in [FlowStatusEnum.NO_PLAN, FlowStatusEnum.COMPLETE]
@@ -395,10 +398,16 @@ class MatMasterFlowAgent(LlmAgent):
                     origin_steps = ctx.session.state['plan']['steps']
                     actual_steps = []
                     for step in origin_steps:
-                        if step.get('tool_name'):
-                            actual_steps.append(step)
-                        else:
-                            break
+                        current_step_tools = []
+                        for tool in step['tools']:
+                            if tool.get('tool_name'):
+                                current_step_tools.append(tool)
+                        actual_steps.append(
+                            {
+                                'tools': current_step_tools,
+                                'relationship': step['relationship'],
+                            }
+                        )
                     update_plan['steps'] = actual_steps
                     yield update_state_event(ctx, state_delta={'plan': update_plan})
 
