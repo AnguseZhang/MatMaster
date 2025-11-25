@@ -1,5 +1,5 @@
 SCIENCE_NAVIGATOR_AGENT_DESCRIPTION = """
-Science Navigator Agent is designed to help researchers search academic papers. 
+Science Navigator Agent is designed to help researchers search academic papers.
 It can search papers by authors or by keywords and research questions.
 """
 

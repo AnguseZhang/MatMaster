@@ -10,7 +10,7 @@ from ..constant import CHEMBRAIN_AGENT_NAME
 from ..tools.database import DatabaseManager
 from .prompt import instructions_cch_v1
 
- 
+
 def save_query_results(
     tool: BaseTool, args: Dict[str, Any], tool_context: ToolContext, tool_response: Any
 ) -> None:
