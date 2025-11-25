@@ -292,9 +292,10 @@ def check_user_phonon_balance(
 
         # 如果 tool 不是 CalculationMCPTool，不应该调用这个 callback
         if not isinstance(tool, CalculationMCPTool):
-            raise TypeError(
+            logger.warning(
                 "Not CalculationMCPTool type, current tool can't create job!"
             )
+            return
 
         user_id = _get_userId(tool_context)
         cost, sku_id = await cost_func(tool, args)
@@ -460,11 +461,12 @@ def inject_username_ticket(func: BeforeToolCallback) -> BeforeToolCallback:
         if (before_tool_result := await func(tool, args, tool_context)) is not None:
             return before_tool_result
 
-        # 注入 username
-        _, tool.executor = _inject_username(tool_context, tool.executor)
+        if isinstance(tool, CalculationMCPTool):
+            # 注入 username
+            _, tool.executor = _inject_username(tool_context, tool.executor)
 
-        # 注入 ticket
-        _, tool.executor = _inject_ticket(tool_context, tool.executor)
+            # 注入 ticket
+            _, tool.executor = _inject_ticket(tool_context, tool.executor)
 
     return wrapper
 
@@ -478,11 +480,12 @@ def inject_userId_sessionId(func: BeforeToolCallback) -> BeforeToolCallback:
         if (before_tool_result := await func(tool, args, tool_context)) is not None:
             return before_tool_result
 
-        # 注入 username
-        _, tool.executor = _inject_userId(tool_context, tool.executor)
+        if isinstance(tool, CalculationMCPTool):
+            # 注入 username
+            _, tool.executor = _inject_userId(tool_context, tool.executor)
 
-        # 注入 ticket
-        _, tool.executor = _inject_sessionId(tool_context, tool.executor)
+            # 注入 ticket
+            _, tool.executor = _inject_sessionId(tool_context, tool.executor)
 
     return wrapper
 
@@ -496,8 +499,9 @@ def inject_current_env(func: BeforeToolCallback) -> BeforeToolCallback:
         if (before_tool_result := await func(tool, args, tool_context)) is not None:
             return before_tool_result
 
-        # 注入当前环境
-        tool.executor = _inject_current_env(tool.executor)
+        if isinstance(tool, CalculationMCPTool):
+            # 注入当前环境
+            tool.executor = _inject_current_env(tool.executor)
 
     return wrapper
 
@@ -515,9 +519,10 @@ def check_job_create(func: BeforeToolCallback) -> BeforeToolCallback:
 
         # 如果 tool 不是 CalculationMCPTool，不应该调用这个 callback
         if not isinstance(tool, CalculationMCPTool):
-            raise TypeError(
+            logger.warning(
                 "Not CalculationMCPTool type, current tool can't create job!"
             )
+            return
 
         if tool.executor is not None:
             return await check_job_create_service()
@@ -550,15 +555,13 @@ def catch_before_tool_callback_error(func: BeforeToolCallback) -> BeforeToolCall
                         tool.wait = True
                         tool.executor = LOCAL_EXECUTOR
 
-            logger.info(
-                f'[{MATMASTER_AGENT_NAME}]:[catch_before_tool_callback_error] executor={tool.executor}'
-            )
+            if isinstance(tool, CalculationMCPTool):
+                logger.info(
+                    f'[{MATMASTER_AGENT_NAME}]:[catch_before_tool_callback_error] executor={tool.executor}'
+                )
             logger.info(
                 f'[{MATMASTER_AGENT_NAME}] update_tool_args = {tool_context.state['update_tool_args']}'
             )
-            # return await tool.run_async(
-            #     args=tool_context.state['update_tool_args'], tool_context=tool_context
-            # )
             return await tool.run_async(args=args, tool_context=tool_context)
         except Exception as e:
             return {
@@ -635,7 +638,7 @@ def tgz_oss_to_oss_list(
 
         # 如果 tool 不是 CalculationMCPTool，不应该调用这个 callback
         if not isinstance(tool, CalculationMCPTool):
-            raise TypeError('Not CalculationMCPTool type')
+            logger.warning('Not CalculationMCPTool type')
 
         # 检查是否为有效的 json 字典
         if not check_valid_tool_response(tool_response):
