@@ -39,6 +39,7 @@ from agents.matmaster_agent.constant import (
 )
 from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.model import CostFuncType
+from agents.matmaster_agent.setting import USE_PHOTON
 from agents.matmaster_agent.style import tool_response_failed_card
 from agents.matmaster_agent.utils.event_utils import (
     all_text_event,
@@ -103,18 +104,16 @@ class MCPCallbackMixin(BaseMixin):
             )
         )
 
-        data['before_tool_callback'] = catch_before_tool_callback_error(
-            inject_current_env(
-                inject_username_ticket(
-                    check_job_create(
-                        check_user_phonon_balance(
-                            inject_userId_sessionId(data['before_tool_callback']),
-                            data['cost_func'],
-                        )
-                    )
-                )
-            )
-        )
+        pipeline = inject_userId_sessionId(data['before_tool_callback'])
+
+        if USE_PHOTON:
+            pipeline = check_user_phonon_balance(pipeline, data['cost_func'])
+
+        pipeline = check_job_create(pipeline)
+        pipeline = inject_username_ticket(pipeline)
+        pipeline = inject_current_env(pipeline)
+
+        data['before_tool_callback'] = catch_before_tool_callback_error(pipeline)
 
         data['after_tool_callback'] = check_before_tool_callback_effect(
             catch_after_tool_callback_error(
@@ -162,12 +161,13 @@ class MCPRunEventsMixin(BaseMixin):
                         },
                         event=event,
                     )
-                    # prompt user photon cost
-                    cost_func = self.cost_func
-                    async for future_consume_event in display_future_consume_event(
-                        event, cost_func, ctx, self.name
-                    ):
-                        yield future_consume_event
+                    if USE_PHOTON:
+                        # prompt user photon cost
+                        cost_func = self.cost_func
+                        async for future_consume_event in display_future_consume_event(
+                            event, cost_func, ctx, self.name
+                        ):
+                            yield future_consume_event
                 elif is_function_response(event):
                     # Loading Event
                     if self.loading:

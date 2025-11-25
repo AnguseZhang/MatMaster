@@ -16,6 +16,7 @@ from agents.matmaster_agent.constant import (
 from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.model import BohrJobInfo, DFlowJobInfo
+from agents.matmaster_agent.setting import USE_PHOTON
 from agents.matmaster_agent.style import tool_response_failed_card
 from agents.matmaster_agent.utils.event_utils import (
     all_text_event,
@@ -69,12 +70,13 @@ class SubmitCoreMCPAgent(MCPAgent):
                     },
                     event=event,
                 )
-                # prompt user photon cost
-                cost_func = self.cost_func
-                async for future_consume_event in display_future_consume_event(
-                    event, cost_func, ctx, self.name
-                ):
-                    yield future_consume_event
+                if USE_PHOTON:
+                    # prompt user photon cost
+                    cost_func = self.cost_func
+                    async for future_consume_event in display_future_consume_event(
+                        event, cost_func, ctx, self.name
+                    ):
+                        yield future_consume_event
 
             if (
                 is_function_response(event)
@@ -160,12 +162,13 @@ class SubmitCoreMCPAgent(MCPAgent):
                     event=event,
                 )
 
-                # prompt user tool-call cost
-                cost_func = self.cost_func
-                async for future_consume_event in display_future_consume_event(
-                    event, cost_func, ctx, self.name
-                ):
-                    yield future_consume_event
+                if USE_PHOTON:
+                    # prompt user tool-call cost
+                    cost_func = self.cost_func
+                    async for future_consume_event in display_future_consume_event(
+                        event, cost_func, ctx, self.name
+                    ):
+                        yield future_consume_event
 
             if event.content and event.content.parts:
                 for part in event.content.parts:

@@ -16,6 +16,7 @@ from agents.matmaster_agent.base_callbacks.private_callback import _get_userId
 from agents.matmaster_agent.constant import CURRENT_ENV, MATMASTER_AGENT_NAME, ModelRole
 from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
 from agents.matmaster_agent.locales import i18n
+from agents.matmaster_agent.setting import USE_PHOTON
 from agents.matmaster_agent.style import (
     photon_consume_free_card,
     photon_consume_notify_card,
@@ -422,8 +423,9 @@ async def display_failed_result_or_consume(
         update_plan['steps'][ctx.session.state['plan_index']]['status'] = status
         yield update_state_event(ctx, state_delta={'plan': update_plan})
 
-        async for consume_event in photon_consume_event(ctx, event, author):
-            yield consume_event
+        if USE_PHOTON:
+            async for consume_event in photon_consume_event(ctx, event, author):
+                yield consume_event
 
 
 async def handle_upload_file_event(ctx: InvocationContext, author):
