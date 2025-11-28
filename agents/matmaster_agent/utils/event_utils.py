@@ -477,3 +477,310 @@ async def handle_upload_file_event(ctx: InvocationContext, author):
                     yield event
 
                 yield update_state_event(ctx, state_delta={'upload_file': True})
+
+
+def _get_agent_machine_type(agent_name: str) -> str:
+    """
+    获取 agent 的 machine_type，如果未设置则返回默认值 c2_m4_cpu
+
+    Args:
+        agent_name: Agent 名称
+
+    Returns:
+        str: machine_type
+    """
+    from agents.matmaster_agent.sub_agents.mapping import AGENT_MACHINE_TYPE
+
+    # 从 mapping.py 中获取 machine_type，如果未设置则使用默认值
+    return AGENT_MACHINE_TYPE.get(agent_name, 'c2_m4_cpu')
+
+
+def save_parameters_to_json(
+    ctx: InvocationContext, params_dict_list: list, task_groups: list = None
+) -> str:
+    """
+    将收集到的参数保存为 JSON 文件，格式包含 nodes 和 edges（新格式）
+
+    Args:
+        ctx: InvocationContext
+        params_dict_list: 参数列表，每个元素包含 tool_name, step_index, description, tool_args, missing_tool_args, agent_name
+        task_groups: 任务分组（依赖关系），如果为 None 则不包含 edges
+
+    Returns:
+        str: JSON 文件路径
+    """
+    import json
+    import os
+    import uuid
+    from datetime import datetime
+
+    from agents.matmaster_agent.sub_agents.mapping import AGENT_IMAGE_ADDRESS
+
+    # 创建输出目录
+    output_dir = os.path.join(os.getcwd(), 'parameters_output')
+    os.makedirs(output_dir, exist_ok=True)
+
+    # 生成文件名（包含 session_id 和时间戳）
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    session_id = ctx.session.id[:8] if ctx.session.id else 'unknown'
+    filename = f'parameters_{session_id}_{timestamp}.json'
+    filepath = os.path.join(output_dir, filename)
+
+    # 获取 function_declarations 用于获取参数类型信息
+    function_declarations = ctx.session.state.get('function_declarations', [])
+
+    # 构建 nodes（每个任务一个 node）
+    nodes = []
+    node_id_map = {}  # step_index -> node_id 映射
+
+    for i, params in enumerate(params_dict_list):
+        step_index = params['step_index']
+        tool_name = params['tool_name']
+        agent_name = params.get('agent_name', '')
+
+        # 生成 node_id (格式: node-$id1, node-$id2, ...)
+        node_id = f"node-$id{i + 1}"
+        node_id_map[step_index] = node_id
+
+        # 获取该工具的 function_declaration
+        tool_declaration = None
+        for decl in function_declarations:
+            if decl.get('name') == tool_name:
+                tool_declaration = decl
+                break
+
+        # 构建 input_parameters（从 tool_args 转换）
+        input_parameters = []
+        tool_args = params.get('tool_args', {})
+        if tool_declaration and 'parameters' in tool_declaration:
+            properties = tool_declaration['parameters'].get('properties', {})
+            for param_name, param_value in tool_args.items():
+                # 跳过系统参数
+                if param_name in ['executor', 'storage']:
+                    continue
+
+                # 获取参数类型和默认值
+                param_type = 'str'  # 默认类型
+                default_value = None
+                if param_name in properties:
+                    param_schema = properties[param_name]
+                    param_type = _get_parameter_type(param_schema)
+                    # 获取默认值
+                    if 'default' in param_schema:
+                        default_value = param_schema['default']
+
+                input_parameters.append(
+                    {
+                        'name': param_name,
+                        'type': param_type,
+                        'value': (
+                            param_value if param_value is not None else default_value
+                        ),
+                    }
+                )
+        else:
+            # 如果没有 function_declaration，直接从 tool_args 构建
+            for param_name, param_value in tool_args.items():
+                if param_name in ['executor', 'storage']:
+                    continue
+                input_parameters.append(
+                    {'name': param_name, 'type': 'str', 'value': param_value}
+                )
+
+        # 构建 output_parameters（先空着）
+        output_parameters = []
+
+        # 获取 machine_type 和 image
+        machine_type = _get_agent_machine_type(agent_name)
+        image = AGENT_IMAGE_ADDRESS.get(agent_name, '')
+
+        # 构建节点
+        node = {
+            'id': node_id,
+            'node_uuid': str(uuid.uuid4()),
+            'node_version': '1.2',
+            'label': tool_name,  # 使用 tool_name 作为 label
+            'position_x': 0.0,  # 先空置
+            'position_y': 0.0,  # 先空置
+            'system_values': {
+                'machine_type': machine_type,
+                'image': image,
+                'docker_image': '',  # 先空着
+            },
+            'input_parameters': input_parameters,
+            'output_parameters': output_parameters,
+        }
+        nodes.append(node)
+
+    # 构建 edges（任务之间的依赖关系）
+    edges = []
+    edge_id_counter = 1
+
+    def _find_file_connections(source_node, target_node):
+        """
+        判断两个节点的输出输入文件对接
+        返回匹配的连接列表，每个连接包含 (source_param_name, target_param_name)
+        """
+        connections = []
+        source_tool_name = source_node.get('label', '')
+        target_input_params = target_node.get('input_parameters', [])
+        source_output_params = source_node.get('output_parameters', [])
+
+        # 如果没有 output_parameters，使用默认的输出参数名
+        if not source_output_params:
+            # 使用 tool_name 生成默认输出参数名
+            default_output_name = f'out_{source_tool_name}'
+        else:
+            default_output_name = source_output_params[0].get(
+                'name', f'out_{source_tool_name}'
+            )
+
+        if target_input_params:
+            # 简单匹配：如果参数名包含文件相关关键词，建立连接
+            file_keywords = [
+                'file',
+                'path',
+                'url',
+                'input',
+                'output',
+                'structure',
+                'data',
+                'result',
+            ]
+            for target_param in target_input_params:
+                target_name = target_param.get('name', '')
+                if any(keyword in target_name.lower() for keyword in file_keywords):
+                    connections.append((default_output_name, target_name))
+                    break
+
+            # 如果没有找到匹配，使用第一个输入参数
+            if not connections:
+                connections.append(
+                    (default_output_name, target_input_params[0].get('name', 'input'))
+                )
+        else:
+            # 如果没有输入参数，使用默认值
+            connections.append((default_output_name, 'input'))
+
+        return connections
+
+    if task_groups:
+        # 如果提供了 task_groups，根据依赖关系构建 edges
+        for group in task_groups:
+            if isinstance(group, list) and len(group) > 1:
+                # 同一组内的任务有依赖关系
+                for i in range(len(group) - 1):
+                    source_idx = group[i]
+                    target_idx = group[i + 1]
+
+                    # 找到对应的节点
+                    source_node = next(
+                        (n for n in nodes if n['id'] == node_id_map.get(source_idx)),
+                        None,
+                    )
+                    target_node = next(
+                        (n for n in nodes if n['id'] == node_id_map.get(target_idx)),
+                        None,
+                    )
+
+                    if source_node and target_node:
+                        # 判断输出输入文件对接
+                        connections = _find_file_connections(source_node, target_node)
+
+                        for source_param_name, target_param_name in connections:
+                            edges.append(
+                                {
+                                    'id': f'edge-$id{edge_id_counter}',
+                                    'source_node_id': source_node['id'],
+                                    'source_parameter_name': source_param_name,
+                                    'target_node_id': target_node['id'],
+                                    'target_parameter_name': target_param_name,
+                                }
+                            )
+                            edge_id_counter += 1
+    else:
+        # 如果没有提供 task_groups，根据 step_index 顺序构建简单的依赖关系
+        sorted_params = sorted(params_dict_list, key=lambda x: x['step_index'])
+        for i in range(len(sorted_params) - 1):
+            source_step = sorted_params[i]['step_index']
+            target_step = sorted_params[i + 1]['step_index']
+
+            source_node = next(
+                (n for n in nodes if n['id'] == node_id_map.get(source_step)), None
+            )
+            target_node = next(
+                (n for n in nodes if n['id'] == node_id_map.get(target_step)), None
+            )
+
+            if source_node and target_node:
+                # 判断输出输入文件对接
+                connections = _find_file_connections(source_node, target_node)
+
+                for source_param_name, target_param_name in connections:
+                    edges.append(
+                        {
+                            'id': f'edge-$id{edge_id_counter}',
+                            'source_node_id': source_node['id'],
+                            'source_parameter_name': source_param_name,
+                            'target_node_id': target_node['id'],
+                            'target_parameter_name': target_param_name,
+                        }
+                    )
+                    edge_id_counter += 1
+
+    # 生成 template_uuid
+    template_uuid = str(uuid.uuid4())
+
+    # 构建完整的 JSON 结构（新格式）
+    json_data = {
+        'nodes': nodes,
+        'edges': edges,
+        'meta': {'template_uuid': template_uuid},
+    }
+
+    # 保存为 JSON 文件
+    with open(filepath, 'w', encoding='utf-8') as f:
+        json.dump(json_data, f, ensure_ascii=False, indent=2)
+
+    logger.info(
+        f'[{MATMASTER_AGENT_NAME}] {ctx.session.id} Saved parameters to {filepath}'
+    )
+
+    return filepath
+
+
+def _get_parameter_type(param_schema: dict) -> str:
+    """
+    从参数 schema 中提取类型字符串
+
+    Args:
+        param_schema: 参数的 JSON schema
+
+    Returns:
+        str: 类型字符串（如 'str', 'int', 'float', 'typing.Dict', 'typing.List' 等）
+    """
+    param_type = param_schema.get('type', 'str')
+
+    # 处理基本类型
+    type_mapping = {
+        'string': 'str',
+        'integer': 'int',
+        'number': 'float',
+        'boolean': 'bool',
+        'array': 'typing.List',
+        'object': 'typing.Dict',
+    }
+
+    if param_type in type_mapping:
+        return type_mapping[param_type]
+
+    # 处理 anyOf, oneOf 等复杂类型
+    if 'anyOf' in param_schema or 'oneOf' in param_schema:
+        return 'typing.Union'
+
+    # 处理枚举类型
+    if 'enum' in param_schema:
+        return 'str'  # 枚举通常用字符串表示
+
+    # 默认返回 str
+    return 'str'

@@ -12,22 +12,26 @@ from agents.matmaster_agent.constant import (
 from agents.matmaster_agent.job_agents.agent import BaseAsyncJobAgent
 from agents.matmaster_agent.llm_config import LLMConfig
 from agents.matmaster_agent.logger import matmodeler_logging_handler
+from agents.matmaster_agent.sub_agents.mapping import (
+    AGENT_IMAGE_ADDRESS,
+    AGENT_MACHINE_TYPE,
+)
 from agents.matmaster_agent.sub_agents.superconductor_agent.prompt import (
     SuperconductorAgentDescription,
     SuperconductorAgentInstruction,
-    SuperconductorAgentName,
 )
 
-from .constant import SuperconductorServerUrl
+from .constant import SuperconductorAgentName, SuperconductorServerUrl
 
 SuperconductorBohriumExecutor = copy.deepcopy(BohriumExecutor)
 SuperconductorBohriumStorge = copy.deepcopy(BohriumStorge)
-SuperconductorBohriumExecutor['machine']['remote_profile'][
-    'image_address'
-] = 'registry.dp.tech/dptech/dp/native/prod-435364/dpa-thermo-superconductor:20'
-SuperconductorBohriumExecutor['machine']['remote_profile'][
-    'machine_type'
-] = 'c16_m64_1 * NVIDIA 4090'
+
+SuperconductorBohriumExecutor['machine']['remote_profile']['image_address'] = (
+    AGENT_IMAGE_ADDRESS.get(SuperconductorAgentName, '')
+)
+SuperconductorBohriumExecutor['machine']['remote_profile']['machine_type'] = (
+    AGENT_MACHINE_TYPE.get(SuperconductorAgentName) or 'c2_m4_cpu'
+)
 
 sse_params = SseServerParams(url=SuperconductorServerUrl)
 

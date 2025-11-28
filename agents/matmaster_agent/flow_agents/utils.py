@@ -117,3 +117,79 @@ def should_bypass_confirmation(ctx: InvocationContext) -> bool:
             return True
 
     return False
+
+
+def get_async_tool_steps(ctx: InvocationContext) -> List[dict]:
+    """
+    获取计划中所有异步工具的步骤
+
+    Args:
+        ctx: InvocationContext
+
+    Returns:
+        List[dict]: 异步工具步骤列表，每个元素包含 index, step, tool_name
+    """
+    plan = ctx.session.state.get('plan', {})
+    steps = plan.get('steps', [])
+
+    async_steps = []
+    for index, step in enumerate(steps):
+        tool_name = step.get('tool_name')
+        if tool_name and tool_name in ALL_TOOLS:
+            # 检查工具是否为异步工具（通过检查工具是否属于异步 agent）
+            tool_info = ALL_TOOLS[tool_name]
+            belonging_agent = tool_info.get('belonging_agent', '')
+            # 如果工具属于异步 agent（如 apex_agent, abacus_agent 等），则认为是异步工具
+            # 这里可以根据实际需求调整判断逻辑
+            if belonging_agent and 'agent' in belonging_agent:
+                async_steps.append(
+                    {
+                        'index': index,
+                        'step': step,
+                        'tool_name': tool_name,
+                    }
+                )
+
+    return async_steps
+
+
+def analyze_async_task_dependencies(
+    ctx: InvocationContext, async_steps: List[dict]
+) -> List[List[int]]:
+    """
+    分析异步任务之间的依赖关系
+
+    Args:
+        ctx: InvocationContext
+        async_steps: 异步工具步骤列表
+
+    Returns:
+        List[List[int]]: 任务分组列表，每个分组内的任务有依赖关系
+    """
+    # 简单的依赖分析：按照 step_index 顺序分组
+    # 可以根据实际需求实现更复杂的依赖分析逻辑
+    if not async_steps:
+        return []
+
+    # 按 step_index 排序
+    sorted_steps = sorted(async_steps, key=lambda x: x['index'])
+
+    # 简单的分组：每个连续的任务为一组
+    task_groups = []
+    current_group = [sorted_steps[0]['index']]
+
+    for i in range(1, len(sorted_steps)):
+        prev_index = sorted_steps[i - 1]['index']
+        curr_index = sorted_steps[i]['index']
+
+        # 如果步骤是连续的，放在同一组；否则开始新组
+        if curr_index == prev_index + 1:
+            current_group.append(curr_index)
+        else:
+            task_groups.append(current_group)
+            current_group = [curr_index]
+
+    if current_group:
+        task_groups.append(current_group)
+
+    return task_groups

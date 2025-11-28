@@ -5,6 +5,10 @@ from agents.matmaster_agent.constant import (
     BohriumExecutor,
     BohriumStorge,
 )
+from agents.matmaster_agent.sub_agents.mapping import (
+    AGENT_IMAGE_ADDRESS,
+    AGENT_MACHINE_TYPE,
+)
 
 if CURRENT_ENV in ['test', 'uat']:
     LAMMPS_URL = 'http://qpus1389933.bohrium.tech:50004/sse'
@@ -14,10 +18,10 @@ else:
 LAMMPS_AGENT_NAME = 'LAMMPS_agent'
 
 LAMMPS_BOHRIUM_EXECUTOR = copy.deepcopy(BohriumExecutor)
-LAMMPS_BOHRIUM_EXECUTOR['machine']['remote_profile'][
-    'image_address'
-] = 'registry.dp.tech/dptech/lammps-agent:9ae769be'
-LAMMPS_BOHRIUM_EXECUTOR['machine']['remote_profile'][
-    'machine_type'
-] = 'c16_m64_1 * NVIDIA 4090'
+LAMMPS_BOHRIUM_EXECUTOR['machine']['remote_profile']['image_address'] = (
+    AGENT_IMAGE_ADDRESS.get(LAMMPS_AGENT_NAME, '')
+)
+LAMMPS_BOHRIUM_EXECUTOR['machine']['remote_profile']['machine_type'] = (
+    AGENT_MACHINE_TYPE.get(LAMMPS_AGENT_NAME) or 'c2_m4_cpu'
+)
 LAMMPS_BOHRIUM_STORAGE = copy.deepcopy(BohriumStorge)

@@ -15,19 +15,23 @@ from agents.matmaster_agent.logger import matmodeler_logging_handler
 from agents.matmaster_agent.sub_agents.convexhull_agent.prompt import (
     ConvexHullAgentDescription,
     ConvexHullAgentInstruction,
-    ConvexHullAgentName,
+)
+from agents.matmaster_agent.sub_agents.mapping import (
+    AGENT_IMAGE_ADDRESS,
+    AGENT_MACHINE_TYPE,
 )
 
-from .constant import ConvexHullServerUrl
+from .constant import ConvexHullAgentName, ConvexHullServerUrl
 
 ConvexHullBohriumExecutor = copy.deepcopy(BohriumExecutor)
 ConvexHullBohriumStorge = copy.deepcopy(BohriumStorge)
-ConvexHullBohriumExecutor['machine']['remote_profile'][
-    'image_address'
-] = 'registry.dp.tech/dptech/dp/native/prod-435364/dpa-thermo-superconductor:20'
-ConvexHullBohriumExecutor['machine']['remote_profile'][
-    'machine_type'
-] = 'c16_m64_1 * NVIDIA 4090'
+
+ConvexHullBohriumExecutor['machine']['remote_profile']['image_address'] = (
+    AGENT_IMAGE_ADDRESS.get(ConvexHullAgentName, '')
+)
+ConvexHullBohriumExecutor['machine']['remote_profile']['machine_type'] = (
+    AGENT_MACHINE_TYPE.get(ConvexHullAgentName) or 'c2_m4_cpu'
+)
 
 sse_params = SseServerParams(url=ConvexHullServerUrl)
 
