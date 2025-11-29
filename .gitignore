@@ -29,3 +29,5 @@ log
 *log*
 *.ipynb
 function_declaration
+parameter
+agents/parameters_output/

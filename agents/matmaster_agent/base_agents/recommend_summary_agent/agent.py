@@ -45,6 +45,7 @@ from agents.matmaster_agent.base_agents.tool_connect_agent import ToolConnectAge
 from agents.matmaster_agent.base_callbacks.private_callback import (
     inject_function_declarations,
     remove_function_call,
+    save_tool_call_info_before_remove,
 )
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
 from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
@@ -82,11 +83,20 @@ class BaseAgentWithRecAndSum(
             after_model_callback=remove_function_call,
         )
 
+        # 组合 callback：先保存 function_call 到 state，再移除
+        async def tool_call_info_after_model_callback(callback_context, llm_response):
+            # 先保存 function_call 到 state
+            await save_tool_call_info_before_remove(callback_context, llm_response)
+            # 再移除 function_call
+            return await remove_function_call(callback_context, llm_response)
+
         self._tool_call_info_agent = DisallowTransferSchemaAgent(
             model=MatMasterLlmConfig.tool_schema_model,
             name=f"{agent_prefix}_tool_call_info_agent",
             output_schema=ToolCallInfoSchema,
             state_key='tool_call_info',
+            before_model_callback=inject_function_declarations,
+            after_model_callback=tool_call_info_after_model_callback,
         )
 
         self._recommend_params_agent = DisallowTransferLlmAgent(

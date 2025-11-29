@@ -177,6 +177,35 @@ class MatMasterFlowAgent(LlmAgent):
             # instruction=PLAN_INFO_INSTRUCTION,
         )
 
+        # define execution_agent，parameters_agent needs it
+        execution_result_agent = DisallowTransferLlmAgent(
+            name='execution_result_agent',
+            model=MatMasterLlmConfig.gemini_2_5_pro,  # NOTE: Temporary fix until refactor
+            description='汇总计划的执行情况，并根据计划提示下一步的动作',
+            instruction=PLAN_EXECUTION_CHECK_INSTRUCTION,
+        )
+
+        self._execution_agent = MatMasterSupervisorAgent(
+            name='execution_agent',
+            model=MatMasterLlmConfig.default_litellm_model,
+            description='根据 materials_plan 返回的计划进行总结',
+            instruction='',
+            sub_agents=[
+                sub_agent(MatMasterLlmConfig)
+                for sub_agent in AGENT_CLASS_MAPPING.values()
+            ]
+            + [execution_result_agent],
+        )
+
+        self._parameters_agent = ParametersAgent(
+            execution_agent=self._execution_agent,
+            name='parameters_agent',
+            model=MatMasterLlmConfig.default_litellm_model,
+            description='收集计划中所有工具的参数',
+            disallow_transfer_to_parent=True,
+            disallow_transfer_to_peers=True,
+        )
+
         self._parameters_confirm_agent = SchemaAgent(
             name='parameters_confirm_agent',
             model=MatMasterLlmConfig.tool_schema_model,

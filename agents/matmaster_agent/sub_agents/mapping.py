@@ -5,6 +5,9 @@ from agents.matmaster_agent.sub_agents.ABACUS_agent.agent import (
     abacus_toolset,
 )
 from agents.matmaster_agent.sub_agents.ABACUS_agent.constant import ABACUS_AGENT_NAME
+from agents.matmaster_agent.sub_agents.agent_runtime_config import (
+    AGENT_IMAGE_ADDRESS,
+)
 from agents.matmaster_agent.sub_agents.apex_agent.agent import ApexAgent, apex_toolset
 from agents.matmaster_agent.sub_agents.apex_agent.constant import ApexAgentName
 from agents.matmaster_agent.sub_agents.built_in_agent.file_parse_agent.agent import (
@@ -300,16 +303,28 @@ ALL_TOOLSET_DICT = {
         'toolset': hea_assistant_toolset,
         'image': AGENT_TOOLSET_CONFIG[HEA_assistant_AgentName]['image'],
     },
-    'hea_calculator_toolset': {'toolset': hea_calculator_toolset, 'image': ''},
+    'hea_calculator_toolset': {
+        'toolset': hea_calculator_toolset,
+        'image': AGENT_IMAGE_ADDRESS.get('HEACalculator_agent', ''),
+    },
     'hea_kb_toolset': {'toolset': hea_kb_toolset, 'image': ''},
     'sse_kb_toolset': {'toolset': sse_kb_toolset, 'image': ''},
     'polymer_kb_toolset': {'toolset': polymer_kb_toolset, 'image': ''},
     'steel_kb_toolset': {'toolset': steel_kb_toolset, 'image': ''},
     'steel_predict_toolset': {'toolset': steel_predict_toolset, 'image': ''},
-    'optimade_toolset': {'toolset': optimade_toolset, 'image': ''},
-    'bohriumpublic_toolset': {'toolset': bohriumpublic_toolset, 'image': ''},
+    'optimade_toolset': {
+        'toolset': optimade_toolset,
+        'image': AGENT_IMAGE_ADDRESS.get('Optimade_agent', ''),
+    },
+    'bohriumpublic_toolset': {
+        'toolset': bohriumpublic_toolset,
+        'image': AGENT_IMAGE_ADDRESS.get('BohriumPublic_agent', ''),
+    },
     'openlam_toolset': {'toolset': openlam_toolset, 'image': ''},
-    'mofdb_toolset': {'toolset': mofdb_toolset, 'image': ''},
+    'mofdb_toolset': {
+        'toolset': mofdb_toolset,
+        'image': AGENT_IMAGE_ADDRESS.get('Mofdb_agent', ''),
+    },
     'organic_reaction_toolset': {
         'toolset': organic_reaction_toolset,
         'image': AGENT_TOOLSET_CONFIG[ORGANIC_REACTION_AGENT_NAME]['image'],

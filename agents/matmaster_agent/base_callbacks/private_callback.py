@@ -262,6 +262,91 @@ def update_tool_args(func: AfterModelCallback) -> AfterModelCallback:
     return wrapper
 
 
+async def save_tool_call_info_before_remove(
+    callback_context: CallbackContext, llm_response: LlmResponse
+) -> Optional[LlmResponse]:
+    """在 remove_function_call 之前保存 function_call 到 state，用于 tool_call_info_agent"""
+    # 检查响应是否有效
+    if not (
+        llm_response
+        and llm_response.content
+        and llm_response.content.parts
+        and len(llm_response.content.parts)
+    ):
+        return None
+
+    # 获取当前步骤的 tool_name（如果存在）
+    plan_index = callback_context.state.get('plan_index')
+    expected_tool_name = None
+    if plan_index is not None:
+        plan = callback_context.state.get('plan', {})
+        steps = plan.get('steps', [])
+        if plan_index < len(steps):
+            expected_tool_name = steps[plan_index].get('tool_name')
+
+    logger.info(
+        f"[{MATMASTER_AGENT_NAME}] save_tool_call_info_before_remove: plan_index={plan_index}, "
+        f"expected_tool_name={expected_tool_name}"
+    )
+
+    # 遍历所有 parts，查找 function_call
+    # 只保存与当前 plan_index 对应的工具参数
+    for part in llm_response.content.parts:
+        if part.function_call and not llm_response.partial:
+            function_name = part.function_call.name
+            function_args = part.function_call.args
+
+            # 跳过 set_model_response
+            if function_name == 'set_model_response':
+                continue
+
+            # 如果指定了 expected_tool_name，只保存匹配的 function_call
+            if expected_tool_name and function_name != expected_tool_name:
+                logger.info(
+                    f"[{MATMASTER_AGENT_NAME}] Skipping function_call {function_name}, "
+                    f"expected {expected_tool_name} for plan_index {plan_index}"
+                )
+                continue
+
+            # 如果没有指定 expected_tool_name，只保存第一个（避免覆盖）
+            if not expected_tool_name and callback_context.state.get('tool_call_info'):
+                logger.info(
+                    f"[{MATMASTER_AGENT_NAME}] Skipping function_call {function_name}, "
+                    f"already have tool_call_info in state (no expected_tool_name)"
+                )
+                continue
+
+            # 构建 tool_call_info 格式并保存到 state
+            if isinstance(function_args, dict):
+                if 'tool_name' in function_args:
+                    tool_call_info = function_args.copy()
+                else:
+                    tool_call_info = {
+                        'tool_name': function_name,
+                        'tool_args': function_args.copy(),
+                        'missing_tool_args': [],
+                    }
+            else:
+                tool_call_info = {
+                    'tool_name': function_name,
+                    'tool_args': (
+                        function_args if isinstance(function_args, dict) else {}
+                    ),
+                    'missing_tool_args': [],
+                }
+
+            # 保存到 state
+            callback_context.state['tool_call_info'] = tool_call_info
+            logger.info(
+                f"[{MATMASTER_AGENT_NAME}] Saved tool_call_info from function_call before removal: {tool_call_info}"
+            )
+            # 如果找到了匹配的 function_call，不再处理其他 parts
+            if expected_tool_name and function_name == expected_tool_name:
+                break
+
+    return None
+
+
 async def remove_function_call(
     callback_context: CallbackContext, llm_response: LlmResponse
 ) -> Optional[LlmResponse]:

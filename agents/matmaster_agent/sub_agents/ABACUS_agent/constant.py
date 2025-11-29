@@ -1,6 +1,9 @@
-from agents.matmaster_agent.constant import CURRENT_ENV
+from agents.matmaster_agent.constant import (
+    CURRENT_ENV,
+)
 
 ABACUS_AGENT_NAME = 'ABACUS_calculation_agent'
+
 if CURRENT_ENV in ['test', 'uat']:
     ABACUS_CALCULATOR_URL = 'http://toyl1410396.bohrium.tech:50004/sse'
 else:
