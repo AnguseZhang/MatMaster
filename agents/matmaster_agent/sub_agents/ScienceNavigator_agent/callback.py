@@ -32,8 +32,33 @@ MAX_ABSTRACT_LEN = 600
 logger = logging.getLogger(__name__)
 
 
-async def after_tool_callback(tool, args, tool_context, tool_response):
-    print(f"[after_tool_callback] Tool '{tool.name}' executed.")
+def _process_web_search_response(tool_response):
+    """
+    Process web-search tool response by removing total_results field.
+    """
+    try:
+        tool_output = tool_response.content
+        output_json = json.loads(tool_output[0].text)
+
+        # Remove total_results key if present
+        if 'total_results' in output_json:
+            del output_json['total_results']
+
+        new_content = json.dumps(output_json)
+        new_response = CallToolResult(
+            content=[TextContent(type='text', text=new_content)],
+            meta=getattr(tool_response, 'meta', None),
+        )
+        return new_response
+    except Exception as e:
+        print(e)
+        return tool_response
+
+
+def _process_search_papers_enhanced_response(tool_response):
+    """
+    Process search-papers-enhanced tool response by filtering fields and truncating abstracts.
+    """
     try:
         tool_output = tool_response.content
         output_json = json.loads(tool_output[0].text)
@@ -61,6 +86,19 @@ async def after_tool_callback(tool, args, tool_context, tool_response):
     )
 
     return new_response
+
+
+async def after_tool_callback(tool, args, tool_context, tool_response):
+    print(f"[after_tool_callback] Tool '{tool.name}' executed.")
+
+    # Only process specific tools
+    if tool.name == 'web-search':
+        return _process_web_search_response(tool_response)
+    elif tool.name == 'search-papers-enhanced':
+        return _process_search_papers_enhanced_response(tool_response)
+    else:
+        # Return original response for unhandled tools
+        return tool_response
 
 
 def contains_chinese(text: str) -> bool:
