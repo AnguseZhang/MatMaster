@@ -241,33 +241,33 @@ class MatMasterFlowAgent(LlmAgent):
         """Count the number of tools in the current plan."""
         if not ctx.session.state.get('plan'):
             return 0
-            
+
         plan = ctx.session.state['plan']
         if not isinstance(plan, dict) or 'steps' not in plan:
             return 0
-            
+
         steps = plan['steps']
         if not isinstance(steps, list):
             return 0
-            
+
         # Count unique tools in the plan steps
         tool_names = set()
         for step in steps:
             if isinstance(step, dict) and step.get('tool_name'):
                 tool_names.add(step['tool_name'])
-                
+
         return len(tool_names)
 
     def _get_effective_sub_agents(self, ctx: InvocationContext) -> list:
         """Get the list of sub agents, conditionally including analysis_agent."""
         # Start with base sub_agents
         effective_sub_agents = self.sub_agents[:]
-        
+
         # Check if we should include analysis_agent
         tools_count = self._get_plan_tools_count(ctx)
         if tools_count > 1:
             effective_sub_agents.append(self.analysis_agent)
-        
+
         return effective_sub_agents
 
     async def _run_async_impl(
@@ -397,7 +397,7 @@ class MatMasterFlowAgent(LlmAgent):
                         # 使用包含或不包含 analysis_agent 的有效子代理列表
                         original_sub_agents = self.sub_agents
                         self.sub_agents = self._get_effective_sub_agents(ctx)
-                        
+
                         try:
                             async for execution_event in self.execution_agent.run_async(
                                 ctx
@@ -422,7 +422,9 @@ class MatMasterFlowAgent(LlmAgent):
                         # 只有当计划中包含多个工具时才运行 analysis_agent
                         tools_count = self._get_plan_tools_count(ctx)
                         if tools_count > 1:
-                            async for analysis_event in self.analysis_agent.run_async(ctx):
+                            async for analysis_event in self.analysis_agent.run_async(
+                                ctx
+                            ):
                                 yield analysis_event
         except BaseException as err:
             async for error_event in send_error_event(err, ctx, self.name):
