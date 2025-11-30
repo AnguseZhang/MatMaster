@@ -76,11 +76,15 @@ async def is_sequence(data):
 
 
 async def is_float_sequence(data) -> bool:
-    return is_sequence(data) and all(isinstance(x, float) for x in data)
+    if not await is_sequence(data):
+        return False
+    return all(isinstance(x, float) for x in data)
 
 
 async def is_str_sequence(data) -> bool:
-    return is_sequence(data) and all(isinstance(x, str) for x in data)
+    if not await is_sequence(data):
+        return False
+    return all(isinstance(x, str) for x in data)
 
 
 def validate_model_list(data: list, model: type[BaseModel]) -> bool:
@@ -94,11 +98,15 @@ def validate_model_list(data: list, model: type[BaseModel]) -> bool:
 
 
 async def is_literature_sequence(data) -> bool:
-    return is_sequence(data) and validate_model_list(data, LiteratureItem)
+    if not await is_sequence(data):
+        return False
+    return validate_model_list(data, LiteratureItem)
 
 
 async def is_web_search_sequence(data) -> bool:
-    return is_sequence(data) and validate_model_list(data, WebSearchItem)
+    if not await is_sequence(data):
+        return False
+    return validate_model_list(data, WebSearchItem)
 
 
 async def is_matmodeler_file(filename: str) -> bool:
@@ -122,6 +130,10 @@ async def is_matmodeler_file(filename: str) -> bool:
         or 'CONTCAR' in filename
         or filename == 'STRU'
     )
+
+
+async def is_echarts_file(filename: str) -> bool:
+    return filename.endswith('.echarts')
 
 
 async def is_image_file(filename: str) -> bool:
@@ -218,6 +230,11 @@ async def parse_result(result: dict) -> List[dict]:
         >>>    {"name": "markdown_image_phonon", "data": "![phonon.png](http://example.com/phonon.png)", "type": "Value"}
         >>> ]
     """
+    import logging
+
+    logger = logging.getLogger(__name__)
+    logger.info(f'[parse_result] dict_result content: {result}, type: {type(result)}')
+
     parsed_result = []
     new_result = {}
     for k, v in result.items():
@@ -248,6 +265,15 @@ async def parse_result(result: dict) -> List[dict]:
                             name=k,
                             data=filename,
                             type=JobResultType.MatModelerFile,
+                            url=v,
+                        ).model_dump(mode='json')
+                    )
+                elif await is_echarts_file(filename):
+                    parsed_result.append(
+                        JobResult(
+                            name=k,
+                            data=filename,
+                            type=JobResultType.EchartsFile,
                             url=v,
                         ).model_dump(mode='json')
                     )
@@ -298,11 +324,19 @@ async def parse_result(result: dict) -> List[dict]:
     return parsed_result
 
 
-def get_markdown_image_result(parsed_tool_result: List[dict]) -> List[dict]:
+def get_markdown_image_result(parsed_tool_result: List[JobResult]) -> List[JobResult]:
     return [
         item
         for item in parsed_tool_result
         if item.get('name') and item['name'].startswith('markdown_image')
+    ]
+
+
+def get_echarts_result(parsed_tool_result: List[JobResult]) -> List[JobResult]:
+    return [
+        item
+        for item in parsed_tool_result
+        if item.get('name') and item['type'] == JobResultType.EchartsFile
     ]
 
 

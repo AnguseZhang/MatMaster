@@ -16,6 +16,7 @@ class JobStatus(str, Enum):
 class JobResultType(str, Enum):
     RegularFile = 'RegularFile'
     MatModelerFile = 'MatModelerFile'
+    EchartsFile = 'EchartsFile'
     Value = 'Value'
 
 

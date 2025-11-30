@@ -55,6 +55,7 @@ from agents.matmaster_agent.utils.event_utils import (
 )
 from agents.matmaster_agent.utils.frontend import get_frontend_job_result_data
 from agents.matmaster_agent.utils.helper_func import (
+    get_echarts_result,
     get_markdown_image_result,
     is_mcp_result,
     load_tool_response,
@@ -296,6 +297,19 @@ class MCPRunEventsMixin(BaseMixin):
                                 ctx, self.name, item['data'], ModelRole
                             ):
                                 yield markdown_image_event
+
+                    echarts_result = get_echarts_result(parsed_tool_result)
+                    if echarts_result:
+                        for item in echarts_result:
+                            for echarts_event in context_function_event(
+                                ctx,
+                                self.name,
+                                'matmaster_echarts',
+                                None,
+                                ModelRole,
+                                {'echarts_url': item['url']},
+                            ):
+                                yield echarts_event
 
                 if is_text(event):
                     if not event.partial:
