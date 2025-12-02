@@ -12,6 +12,9 @@ from agents.matmaster_agent.base_agents.disallow_transfer_agent import (
 from agents.matmaster_agent.base_callbacks.public_callback import check_transfer
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME, ModelRole
 from agents.matmaster_agent.flow_agents.constant import MATMASTER_SUPERVISOR_AGENT
+from agents.matmaster_agent.flow_agents.execution_result_agent.style import (
+    get_execution_result_card,
+)
 from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
 from agents.matmaster_agent.flow_agents.schema import FlowStatusEnum
 from agents.matmaster_agent.flow_agents.utils import (
@@ -26,6 +29,7 @@ from agents.matmaster_agent.sub_agents.mapping import (
     MatMasterSubAgentsEnum,
 )
 from agents.matmaster_agent.utils.event_utils import (
+    all_text_event,
     context_function_event,
     update_state_event,
 )
@@ -114,7 +118,15 @@ class MatMasterSupervisorAgent(DisallowTransferLlmAgent):
                         async for execution_result_event in self.sub_agents[
                             -1
                         ].run_async(ctx):
-                            yield execution_result_event
+                            for plan_ask_confirm_event in all_text_event(
+                                ctx,
+                                self.name,
+                                get_execution_result_card(
+                                    execution_result_event.content.parts[0].text
+                                ),
+                                ModelRole,
+                            ):
+                                yield plan_ask_confirm_event
 
                     current_steps = ctx.session.state['plan']['steps']
                     if (
