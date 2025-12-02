@@ -299,7 +299,7 @@ ALL_TOOLS = {
     'HEA_params_calculator': {
         'belonging_agent': HEA_assistant_AgentName,
         'scene': [SceneEnum.HIGH_ENTROPY_ALLOY],
-        'description': 'Split the HEA chemical formula into element ratios, and calculate VEC, delta, Hmix, Smix, Lambda parameters of the given composition.',
+        'description': 'Split the HEA chemical formula into element and corresponding ratios, and calculate VEC(valence electron consentration), delta(atom size factor), Hmix(mix enthalpy), Smix(mix entropy), Lambda parameters of the given composition.',
     },
     'HEA_predictor': {
         'belonging_agent': HEA_assistant_AgentName,
@@ -309,17 +309,22 @@ ALL_TOOLS = {
     'HEA_comps_generator': {
         'belonging_agent': HEA_assistant_AgentName,
         'scene': [SceneEnum.HIGH_ENTROPY_ALLOY],
-        'description': 'Based on a given initial High Entropy Alloy composition, Generate a series of High Entropy Alloy compositions by adjusting the molar ratio of one specific element.',
+        'description': 'Based on a given initial High Entropy Alloy composition, Generate a series of High Entropy Alloy compositions by adjusting the molar ratio of one specific element. Use this tool first for further High Entropy Alloy composition design and optimization.',
     },
     'HEA_data_extract': {
-        'belonging_agent': HEACALCULATOR_AGENT_NAME,
+        'belonging_agent': HEA_assistant_AgentName,
         'scene': [SceneEnum.HIGH_ENTROPY_ALLOY],
-        'description': 'Extract High Entropy Alloy related data from provided literature in PDF format, including compositions, processing methods, micro-phasestructures, and properties.',
+        'description': 'Extract High Entropy Alloy related data from provided literature in PDF format, including compositions, heat treatment processing methods, micro-phasestructures, and mechanical/thermal properties.',
     },
     'HEA_paper_search': {
         'belonging_agent': HEA_assistant_AgentName,
         'scene': [SceneEnum.HIGH_ENTROPY_ALLOY],
-        'description': 'Search for papers on arXiv by title, author or keywords related to High Entropy Alloys, download the original publications and save basic information.',
+        'description': 'Search for papers on arXiv by title, author or keywords related to High Entropy Alloys, download the original publications to the server and save basic information. provide search results and save direction for further data extraction and analysis.',
+    },
+    'HEA_bi_phase_Calc': {
+        'belonging_agent': HEA_assistant_AgentName,
+        'scene': [SceneEnum.HIGH_ENTROPY_ALLOY],
+        'description': 'For all binary pairs in the High Entropy Alloy chemical system, calculate formation energies and generate binary phase diagram convex hulls',
     },
     'generate_binary_phase_diagram': {
         'belonging_agent': HEACALCULATOR_AGENT_NAME,
