@@ -175,7 +175,7 @@ English translation (JSON list only):
 
 
 async def before_tool_callback(tool, args, tool_context: ToolContext):
-    search_tools = ['search-papers-normal', 'search-papers-enhanced', 'web-search']
+    search_tools = ['search-papers-enhanced', 'web-search']
     print(f"[before_tool_callback] Tool '{tool.name}' called with args: {args}")
     if tool.name not in search_tools:
         return

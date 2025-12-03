@@ -586,14 +586,6 @@ ALL_TOOLS = {
         'scene': [SceneEnum.MOLECULAR_DYNAMICS, SceneEnum.LAMMPS],
         'description': 'Automatically generate LAMMPS input script based on natural language description using LLM, capable of multi-stage tasks, including energy minimization, MD simulation and on-the-fly property computations (e.g. MSD, RDF, density, stress) within complicated constraints, in one script with appropriate parameters or user-appointed parameters. CAN DO: support recognition of potential file type and generate appropriate formats accordingly, including DeePMD and classical force fields.',
     },
-    'search-papers-normal': {
-        'belonging_agent': SCIENCE_NAVIGATOR_AGENT_NAME,
-        'scene': [SceneEnum.LITERATURE],
-        'description': 'Standard version of searching academic papers based on author information',
-        'args_setting': f"If not specified, the starting year 2020, the ending time is {TODAY}.",
-        'summary_prompt': PAPER_SEARCH_AGENT_INSTRUCTION,
-        'bypass_confirmation': True,
-    },
     'search-papers-enhanced': {
         'belonging_agent': SCIENCE_NAVIGATOR_AGENT_NAME,
         'scene': [SceneEnum.LITERATURE],
