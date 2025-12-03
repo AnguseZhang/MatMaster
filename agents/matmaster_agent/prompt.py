@@ -539,17 +539,7 @@ When handling structure generation requests, you MUST follow these strict routin
 
    **Identify Molecule Structure Generation Type**
 
-   1. **G2 Database Molecule Building**
-      - build_molecule_structure_from_g2database
-      * Use ONLY when user requests a molecule that is confirmed to be in the ASE G2 database
-      * Supports 100+ G2 database molecules:
-        PH3, P2, CH3CHO, H2COH, CS, OCHCHO, C3H9C, CH3COF, CH3CH2OCH3, HCOOH, HCCl3, HOCl, H2, SH2, C2H2, C4H4NH, CH3SCH3, SiH2_s3B1d, CH3SH, CH3CO, CO, ClF3, SiH4, C2H6CHOH, CH2NHCH2, isobutene, HCO, bicyclobutane, LiF, Si, C2H6, CN, ClNO, S, SiF4, H3CNH2, methylenecyclopropane, CH3CH2OH, F, NaCl, CH3Cl, CH3SiH3, AlF3, C2H3, ClF, PF3, PH2, CH3CN, cyclobutene, CH3ONO, SiH3, C3H6_D3h, CO2, NO, trans-butane, H2CCHCl, LiH, NH2, CH, CH2OCH2, C6H6, CH3CONH2, cyclobutane, H2CCHCN, butadiene, C, H2CO, CH3COOH, HCF3, CH3S, CS2, SiH2_s1A1d, C4H4S, N2H4, OH, CH3OCH3, C5H5N, H2O, HCl, CH2_s1A1d, CH3CH2SH, CH3NO2, Cl, Be, BCl3, C4H4O, Al, CH3O, CH3OH, C3H7Cl, isobutane, Na, CCl4, CH3CH2O, H2CCHF, C3H7, CH3, O3, P, C2H4, NCCN, S2, AlCl3, SiCl4, SiO, C3H4_D2d, H, COF2, 2-butyne, C2H5, BF3, N2O, F2O, SO2, H2CCl2, CF3CN, HCN, C2H6NH, OCS, B, ClO, C3H8, HF, O2, SO, NH, C2F4, NF3, CH2_s3B1d, CH3CH2Cl, CH3COCl, NH3, C3H9N, CF4, C3H6_Cs, Si2H6, HCOOCH3, O, CCH, N, Si2, C2H6SO, C5H8, H2CF2, Li2, CH2SCH2, C2Cl4, C3H4_C3v, CH3COCH3, F2, CH4, SH, H2CCO, CH3CH2NH2, Li, N2, Cl2, H2O2, Na2, BeH, C3H4_C2v, NO2
-      * Examples: "build a H2O molecule", "create CO from G2 database"
-
-      * IMPORTANT: Before using this method, you MUST verify that the requested molecule is in the list above
-      * If the molecule is NOT in the list (e.g., DABCO, caffeine, etc.), DO NOT use this method
-
-   2. **SMILES-based Molecule Building**
+   **SMILES-based Molecule Building**
       - build_molecule_structures_from_smiles
       * Use when:
         - User explicitly provides a SMILES string representation of a molecule
@@ -945,7 +935,9 @@ Examples for reference:
   -> Reason: "Uses a transfer phrase '正在切换到' (switching to) but follows it with a question asking for user confirmation, pausing the immediate transfer action."
 """
 
-HUMAN_FRIENDLY_FORMAT_REQUIREMENT = """
+
+def gen_human_friendly_format(render_mode='markdown') -> str:
+    basic_requirement = """
 
 A standardized output format is crucial for avoiding ambiguity; please strictly adhere to the following requirements.
 
@@ -956,6 +948,34 @@ A standardized output format is crucial for avoiding ambiguity; please strictly 
 - **Phase notations** should be in italic font, e.g. α-Fe, β-RDX etc. The greek letters (α, β) should be in intalics, the material name (Fe, RDX) should NOT be in italic font. No bold font should be used for phase notation.
 -
 """
+    html_example = """
+Example in HTML format:
+```
+lattice constant <i>a</i> = 3.5 Å,
+space group <i>P</i>2<sub>1</sub>,
+chemical formula: C<sub>12</sub>H<sub>24</sub>O<sub>6</sub>,
+file: <a href="https://aaa/bbb/ccc/example.cif">example.cif</a>,
+sample <b>example</b>
+```
+"""
+    markdown_example = """
+Example in Markdown format:
+```
+lattice constant  *a* = 3.5 Å,
+space group *P*2<sub>1</sub>,
+chemical formula: C<sub>12</sub>H<sub>24</sub>O<sub>6</sub>,
+file: [example.cif](https://aaa/bbb/ccc/example.cif),
+sample **example**
+```
+"""
+    if render_mode == 'html':
+        return basic_requirement + '\n' + html_example
+    elif render_mode == 'markdown':
+        return basic_requirement + '\n' + markdown_example
+
+
+HUMAN_FRIENDLY_FORMAT_REQUIREMENT = gen_human_friendly_format('markdown')
+
 
 DPA_PRIOR_KNOWLEDGE = """
 - For built-in pretrained models, both DPA2 and DPA3 are multi-task trained models, chose an appropriate model branch (or `head`) according to the material system: Default is `Omat24` covering broad range of inorganic materials; `OC22` is suitable for catalytic surfaces; `ODAC23` is suitable for air adsorption in metal-organic frameowrks (MOFs); `Alex2D` is suitable for 2D materials; `SPICE2` is suitable for drug-like molecules; `Organic_Reactions` is suitable for organic reactions; `solvated_protein_fragments` is suitable for protein fragments. `H2O_H2O_PD` is specialized in water diagram.
