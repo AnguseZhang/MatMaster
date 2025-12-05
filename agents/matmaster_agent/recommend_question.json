@@ -63,17 +63,7 @@
     {
       "zhPrompt": {
         "belonging": "学术情报",
-        "question": "请搜索近期关于MoTe₂相变（1T′–2H）调控的研究进展，并总结主流调控方法",
-        "sharing_url": {
-          "test_url": "https://matmaster.test.bohrium.com/matmaster/share/019ae2e8b6af706ab2ac632d8becdc85"
-        },
-        "structure_url": ""
-      }
-    },
-    {
-      "zhPrompt": {
-        "belonging": "学术情报",
-        "question": "请先帮我查找2024–2025 年钙钛矿太阳能电池的最新效率纪录，并查找主要研究工作或论文",
+        "question": "查找2024–2025年钙钛矿太阳能电池的最新效率纪录，及其主要研究工作或论文",
         "sharing_url": {
           "test_url": "https://matmaster.test.bohrium.com/matmaster/share/019ae34228f07e6abf103befb80dd70c"
         },
@@ -83,7 +73,7 @@
     {
       "zhPrompt": {
         "belonging": "学术情报",
-        "question": "请帮我梳理近几年报道的、比表面积超过 5000 m²/g 的代表性 MOF 结构",
+        "question": "梳理近几年报道的、比表面积超过5000 m²/g的代表性MOF结构",
         "sharing_url": {
           "test_url": "https://matmaster.test.bohrium.com/matmaster/share/019ae371eea572d3810ce215e35a4e90"
         },
@@ -93,11 +83,41 @@
     {
       "zhPrompt": {
         "belonging": "结构生成",
-        "question": "请生成空间群为225的晶体结构，要求带隙（bandgap）小于0.5 eV，生成2个样本",
+        "question": "以超导临界温度大于40 K为条件，生成10个候选晶体结构",
         "sharing_url": {
-          "test_url": "https://matmaster.test.bohrium.com/matmaster/share/019ae41e541b7e0bb971b28bcecc45b3"
+          "test_url": "https://matmaster.test.bohrium.com/matmaster/share/019aec463c757f2d865582dc5058b287"
         },
         "structure_url": null
+      }
+    },
+    {
+      "zhPrompt": {
+        "belonging": "结构生成",
+        "question": "构建咖啡因和腺苷的分子结构",
+        "sharing_url": {
+          "test_url": "https://matmaster.test.bohrium.com/matmaster/share/019aec28add77e309dda7bddc3159d89"
+        },
+        "structure_url": null
+      }
+    },
+    {
+      "zhPrompt": {
+        "belonging": "结构生成",
+        "question": "基于fcc-Ni的5×5×5超胞模板构建合金Fe:Ni:Co:Cr:V=0.635:0.165:0.1:0.05:0.05的结构",
+        "sharing_url": {
+          "test_url": "https://matmaster.test.bohrium.com/matmaster/share/019aec06f6597f12a322658f53b9e2c5"
+        },
+        "structure_url": null
+      }
+    },
+    {
+      "zhPrompt": {
+        "belonging": "结构生成",
+        "question": "搜索刚玉的Wyckoff位置信息，用其构建晶体结构",
+        "sharing_url": {
+          "test_url": "https://matmaster.test.bohrium.com/matmaster/share/019ae349b43a71cf976f2d50c7ecac6d"
+        },
+        "structure_url": ""
       }
     },
     {
@@ -119,36 +139,6 @@
           "test_url": "https://matmaster.test.bohrium.com/matmaster/share/019ae312dda27594818e8f1da70f22eb"
         },
         "structure_url": null
-      }
-    },
-    {
-      "zhPrompt": {
-        "belonging": "结构生成",
-        "question": "基于fcc Ni的5×5×5超胞构建Fe-Ni-Co-Cr-V 0.635-0.165-0.1-0.05-0.05的合金结构",
-        "sharing_url": {
-          "test_url": "https://matmaster.test.bohrium.com/matmaster/share/019ae4356abe711eb8e8c90df0169639"
-        },
-        "structure_url": null
-      }
-    },
-    {
-      "zhPrompt": {
-        "belonging": "结构生成",
-        "question": "搭建布洛芬的分子结构",
-        "sharing_url": {
-          "test_url": "https://matmaster.test.bohrium.com/matmaster/share/019ae34580a07d2b90fba5c7d7d17d60"
-        },
-        "structure_url": null
-      }
-    },
-    {
-      "zhPrompt": {
-        "belonging": "结构生成",
-        "question": "搜索刚玉的Wyckoff位置信息，用其构建晶体结构",
-        "sharing_url": {
-          "test_url": "https://matmaster.test.bohrium.com/matmaster/share/019ae349b43a71cf976f2d50c7ecac6d"
-        },
-        "structure_url": ""
       }
     },
     {
@@ -190,20 +180,6 @@
       "zhPrompt": {
         "belonging": "结构检索",
         "question": "从Materials Project批量下载20个含锂材料的CIF文件，并统计其平均体积/原子",
-        "structure_url": null
-      }
-    },
-    {
-      "zhPrompt": {
-        "belonging": "结构检索",
-        "question": "从hMOF数据库中检索比表面积> 2000 m²/g且孔径在6–8 Å的MOF结构，并导出10个候选结构",
-        "structure_url": null
-      }
-    },
-    {
-      "zhPrompt": {
-        "belonging": "结构检索",
-        "question": "检索hMOF数据库中CO₂吸附量> 3 mmol/g的结构，并导出前5个候选结构与吸附等温线数据",
         "structure_url": null
       }
     },

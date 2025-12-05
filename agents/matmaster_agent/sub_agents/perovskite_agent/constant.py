@@ -14,3 +14,4 @@ if CURRENT_ENV in ['test', 'uat']:
 else:
     PEROVSKITE_RESEARCH_URL = 'https://56d326d8139f904b679084778f1b3285.app-space.dplink.cc/sse?token=57bc01c18d6a4f71bb156f2ac0bbf0b8'
     # PEROVSKITE_RESEARCH_URL='http://dhxi1369865.bohrium.tech:50004/sse'
+    UNIMOL_SERVER_URL = 'http://acsa1402612.bohrium.tech:50001/mcp'
