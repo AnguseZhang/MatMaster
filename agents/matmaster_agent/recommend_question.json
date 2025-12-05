@@ -289,9 +289,9 @@
         "belonging": "数据可视化",
         "question": "绘制此变温PXRD图谱，标题的数字代表测试温度，请用规范的摄氏度记号标注；100摄氏度以下用绿色线，以上用红色线。仅需画图，无需额外解析",
         "sharing_url": {
-          "test_url": ""
+          "test_url": "https://matmaster.test.bohrium.com/matmaster/share/019aec2317f67a749779a9243094fcbc"
         },
-        "structure_url": "https://dp-storage-test2.oss-cn-zhangjiakou.aliyuncs.com/bohrium-test/bohrium/feedback/attachment/01KBM2GSWYJ9V53JT0B3987583/td-pxrd_example.txt"
+        "structure_url": "https://dp-storage-test2.oss-cn-zhangjiakou.aliyuncs.com/bohrium-test/bohrium/feedback/attachment/01KBP28H5EQH5CJ2ECNVMG6N90/td-pxrd-example.txt"
       }
     },
     {
