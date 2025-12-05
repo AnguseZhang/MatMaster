@@ -42,7 +42,7 @@ _FORMAT_REQUIREMENT = """
 - Output in plain text, no bullet points unless necessary or user requests.
 - Avoid starting with any preambles, acknowledgements, confirmations, or meta-statements such as "Sure, I will...", "Okay, I will...", or "I will now analyze...". Instead, directly output the substantive content.
 - Avoid statement without evidence from the papers, e.g. the first, the best, most popular, etc.
-- A space should be added between figures and units, e.g. 10 cm, 5 kg. Avoid unnecessary space between Chinese characters and English characters. An italic font should be used for physical quantities, e.g. $E$, $T$, $k$. A bold font should be used for vectors, e.g. **F**, **E**, and serial code names of compounds/materials, e.g. compound **1** etc.
+- A space should be added between figures and units, e.g. 10 cm, 5 kg. Avoid unnecessary space between Chinese characters and English characters. An italic font should be used for physical quantities, e.g. *E*, *T*, *k*. A bold font should be used for vectors, e.g. **F**, **E**, and serial code names of compounds/materials, e.g. compound **1** etc.
 - Any abbreviations of terminologies should be defined in the beginning of the output, and should be used consistently throughout the output.
 - The English journal name and ariticle title should be italized, NOT wrapped by book-title marks. e.g. *The Journal of Chemical Physics*, NOT《The Journal of Chemical Physics》
 - Every summary must include the reference link to the original `paperUrl`, displayed as clickable number with links. When inserting reference links, use ONLY the following exact HTML format:
@@ -57,19 +57,26 @@ _FORMAT_REQUIREMENT = """
 
 """
 
+# NOTE: fallback after front-end fixing
+# _MARKDOWN_EXAMPLE = r"""
+# Should refer these Markdown format:
 
-_MARKDOWN_EXAMPLE = r"""
+# lattice constant  $a$ = 3.5 Å,
+# space group $P2_1$, $Pm\\bar\{3\}m$,
+# chemical formula: C$_12$H$_24$O$_6$, $\\alpha$-Si, NH$_4^+$
+# physical variables: Δ$H_\\text\{det\}$, Δ$_\\text\{c\}H_\\text\{det\}$,
+# sample name: **example**
+# """
 
+_MARKDOWN_EXAMPLE = """
 Should refer these Markdown format:
 
-lattice constant  $a$ = 3.5 Å,
-space group $P2_1$, $Pm\\bar\{3\}m$,
-chemical formula: C$_12$H$_24$O$_6$, $\\alpha$-Si, NH$_4^+$
-physical variables: Δ$H_\\text\{det\}$, Δ$_\\text\{c\}H_\\text\{det\}$,
-sample **example**
-
+lattice constant *a* = 3.5 Å,
+space group *P*2₁, *Pm*-3*m*,
+chemical formula: C₁₂H₂₄O₆, *α*-Si, NH₄⁺
+physical variables: Δ*H*₍det₎, Δ₍c₎*H*₍det₎,
+sample name: **example**
 """
-
 
 WEB_SEARCH_AGENT_INSTRUCTION = (
     f"""
