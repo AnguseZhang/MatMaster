@@ -8,8 +8,8 @@ if CURRENT_ENV == 'test':
 elif CURRENT_ENV == 'uat':
     DPAMCPServerUrl = 'https://1415fe9fea0fa1e45dddcff5682239a0.appspace.uat.bohrium.com/sse?token=f812b4cc79ef47b4b2a1bb81c415367d'
 else:
-    DPAMCPServerUrl = 'http://pfmx1355864.bohrium.tech:50001/sse'
-    # DPAMCPServerUrl = 'https://dpa-uuid1750659890.app-space.dplink.cc/sse?token=7c2e8de61ec94f4e80ebcef1ac17c92e'
+    # DPAMCPServerUrl = 'http://pfmx1355864.bohrium.tech:50001/sse'
+    DPAMCPServerUrl = "https://dpa-uuid1750659890.appspace.bohrium.com/sse?token=b2b94c52d10141e992514f9d17bcca23"
 DPACalulator_BOHRIUM_EXECUTOR = copy.deepcopy(BohriumExecutor)
 DPACalulator_BOHRIUM_EXECUTOR['machine']['remote_profile'][
     'image_address'
