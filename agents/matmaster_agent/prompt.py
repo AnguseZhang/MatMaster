@@ -943,7 +943,7 @@ Examples for reference:
 
 HUMAN_FRIENDLY_FORMAT_REQUIREMENT = """
 
-A standardized output format is crucial for avoiding ambiguity; please strictly adhere to the following requirements. No need to output these rules in your response. Do not output emojis or other non-textual elements.
+A standardized output format is crucial for avoiding ambiguity; please strictly adhere to the following requirements. No need to output these rules in your response. Do not output emojis or other non-textual elements. Avoid unnecessary space between Chinese and English characters.
 
 - **General requirement:** A space should be added between figures and units, e.g. 10 cm, 5 kg, except percentages and angular degrees.
 - An italic font should be used for **physical quantities**; A bold font should be used for **vectors**; No need to use italic font or bold font for figures and units.

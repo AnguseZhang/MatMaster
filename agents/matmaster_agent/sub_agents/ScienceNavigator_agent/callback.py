@@ -28,7 +28,7 @@ DISCARD_KEYS = [
 ]
 
 MAX_ABSTRACT_LEN = 300
-
+MIN_page_size = 150
 logger = logging.getLogger(__name__)
 
 
@@ -181,6 +181,12 @@ async def before_tool_callback(tool, args, tool_context: ToolContext):
         return
 
     words = args.get('words', [])
+    page_size = args.get('page_size')
+    if page_size is None:
+        return
+    else:
+        page_size = max(MIN_page_size, int(page_size))
+    args['page_size'] = int(page_size)
     if isinstance(words, str):
         words = [w.strip() for w in words.split()] if words.strip() else []
     elif not isinstance(words, list):
