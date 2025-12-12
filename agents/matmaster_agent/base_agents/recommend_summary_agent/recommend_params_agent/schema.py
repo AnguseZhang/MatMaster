@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Literal, Union
 
 from google.genai import types
 from pydantic import BaseModel, Field, create_model
@@ -38,7 +38,13 @@ def get_field_type(field: Dict[str, Any]) -> Any:
     field_type = field.get('type', types.Type.OBJECT)
 
     # 基本类型
-    if field_type in GENAI_TYPE_TO_PYDANTIC_MAPPING:
+    if field_type == types.Type.STRING:
+        if field.get('enum'):
+            return Literal[tuple(field['enum'])]
+        else:
+            return GENAI_TYPE_TO_PYDANTIC_MAPPING.get(field_type)
+
+    elif field_type in GENAI_TYPE_TO_PYDANTIC_MAPPING:
         return GENAI_TYPE_TO_PYDANTIC_MAPPING.get(field_type)
 
     # 处理数组类型
@@ -107,6 +113,7 @@ def create_tool_args_schema(missing_tool_args, function_declaration):
         **fields,
         __base__=BaseModel,
     )
+    logger.info(f'DynamicToolArgsSchema = {DynamicToolArgsSchema.model_json_schema()}')
 
     ToolSchema = create_model(
         'ToolSchema',
@@ -120,25 +127,156 @@ def create_tool_args_schema(missing_tool_args, function_declaration):
 
 
 if __name__ == '__main__':
-    import pickle
-
-    missing_tool_args = [
-        'a',
-        'b',
-        'c',
-        'alpha',
-        'beta',
-        'gamma',
-        'spacegroup',
-        'wyckoff_positions',
+    function_declaration = [
+        {
+            'parameters': {
+                'properties': {
+                    'stru_file': {'title': 'Stru File', 'type': 'STRING'},
+                    'stru_type': {
+                        'default': 'cif',
+                        'enum': ['cif', 'poscar', 'abacus/stru'],
+                        'title': 'Stru Type',
+                        'type': 'STRING',
+                    },
+                    'lcao': {'default': True, 'title': 'Lcao', 'type': 'BOOLEAN'},
+                    'nspin': {
+                        'default': 1,
+                        'enum': [1, 2],
+                        'title': 'Nspin',
+                        'type': 'INTEGER',
+                    },
+                    'dft_functional': {
+                        'default': 'PBE',
+                        'enum': [
+                            'PBE',
+                            'PBEsol',
+                            'LDA',
+                            'SCAN',
+                            'HSE',
+                            'PBE0',
+                            'R2SCAN',
+                        ],
+                        'title': 'Dft Functional',
+                        'type': 'STRING',
+                    },
+                    'dftu': {'default': False, 'title': 'Dftu', 'type': 'BOOLEAN'},
+                    'dftu_param': {
+                        'description': 'Definition of DFT+U params',
+                        'properties': {
+                            'element': {
+                                'items': {'type': 'STRING'},
+                                'title': 'Element',
+                                'type': 'ARRAY',
+                            },
+                            'orbital': {
+                                'items': {'enum': ['p', 'd', 'f'], 'type': 'STRING'},
+                                'title': 'Orbital',
+                                'type': 'ARRAY',
+                            },
+                            'U_value': {
+                                'items': {'type': 'NUMBER'},
+                                'title': 'U Value',
+                                'type': 'ARRAY',
+                            },
+                        },
+                        'required': ['element', 'orbital', 'U_value'],
+                        'title': 'DFTUParam',
+                        'type': 'OBJECT',
+                    },
+                    'init_mag': {
+                        'description': 'Definition of initial magnetic params',
+                        'properties': {
+                            'element': {
+                                'items': {'type': 'STRING'},
+                                'title': 'Element',
+                                'type': 'ARRAY',
+                            },
+                            'mag': {
+                                'items': {'type': 'NUMBER'},
+                                'title': 'Mag',
+                                'type': 'ARRAY',
+                            },
+                        },
+                        'required': ['element', 'mag'],
+                        'title': 'InitMagParam',
+                        'type': 'OBJECT',
+                    },
+                    'max_steps': {
+                        'default': 100,
+                        'title': 'Max Steps',
+                        'type': 'INTEGER',
+                    },
+                    'relax': {'default': False, 'title': 'Relax', 'type': 'BOOLEAN'},
+                    'relax_cell': {
+                        'default': True,
+                        'title': 'Relax Cell',
+                        'type': 'BOOLEAN',
+                    },
+                    'relax_precision': {
+                        'default': 'medium',
+                        'enum': ['low', 'medium', 'high'],
+                        'title': 'Relax Precision',
+                        'type': 'STRING',
+                    },
+                    'relax_method': {
+                        'default': 'cg',
+                        'enum': ['cg', 'bfgs', 'bfgs_trad', 'cg_bfgs', 'sd', 'fire'],
+                        'title': 'Relax Method',
+                        'type': 'STRING',
+                    },
+                    'fixed_axes': {
+                        'enum': [
+                            'None',
+                            'volume',
+                            'shape',
+                            'a',
+                            'b',
+                            'c',
+                            'ab',
+                            'ac',
+                            'bc',
+                        ],
+                        'title': 'Fixed Axes',
+                        'type': 'STRING',
+                    },
+                    'vacuum_direction': {
+                        'default': 'z',
+                        'enum': ['x', 'y', 'z'],
+                        'title': 'Vacuum Direction',
+                        'type': 'STRING',
+                    },
+                    'dipole_correction': {
+                        'default': False,
+                        'title': 'Dipole Correction',
+                        'type': 'BOOLEAN',
+                    },
+                    'executor': {
+                        'any_of': [
+                            {'type': 'OBJECT'},
+                            {'nullable': True, 'type': 'OBJECT'},
+                        ],
+                        'title': 'Executor',
+                        'type': 'OBJECT',
+                    },
+                    'storage': {
+                        'any_of': [
+                            {'type': 'OBJECT'},
+                            {'nullable': True, 'type': 'OBJECT'},
+                        ],
+                        'title': 'Storage',
+                        'type': 'OBJECT',
+                    },
+                },
+                'required': ['stru_file'],
+                'title': 'abacus_cal_work_functionArguments',
+                'type': 'OBJECT',
+            }
+        }
     ]
-    with open(
-        '/agents/matmaster_agent/function_declaration',
-        'rb',
-    ) as f:
-        function_declaration = pickle.load(f)
 
-    DynamicToolArgsSchema = create_tool_args_schema(
+    missing_tool_args = ['fixed_axes']
+
+    DynamicToolArgsSchema, ToolSchema = create_tool_args_schema(
         missing_tool_args, function_declaration
     )
     model_json_schema = DynamicToolArgsSchema.model_json_schema()
