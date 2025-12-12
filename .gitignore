@@ -30,4 +30,4 @@ log
 *.ipynb
 function_declaration
 parameter
-agents/parameters_output/
+parameters_output/

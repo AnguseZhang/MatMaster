@@ -36,8 +36,13 @@ from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.sub_agents.tools import ALL_TOOLS
 from agents.matmaster_agent.utils.event_utils import (
     all_text_event,
-    save_parameters_to_json,
     update_state_event,
+)
+from agents.matmaster_agent.utils.parameters_utils import (
+    _get_parameter_type,
+    _is_structure_file_parameter,
+    _is_structure_output_tool,
+    save_parameters_to_json,
 )
 
 logger = logging.getLogger(__name__)
@@ -115,10 +120,6 @@ async def collect_tool_params_parallel(
                         )
                         if function_declarations
                         else None
-                    )
-
-                    from agents.matmaster_agent.utils.event_utils import (
-                        _is_structure_output_tool,
                     )
 
                     if _is_structure_output_tool(prev_tool_name, prev_decl):
@@ -389,10 +390,6 @@ async def collect_tool_params_parallel(
                     # 从 function_declarations 中动态识别结构文件参数
                     structure_file_params = []
                     if current_function_declaration:
-                        from agents.matmaster_agent.utils.event_utils import (
-                            _get_parameter_type,
-                            _is_structure_file_parameter,
-                        )
 
                         properties = (
                             current_function_declaration[0]
