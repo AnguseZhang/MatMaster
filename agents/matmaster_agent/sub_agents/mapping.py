@@ -284,7 +284,7 @@ ALL_TOOLSET_DICT = {
     },
     'smiles_conversion_toolset': {'toolset': smiles_conversion_toolset, 'image': ''},
     'retrosyn_toolset': {'toolset': retrosyn_toolset, 'image': ''},
-    'uni_elf_toolset': {'toolset': unielf_toolset, 'image': ''},
+    'unielf_toolset': {'toolset': unielf_toolset, 'image': ''},
     'compdart_toolset': {
         'toolset': compdart_toolset,
         'image': AGENT_TOOLSET_CONFIG[COMPDART_AGENT_NAME]['image'],

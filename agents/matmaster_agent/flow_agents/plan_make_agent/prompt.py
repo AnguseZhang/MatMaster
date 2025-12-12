@@ -37,4 +37,14 @@ EXECUTION PRINCIPLES:
 - Maintain logical flow in step sequencing
 - Ensure descriptions clearly communicate purpose
 - Validate tool compatibility before assignment
+
+EXECUTION ARCHITECTURE GUIDELINES:
+- **Structure Optimization First**: If the user requests structure optimization followed by other calculations (e.g., DOS, band structure, phonon), the optimization step MUST come first, and its output (optimized structure) should be used as input for subsequent calculations.
+- **Parallel Calculations**: If multiple calculations (e.g., DOS and band structure) both require the same optimized structure as input, they can be planned as separate steps that both depend on the optimization step. The plan should reflect this dependency clearly in the step descriptions.
+- **Example Architecture**:
+  * Step 1: optimize_structure (optimize the input structure)
+  * Step 2: abacus_dos_run (calculate DOS using the optimized structure from Step 1)
+  * Step 3: abacus_cal_band (calculate band structure using the optimized structure from Step 1)
+  * Note: Steps 2 and 3 both depend on Step 1's output, but are independent of each other.
+- **Clear Dependencies**: When a step depends on a previous step's output, explicitly mention this in the step description (e.g., "using the optimized structure from the previous step").
 """

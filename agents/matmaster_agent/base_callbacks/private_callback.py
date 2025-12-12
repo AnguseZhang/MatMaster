@@ -56,10 +56,62 @@ logger.setLevel(logging.INFO)
 async def inject_function_declarations(
     callback_context: CallbackContext, llm_request: LlmRequest
 ) -> Optional[LlmResponse]:
-    callback_context.state['function_declarations'] = [
+    # 获取当前请求的 function_declarations
+    current_function_declarations = [
         item.to_json_dict()
         for item in llm_request.config.tools[0].function_declarations
     ]
+
+    # 合并到现有的 function_declarations（而不是覆盖）
+    # 这样可以保留之前收集的所有工具的 function_declarations
+    existing_function_declarations = callback_context.state.get(
+        'function_declarations', []
+    )
+
+    # 如果 existing_function_declarations 是字典（旧格式），转换为列表
+    if isinstance(existing_function_declarations, dict):
+        existing_function_declarations = []
+        logger.warning(
+            f'[{MATMASTER_AGENT_NAME}] function_declarations was a dict, converting to list'
+        )
+
+    # 创建一个字典，以 tool_name 为 key，避免重复
+    function_declarations_dict = {
+        decl.get('name'): decl
+        for decl in existing_function_declarations
+        if isinstance(decl, dict) and decl.get('name')
+    }
+
+    # 添加或更新当前请求的 function_declarations
+    for decl in current_function_declarations:
+        tool_name = decl.get('name')
+        if tool_name:
+            function_declarations_dict[tool_name] = decl
+            logger.debug(
+                f'[{MATMASTER_AGENT_NAME}] Added/updated function_declaration for {tool_name}'
+            )
+
+    # 更新 state
+    merged_function_declarations = list(function_declarations_dict.values())
+    callback_context.state['function_declarations'] = merged_function_declarations
+
+    # 重要：确保 function_declarations 被保存到 session.state（如果 callback_context 有 session 属性）
+    # 在 ADK 中，callback_context.state 应该就是 session.state，但为了保险起见，我们显式同步
+    if hasattr(callback_context, 'session') and hasattr(
+        callback_context.session, 'state'
+    ):
+        callback_context.session.state['function_declarations'] = (
+            merged_function_declarations
+        )
+        logger.debug(
+            f'[{MATMASTER_AGENT_NAME}] Also saved function_declarations to callback_context.session.state'
+        )
+
+    logger.info(
+        f'[{MATMASTER_AGENT_NAME}] Merged function_declarations: '
+        f'total count = {len(merged_function_declarations)}, '
+        f'tool names = {[d.get("name") for d in merged_function_declarations]}'
+    )
 
 
 # after_model_callback

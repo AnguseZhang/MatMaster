@@ -516,18 +516,27 @@ class MatMasterFlowAgent(LlmAgent):
                             yield parameters_event
 
                     # 阶段4: 用户确认参数
+                    # 在显示参数确认卡片之前，先重置 parameters_confirm
+                    if ctx.session.state.get('parameters_confirm', {}).get(
+                        'flag', False
+                    ):
+                        yield update_state_event(
+                            ctx,
+                            state_delta={
+                                'parameters_confirm': {
+                                    'flag': False,
+                                    'reason': 'Parameters displayed, waiting for user confirmation',
+                                }
+                            },
+                        )
+
                     # 检查参数是否已确认
                     parameters_confirm = ctx.session.state.get(
                         'parameters_confirm', {}
                     ).get('flag', False)
-                    if not parameters_confirm:
-                        # 询问用户是否确认参数
-                        for parameters_ask_confirm_event in all_text_event(
-                            ctx, self.name, parameters_ask_confirm_card(), ModelRole
-                        ):
-                            yield parameters_ask_confirm_event
 
-                        # 判断用户是否确认参数
+                    # 如果参数还没有确认，先调用 parameters_confirm_agent 检查用户是否已经确认
+                    if not parameters_confirm:
                         async for (
                             parameters_confirm_event
                         ) in self.parameters_confirm_agent.run_async(ctx):
@@ -536,6 +545,14 @@ class MatMasterFlowAgent(LlmAgent):
                         parameters_confirm = ctx.session.state.get(
                             'parameters_confirm', {}
                         ).get('flag', False)
+
+                    # 如果参数还没有确认，显示参数确认卡片，等待用户确认
+                    if not parameters_confirm:
+                        # 询问用户是否确认参数
+                        for parameters_ask_confirm_event in all_text_event(
+                            ctx, self.name, parameters_ask_confirm_card(), ModelRole
+                        ):
+                            yield parameters_ask_confirm_event
 
                     # 阶段5: 如果参数已确认，生成 JSON 文件
                     if parameters_confirm:

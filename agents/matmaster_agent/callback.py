@@ -110,8 +110,9 @@ async def matmaster_prepare_state(
     # 用户意图
     callback_context.state['intent'] = callback_context.state.get('intent', {})
     # 函数签名 From Server
+    # 因为 function_declarations 应该是一个列表
     callback_context.state['function_declarations'] = callback_context.state.get(
-        'function_declarations', {}
+        'function_declarations', []
     )
     # 单次计划涉及的所有场景
     callback_context.state['scenes'] = callback_context.state.get('scenes', [])
