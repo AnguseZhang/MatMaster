@@ -41,11 +41,8 @@ from agents.matmaster_agent.flow_agents.intent_agent.schema import IntentSchema
 from agents.matmaster_agent.flow_agents.parameters_agent.agent import (
     ParametersAgent,
 )
-from agents.matmaster_agent.flow_agents.parameters_agent.confirm_prompt import (
+from agents.matmaster_agent.flow_agents.parameters_confirm_agent.prompt import (
     PARAMETERS_CONFIRM_INSTRUCTION,
-)
-from agents.matmaster_agent.flow_agents.parameters_agent.confirm_schema import (
-    ParametersConfirmSchema,
 )
 from agents.matmaster_agent.flow_agents.plan_confirm_agent.prompt import (
     PlanConfirmInstruction,
@@ -187,7 +184,7 @@ class MatMasterFlowAgent(LlmAgent):
             instruction=PARAMETERS_CONFIRM_INSTRUCTION,
             disallow_transfer_to_parent=True,
             disallow_transfer_to_peers=True,
-            output_schema=ParametersConfirmSchema,
+            output_schema=PlanConfirmSchema,
             state_key='parameters_confirm',
         )
 
