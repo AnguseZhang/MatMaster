@@ -66,7 +66,6 @@ from agents.matmaster_agent.flow_agents.schema import FlowStatusEnum, PlanSchema
 from agents.matmaster_agent.flow_agents.style import (
     all_summary_card,
     parameters_ask_confirm_card,
-    plan_ask_confirm_card,
 )
 from agents.matmaster_agent.flow_agents.utils import (
     check_plan,
@@ -181,15 +180,6 @@ class MatMasterFlowAgent(LlmAgent):
             # instruction=PLAN_INFO_INSTRUCTION,
         )
 
-        self._parameters_agent = ParametersAgent(
-            execution_agent=self._execution_agent,
-            name='parameters_agent',
-            model=MatMasterLlmConfig.default_litellm_model,
-            description='收集计划中所有工具的参数',
-            disallow_transfer_to_parent=True,
-            disallow_transfer_to_peers=True,
-        )
-
         self._parameters_confirm_agent = SchemaAgent(
             name='parameters_confirm_agent',
             model=MatMasterLlmConfig.tool_schema_model,
@@ -218,6 +208,13 @@ class MatMasterFlowAgent(LlmAgent):
                 for sub_agent in AGENT_CLASS_MAPPING.values()
             ]
             + [execution_result_agent],
+        )
+
+        self._parameters_agent = ParametersAgent(
+            execution_agent=self._execution_agent,
+            name='parameters_agent',
+            model=MatMasterLlmConfig.default_litellm_model,
+            description='收集计划中所有工具的参数',
         )
 
         self._analysis_agent = DisallowTransferLlmAgent(

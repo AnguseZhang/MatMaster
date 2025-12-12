@@ -240,7 +240,7 @@ from agents.matmaster_agent.sub_agents.thermoelectric_agent.agent import (
 from agents.matmaster_agent.sub_agents.thermoelectric_agent.constant import (
     ThermoelectricAgentName,
 )
-from agents.matmaster_agent.sub_agents.tools import ALL_TOOLS
+from agents.matmaster_agent.sub_agents.tools import AGENT_TOOLSET_CONFIG, ALL_TOOLS
 from agents.matmaster_agent.sub_agents.traj_analysis_agent.agent import (
     TrajAnalysisAgent,
     traj_analysis_toolset,
@@ -270,72 +270,35 @@ from agents.matmaster_agent.sub_agents.XRD_agent.constant import (
     XRD_AGENT_NAME,
 )
 
-# Agent 镜像地址映射（使用字符串作为 key，避免循环导入）
-AGENT_IMAGE_ADDRESS = {
-    'ABACUS_calculation_agent': 'registry.dp.tech/dptech/dp/native/prod-22618/abacusagenttools-matmaster-new-tool:v0.2.3',
-    'apex_agent': 'registry.dp.tech/dptech/dp/native/prod-16664/apex-agent-all:0.2.1',
-    'LAMMPS_agent': 'registry.dp.tech/dptech/lammps-agent:9ae769be',
-    'vaspkit_agent': 'registry.dp.tech/dptech/dp/native/prod-16664/vaspkit-agent:0.0.1',
-    'dpa_calculator_agent': 'registry.dp.tech/dptech/dpa-calculator:a86b37cc',
-    'compdart_agent': 'registry.dp.tech/dptech/dpa-calculator:50e69ca3',
-    'piloteye_electro_agent': 'registry.dp.tech/dptech/dp/native/prod-13375/piloteye:mcpv03',
-    'organic_reaction_agent': 'registry.dp.tech/dptech/dp/native/prod-13364/autots:0.1.0',
-    'HEA_assistant_agent': 'registry.dp.tech/dptech/dp/native/prod-485756/mcphub:heafinal',
-    'thermoelectric_agent': 'registry.dp.tech/dptech/dp/native/prod-435364/dpa-thermo-superconductor:20',
-    'superconductor_agent': 'registry.dp.tech/dptech/dp/native/prod-435364/dpa-thermo-superconductor:20',
-    'finetune_dpa_agent': 'registry.dp.tech/dptech/dp/native/prod-435364/dpa-thermo-superconductor:20',
-    'convexhull_agent': 'registry.dp.tech/dptech/dp/native/prod-435364/dpa-thermo-convexhull:20',
-    'structure_generate_agent': 'registry.dp.tech/dptech/dpa-calculator:46bc2c88',
-}
-
-# Agent 机器类型映射（使用字符串作为 key，避免循环导入）
-# 如果 agent 未在此字典中，默认使用 'c2_m4_cpu'
-AGENT_MACHINE_TYPE = {
-    'ABACUS_calculation_agent': 'c32_m128_cpu',
-    'apex_agent': 'c2_m4_cpu',  # 默认值，未明确设置
-    'LAMMPS_agent': 'c16_m64_1 * NVIDIA 4090',
-    'vaspkit_agent': 'c2_m8_cpu',
-    'dpa_calculator_agent': 'c16_m64_1 * NVIDIA 4090',
-    'compdart_agent': 'c16_m64_1 * NVIDIA 4090',
-    'piloteye_electro_agent': 'c2_m8_cpu',
-    'organic_reaction_agent': 'c32_m128_cpu',
-    'HEA_assistant_agent': 'c2_m4_cpu',  # 默认值，未明确设置
-    'thermoelectric_agent': 'c16_m64_1 * NVIDIA 4090',
-    'superconductor_agent': 'c16_m64_1 * NVIDIA 4090',
-    'finetune_dpa_agent': 'c16_m64_1 * NVIDIA 4090',
-    'convexhull_agent': 'c16_m64_1 * NVIDIA 4090',
-    'structure_generate_agent': 'c8_m32_1 * NVIDIA 4090',
-}
-
 ALL_TOOLSET_DICT = {
     'abacus_toolset': {
         'toolset': abacus_toolset,
-        'image': AGENT_IMAGE_ADDRESS.get('ABACUS_calculation_agent', ''),
+        'image': AGENT_TOOLSET_CONFIG[ABACUS_AGENT_NAME]['image'],
     },
     'apex_toolset': {
         'toolset': apex_toolset,
-        'image': AGENT_IMAGE_ADDRESS.get('apex_agent', ''),
+        'image': AGENT_TOOLSET_CONFIG[ApexAgentName]['image'],
     },
     'smiles_conversion_toolset': {'toolset': smiles_conversion_toolset, 'image': ''},
     'retrosyn_toolset': {'toolset': retrosyn_toolset, 'image': ''},
-    'uni_elf_toolset': {'toolset': uni_elf_toolset, 'image': ''},
+    'uni_elf_toolset': {'toolset': unielf_toolset, 'image': ''},
     'compdart_toolset': {
         'toolset': compdart_toolset,
-        'image': AGENT_IMAGE_ADDRESS.get('compdart_agent', ''),
+        'image': AGENT_TOOLSET_CONFIG[COMPDART_AGENT_NAME]['image'],
     },
     'doe_toolset': {'toolset': doe_toolset, 'image': ''},
     'document_parser_toolset': {'toolset': document_parser_toolset, 'image': ''},
     'dpa_toolset': {
         'toolset': dpa_toolset,
-        'image': AGENT_IMAGE_ADDRESS.get('dpa_calculator_agent', ''),
+        'image': AGENT_TOOLSET_CONFIG[DPACalulator_AGENT_NAME]['image'],
     },
     'finetune_dpa_toolset': {
         'toolset': finetune_dpa_toolset,
-        'image': AGENT_IMAGE_ADDRESS.get('finetune_dpa_agent', ''),
+        'image': AGENT_TOOLSET_CONFIG[FinetuneDPAAgentName]['image'],
     },
     'hea_assistant_toolset': {
         'toolset': hea_assistant_toolset,
-        'image': AGENT_IMAGE_ADDRESS.get('HEA_assistant_agent', ''),
+        'image': AGENT_TOOLSET_CONFIG[HEA_assistant_AgentName]['image'],
     },
     'hea_calculator_toolset': {'toolset': hea_calculator_toolset, 'image': ''},
     'hea_kb_toolset': {'toolset': hea_kb_toolset, 'image': ''},
@@ -349,44 +312,50 @@ ALL_TOOLSET_DICT = {
     'mofdb_toolset': {'toolset': mofdb_toolset, 'image': ''},
     'organic_reaction_toolset': {
         'toolset': organic_reaction_toolset,
-        'image': AGENT_IMAGE_ADDRESS.get('organic_reaction_agent', ''),
+        'image': AGENT_TOOLSET_CONFIG[ORGANIC_REACTION_AGENT_NAME]['image'],
     },
     'perovskite_toolset': {'toolset': perovskite_toolset, 'image': ''},
     'piloteye_electro_toolset': {
         'toolset': piloteye_electro_toolset,
-        'image': AGENT_IMAGE_ADDRESS.get('piloteye_electro_agent', ''),
+        'image': AGENT_TOOLSET_CONFIG[PILOTEYE_ELECTRO_AGENT_NAME]['image'],
     },
     'structure_generate_toolset': {
         'toolset': structure_generate_toolset,
-        'image': AGENT_IMAGE_ADDRESS.get('structure_generate_agent', ''),
+        'image': AGENT_TOOLSET_CONFIG[StructureGenerateAgentName]['image'],
     },
     'superconductor_toolset': {
         'toolset': superconductor_toolset,
-        'image': AGENT_IMAGE_ADDRESS.get('superconductor_agent', ''),
+        'image': AGENT_TOOLSET_CONFIG[SuperconductorAgentName]['image'],
     },
     'thermoelectric_toolset': {
         'toolset': thermoelectric_toolset,
-        'image': AGENT_IMAGE_ADDRESS.get('thermoelectric_agent', ''),
+        'image': AGENT_TOOLSET_CONFIG[ThermoelectricAgentName]['image'],
     },
     'traj_analysis_toolset': {'toolset': traj_analysis_toolset, 'image': ''},
     'visualizer_toolset': {'toolset': visualizer_toolset, 'image': ''},
     'lammps_toolset': {
         'toolset': lammps_toolset,
-        'image': AGENT_IMAGE_ADDRESS.get('LAMMPS_agent', ''),
+        'image': AGENT_TOOLSET_CONFIG[LAMMPS_AGENT_NAME]['image'],
     },
     'vaspkit_toolset': {
         'toolset': vaspkit_toolset,
-        'image': AGENT_IMAGE_ADDRESS.get('vaspkit_agent', ''),
+        'image': AGENT_TOOLSET_CONFIG[VASPKIT_AGENT_NAME]['image'],
     },
     'science_navigator_toolset': {'toolset': science_navigator_toolset, 'image': ''},
     'convexhull_toolset': {
         'toolset': convexhull_toolset,
-        'image': AGENT_IMAGE_ADDRESS.get('convexhull_agent', ''),
+        'image': AGENT_TOOLSET_CONFIG[ConvexHullAgentName]['image'],
     },
     'nmr_toolset': {'toolset': nmr_toolset, 'image': ''},
     'xrd_toolset': {'toolset': xrd_toolset, 'image': ''},
-    'electron_microscope_toolset': {'toolset': electron_microscope_toolset, 'image': ''},
-    'physical_adsorption_toolset': {'toolset': physical_adsorption_toolset, 'image': ''},
+    'electron_microscope_toolset': {
+        'toolset': electron_microscope_toolset,
+        'image': '',
+    },
+    'physical_adsorption_toolset': {
+        'toolset': physical_adsorption_toolset,
+        'image': '',
+    },
 }
 
 AGENT_CLASS_MAPPING = {

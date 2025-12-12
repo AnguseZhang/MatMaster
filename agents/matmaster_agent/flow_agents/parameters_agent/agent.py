@@ -5,18 +5,23 @@ from typing import AsyncGenerator, Dict, List
 
 from google.adk.agents import InvocationContext
 from google.adk.events import Event
-from pydantic import model_validator
 
 from agents.matmaster_agent.base_agents.disallow_transfer_agent import (
     DisallowTransferLlmAgent,
 )
-from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME, ModelRole
-from agents.matmaster_agent.flow_agents.parameters_agent.constant import (
-    PARAMETERS_AGENT_NAME,
+from agents.matmaster_agent.base_agents.recommend_summary_agent.recommend_params_agent.schema import (
+    create_tool_args_schema,
 )
-from agents.matmaster_agent.flow_agents.parameters_agent.prompt import (
-    PARAMETERS_AGENT_DESCRIPTION,
-    PARAMETERS_AGENT_INSTRUCTION,
+from agents.matmaster_agent.base_agents.recommend_summary_agent.tool_call_info_agent.prompt import (
+    gen_tool_call_info_instruction,
+)
+from agents.matmaster_agent.base_agents.recommend_summary_agent.tool_call_info_agent.utils import (
+    update_tool_call_info_with_function_declarations,
+    update_tool_call_info_with_recommend_params,
+)
+from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME, ModelRole
+from agents.matmaster_agent.flow_agents.execution_agent.agent import (
+    MatMasterSupervisorAgent,
 )
 from agents.matmaster_agent.flow_agents.parameters_agent.schema import (
     AsyncToolParamsSchema,
@@ -27,17 +32,6 @@ from agents.matmaster_agent.flow_agents.utils import (
     get_agent_name,
     get_async_tool_steps,
 )
-from agents.matmaster_agent.job_agents.recommend_params_agent.schema import (
-    create_tool_args_schema,
-)
-from agents.matmaster_agent.job_agents.tool_call_info_agent.prompt import (
-    gen_tool_call_info_instruction,
-)
-from agents.matmaster_agent.job_agents.tool_call_info_agent.utils import (
-    update_tool_call_info_with_function_declarations,
-    update_tool_call_info_with_recommend_params,
-)
-from agents.matmaster_agent.llm_config import MatMasterLlmConfig
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.sub_agents.tools import ALL_TOOLS
 from agents.matmaster_agent.utils.event_utils import (
@@ -336,49 +330,9 @@ async def collect_tool_params_parallel(
 
 
 class ParametersAgent(DisallowTransferLlmAgent):
-    """Parameters Agent 负责收集计划中所有异步任务的参数并生成 JSON 文件"""
+    execution_agent: MatMasterSupervisorAgent
 
-    # 临时存储 execution_agent，用于在 __init__ 中获取
-    _temp_execution_agent: object = None
-
-    @model_validator(mode='before')
-    @classmethod
-    def extract_execution_agent(cls, data):
-        """在验证前提取 execution_agent，避免 Pydantic 验证错误"""
-        if isinstance(data, dict) and 'execution_agent' in data:
-            # 从数据中提取 execution_agent，避免 Pydantic 验证
-            cls._temp_execution_agent = data.pop('execution_agent')
-        return data
-
-    def __init__(self, execution_agent=None, **kwargs):
-        """
-        Args:
-            execution_agent: MatMasterSupervisorAgent 实例，用于访问子代理
-        """
-        # 如果 execution_agent 未传入，从临时存储中获取（model_validator 已提取）
-        if execution_agent is None:
-            execution_agent = self.__class__._temp_execution_agent
-            self.__class__._temp_execution_agent = None  # 清空临时存储
-
-        if execution_agent is None:
-            raise ValueError('execution_agent is required')
-
-        # 先调用父类初始化，不传递 execution_agent（避免 Pydantic 验证错误）
-        super().__init__(
-            name=PARAMETERS_AGENT_NAME,
-            model=MatMasterLlmConfig.default_litellm_model,
-            description=PARAMETERS_AGENT_DESCRIPTION,
-            instruction=PARAMETERS_AGENT_INSTRUCTION,
-            disallow_transfer_to_parent=True,
-            disallow_transfer_to_peers=True,
-            **kwargs,
-        )
-        # 使用 object.__setattr__ 直接设置 execution_agent，绕过 Pydantic 验证
-        object.__setattr__(self, 'execution_agent', execution_agent)
-
-    async def _run_async_impl(
-        self, ctx: InvocationContext
-    ) -> AsyncGenerator[Event, None]:
+    async def _run_events(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
         """
         ParametersAgent 的主要执行逻辑
 

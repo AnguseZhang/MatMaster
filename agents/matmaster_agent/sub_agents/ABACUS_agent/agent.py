@@ -7,14 +7,16 @@ from agents.matmaster_agent.job_agents.agent import BaseAsyncJobAgent
 from agents.matmaster_agent.llm_config import LLMConfig
 from agents.matmaster_agent.logger import matmodeler_logging_handler
 from agents.matmaster_agent.sub_agents.ABACUS_agent.constant import (
-    ABACUS_CALCULATOR_BOHRIUM_EXECUTOR,
-    ABACUS_CALCULATOR_BOHRIUM_STORAGE,
     ABACUS_CALCULATOR_URL,
 )
 from agents.matmaster_agent.sub_agents.ABACUS_agent.prompt import (
     ABACUS_AGENT_DESCRIPTION,
     ABACUS_AGENT_INSTRUCTION,
     ABACUS_AGENT_NAME,
+)
+from agents.matmaster_agent.sub_agents.ABACUS_agent.toolset import (
+    ABACUS_CALCULATOR_BOHRIUM_EXECUTOR,
+    ABACUS_CALCULATOR_BOHRIUM_STORAGE,
 )
 
 abacus_toolset = CalculationMCPToolset(

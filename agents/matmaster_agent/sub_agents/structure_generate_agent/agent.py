@@ -1,20 +1,10 @@
-import copy
-
 from dp.agent.adapter.adk import CalculationMCPToolset
 from google.adk.agents import BaseAgent
 from google.adk.tools.mcp_tool.mcp_session_manager import SseServerParams
 
-from agents.matmaster_agent.constant import (
-    BohriumExecutor,
-    BohriumStorge,
-)
 from agents.matmaster_agent.job_agents.agent import BaseAsyncJobAgent
 from agents.matmaster_agent.llm_config import LLMConfig
 from agents.matmaster_agent.logger import matmodeler_logging_handler
-from agents.matmaster_agent.sub_agents.mapping import (
-    AGENT_IMAGE_ADDRESS,
-    AGENT_MACHINE_TYPE,
-)
 from agents.matmaster_agent.sub_agents.structure_generate_agent.callback import (
     regulate_savename_suffix,
 )
@@ -25,16 +15,7 @@ from agents.matmaster_agent.sub_agents.structure_generate_agent.prompt import (
 
 from .constant import StructureGenerateAgentName, StructureGenerateServerUrl
 from .finance import cost_func
-
-StructureGenerateBohriumExecutor = copy.deepcopy(BohriumExecutor)
-StructureGenerateBohriumStorge = copy.deepcopy(BohriumStorge)
-
-StructureGenerateBohriumExecutor['machine']['remote_profile']['image_address'] = (
-    AGENT_IMAGE_ADDRESS.get(StructureGenerateAgentName, '')
-)
-StructureGenerateBohriumExecutor['machine']['remote_profile']['machine_type'] = (
-    AGENT_MACHINE_TYPE.get(StructureGenerateAgentName) or 'c2_m4_cpu'
-)
+from .toolset import StructureGenerateBohriumExecutor, StructureGenerateBohriumStorge
 
 sse_params = SseServerParams(
     url=StructureGenerateServerUrl,

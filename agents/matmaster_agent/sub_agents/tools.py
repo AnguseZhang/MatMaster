@@ -139,6 +139,7 @@ from agents.matmaster_agent.sub_agents.thermoelectric_agent.constant import (
 from agents.matmaster_agent.sub_agents.traj_analysis_agent.constant import (
     TrajAnalysisAgentName,
 )
+from agents.matmaster_agent.sub_agents.vaspkit_agent.constant import VASPKIT_AGENT_NAME
 from agents.matmaster_agent.sub_agents.visualizer_agent.constant import (
     VisualizerAgentName,
 )
@@ -752,5 +753,64 @@ ALL_TOOLS = {
         'scene': [SceneEnum.UNIVERSAL],
         'description': 'Universal File Parsing Tool.Used to parse various file contents, including but not limited to TXT, PDF, Word, Excel, and text files, to extract key information and data.',
         'bypass_confirmation': True,
+    },
+}
+
+AGENT_TOOLSET_CONFIG = {
+    ABACUS_AGENT_NAME: {
+        'image': 'registry.dp.tech/dptech/dp/native/prod-22618/abacusagenttools-matmaster-new-tool:v0.2.3',
+        'machine_type': 'c32_m128_cpu',
+    },
+    ApexAgentName: {
+        'image': 'registry.dp.tech/dptech/dp/native/prod-16664/apex-agent-all:0.2.1',
+        'machine_type': 'c2_m4_cpu',
+    },
+    LAMMPS_AGENT_NAME: {
+        'image': 'registry.dp.tech/dptech/lammps-agent:9ae769be',
+        'machine_type': 'c16_m64_1 * NVIDIA 4090',
+    },
+    VASPKIT_AGENT_NAME: {
+        'image': 'registry.dp.tech/dptech/dp/native/prod-16664/vaspkit-agent:0.0.1',
+        'machine_type': 'c2_m8_cpu',
+    },
+    DPACalulator_AGENT_NAME: {
+        'image': 'registry.dp.tech/dptech/dpa-calculator:a86b37cc',
+        'machine_type': 'c16_m64_1 * NVIDIA 4090',
+    },
+    COMPDART_AGENT_NAME: {
+        'image': 'registry.dp.tech/dptech/dpa-calculator:50e69ca3',
+        'machine_type': 'c16_m64_1 * NVIDIA 4090',
+    },
+    PILOTEYE_ELECTRO_AGENT_NAME: {
+        'image': 'registry.dp.tech/dptech/dp/native/prod-13375/piloteye:mcpv03',
+        'machine_type': 'c2_m8_cpu',
+    },
+    ORGANIC_REACTION_AGENT_NAME: {
+        'image': 'registry.dp.tech/dptech/dp/native/prod-13364/autots:0.1.0',
+        'machine_type': 'c32_m128_cpu',
+    },
+    HEA_assistant_AgentName: {
+        'image': 'registry.dp.tech/dptech/dp/native/prod-485756/mcphub:heafinal',
+        'machine_type': 'c2_m4_cpu',
+    },
+    ThermoelectricAgentName: {
+        'image': 'registry.dp.tech/dptech/dp/native/prod-435364/dpa-thermo-superconductor:20',
+        'machine_type': 'c16_m64_1 * NVIDIA 4090',
+    },
+    SuperconductorAgentName: {
+        'image': 'registry.dp.tech/dptech/dp/native/prod-435364/dpa-thermo-superconductor:20',
+        'machine_type': 'c16_m64_1 * NVIDIA 4090',
+    },
+    FinetuneDPAAgentName: {
+        'image': 'registry.dp.tech/dptech/dp/native/prod-435364/dpa-thermo-superconductor:20',
+        'machine_type': 'c16_m64_1 * NVIDIA 4090',
+    },
+    ConvexHullAgentName: {
+        'image': 'registry.dp.tech/dptech/dp/native/prod-435364/dpa-thermo-convexhull:20',
+        'machine_type': 'c16_m64_1 * NVIDIA 4090',
+    },
+    StructureGenerateAgentName: {
+        'image': 'registry.dp.tech/dptech/dpa-calculator:46bc2c88',
+        'machine_type': 'c8_m32_1 * NVIDIA 4090',
     },
 }

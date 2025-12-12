@@ -11,14 +11,16 @@ from agents.matmaster_agent.sub_agents.DPACalculator_agent.callback import (
 )
 from agents.matmaster_agent.sub_agents.DPACalculator_agent.constant import (
     DPACalulator_AGENT_NAME,
-    DPACalulator_BOHRIUM_EXECUTOR,
-    DPACalulator_BOHRIUM_STORAGE,
     DPAMCPServerUrl,
 )
 from agents.matmaster_agent.sub_agents.DPACalculator_agent.finance import dpa_cost_func
 from agents.matmaster_agent.sub_agents.DPACalculator_agent.prompt import (
     DPAAgentDescription,
     DPAAgentInstruction,
+)
+from agents.matmaster_agent.sub_agents.DPACalculator_agent.toolset import (
+    DPACalulator_BOHRIUM_EXECUTOR,
+    DPACalulator_BOHRIUM_STORAGE,
 )
 
 dpa_toolset = CalculationMCPToolset(

@@ -8,13 +8,15 @@ from agents.matmaster_agent.llm_config import LLMConfig
 from agents.matmaster_agent.logger import matmodeler_logging_handler
 from agents.matmaster_agent.sub_agents.organic_reaction_agent.constant import (
     ORGANIC_REACTION_AGENT_NAME,
-    ORGANIC_REACTION_BOHRIUM_EXECUTOR,
-    ORGANIC_REACTION_BOHRIUM_STORAGE,
     ORGANIC_REACTION_SERVER_URL,
 )
 from agents.matmaster_agent.sub_agents.organic_reaction_agent.prompt import (
     description,
     instruction_en,
+)
+from agents.matmaster_agent.sub_agents.organic_reaction_agent.toolset import (
+    ORGANIC_REACTION_BOHRIUM_EXECUTOR,
+    ORGANIC_REACTION_BOHRIUM_STORAGE,
 )
 
 organic_reaction_toolset = CalculationMCPToolset(

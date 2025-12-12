@@ -24,6 +24,7 @@ from agents.matmaster_agent.style import (
     photon_consume_success_card,
     tool_response_failed_card,
 )
+from agents.matmaster_agent.sub_agents.tools import AGENT_TOOLSET_CONFIG
 from agents.matmaster_agent.utils.finance import photon_consume
 from agents.matmaster_agent.utils.helper_func import (
     is_algorithm_error,
@@ -489,10 +490,9 @@ def _get_agent_machine_type(agent_name: str) -> str:
     Returns:
         str: machine_type
     """
-    from agents.matmaster_agent.sub_agents.mapping import AGENT_MACHINE_TYPE
 
     # 从 mapping.py 中获取 machine_type，如果未设置则使用默认值
-    return AGENT_MACHINE_TYPE.get(agent_name, 'c2_m4_cpu')
+    return AGENT_TOOLSET_CONFIG[agent_name].get('machine_type', 'c2_m4_cpu')
 
 
 def save_parameters_to_json(
@@ -513,8 +513,6 @@ def save_parameters_to_json(
     import os
     import uuid
     from datetime import datetime
-
-    from agents.matmaster_agent.sub_agents.mapping import AGENT_IMAGE_ADDRESS
 
     # 创建输出目录
     output_dir = os.path.join(os.getcwd(), 'parameters_output')
@@ -592,7 +590,7 @@ def save_parameters_to_json(
 
         # 获取 machine_type 和 image
         machine_type = _get_agent_machine_type(agent_name)
-        image = AGENT_IMAGE_ADDRESS.get(agent_name, '')
+        image = AGENT_TOOLSET_CONFIG[agent_name].get('image', '')
 
         # 构建节点
         node = {

@@ -8,13 +8,15 @@ from agents.matmaster_agent.llm_config import LLMConfig
 from agents.matmaster_agent.logger import matmodeler_logging_handler
 from agents.matmaster_agent.sub_agents.CompDART_agent.constant import (
     COMPDART_AGENT_NAME,
-    COMPDART_BOHRIUM_EXECUTOR,
-    COMPDART_BOHRIUM_STORAGE,
     COMPDART_MCPServerUrl,
 )
 from agents.matmaster_agent.sub_agents.CompDART_agent.prompt import (
     CompDARTAgentDescription,
     CompDARTAgentInstruction,
+)
+from agents.matmaster_agent.sub_agents.CompDART_agent.toolset import (
+    COMPDART_BOHRIUM_EXECUTOR,
+    COMPDART_BOHRIUM_STORAGE,
 )
 
 compdart_toolset = CalculationMCPToolset(

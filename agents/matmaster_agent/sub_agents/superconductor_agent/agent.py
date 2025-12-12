@@ -1,37 +1,20 @@
-import copy
-
 from dp.agent.adapter.adk import CalculationMCPToolset
 from google.adk.agents import BaseAgent
 from google.adk.tools.mcp_tool.mcp_session_manager import SseServerParams
 
 from agents.matmaster_agent.constant import (
     MATMASTER_AGENT_NAME,
-    BohriumExecutor,
-    BohriumStorge,
 )
 from agents.matmaster_agent.job_agents.agent import BaseAsyncJobAgent
 from agents.matmaster_agent.llm_config import LLMConfig
 from agents.matmaster_agent.logger import matmodeler_logging_handler
-from agents.matmaster_agent.sub_agents.mapping import (
-    AGENT_IMAGE_ADDRESS,
-    AGENT_MACHINE_TYPE,
-)
 from agents.matmaster_agent.sub_agents.superconductor_agent.prompt import (
     SuperconductorAgentDescription,
     SuperconductorAgentInstruction,
 )
 
 from .constant import SuperconductorAgentName, SuperconductorServerUrl
-
-SuperconductorBohriumExecutor = copy.deepcopy(BohriumExecutor)
-SuperconductorBohriumStorge = copy.deepcopy(BohriumStorge)
-
-SuperconductorBohriumExecutor['machine']['remote_profile']['image_address'] = (
-    AGENT_IMAGE_ADDRESS.get(SuperconductorAgentName, '')
-)
-SuperconductorBohriumExecutor['machine']['remote_profile']['machine_type'] = (
-    AGENT_MACHINE_TYPE.get(SuperconductorAgentName) or 'c2_m4_cpu'
-)
+from .toolset import SuperconductorBohriumExecutor, SuperconductorBohriumStorge
 
 sse_params = SseServerParams(url=SuperconductorServerUrl)
 

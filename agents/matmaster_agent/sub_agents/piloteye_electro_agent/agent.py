@@ -7,14 +7,16 @@ from agents.matmaster_agent.job_agents.agent import BaseAsyncJobAgent
 from agents.matmaster_agent.llm_config import LLMConfig
 from agents.matmaster_agent.logger import matmodeler_logging_handler
 from agents.matmaster_agent.sub_agents.piloteye_electro_agent.constant import (
-    PILOTEYE_BOHRIUM_EXECUTOR,
-    PILOTEYE_BOHRIUM_STORAGE,
     PILOTEYE_SERVER_URL,
 )
 from agents.matmaster_agent.sub_agents.piloteye_electro_agent.prompt import (
     PiloteyeElectroAgentDescription,
     PiloteyeElectroAgentInstruction,
     PiloteyeElectroAgentName,
+)
+from agents.matmaster_agent.sub_agents.piloteye_electro_agent.toolset import (
+    PILOTEYE_BOHRIUM_EXECUTOR,
+    PILOTEYE_BOHRIUM_STORAGE,
 )
 
 # Configure SSE params

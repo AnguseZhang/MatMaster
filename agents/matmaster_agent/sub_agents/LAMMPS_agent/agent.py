@@ -8,9 +8,11 @@ from agents.matmaster_agent.llm_config import LLMConfig
 from agents.matmaster_agent.logger import matmodeler_logging_handler
 from agents.matmaster_agent.sub_agents.LAMMPS_agent.constant import (
     LAMMPS_AGENT_NAME,
+    LAMMPS_URL,
+)
+from agents.matmaster_agent.sub_agents.LAMMPS_agent.toolset import (
     LAMMPS_BOHRIUM_EXECUTOR,
     LAMMPS_BOHRIUM_STORAGE,
-    LAMMPS_URL,
 )
 
 lammps_toolset = CalculationMCPToolset(

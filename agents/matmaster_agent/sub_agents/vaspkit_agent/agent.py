@@ -8,7 +8,6 @@ from agents.matmaster_agent.base_agents.public_agent import (
 from agents.matmaster_agent.constant import (
     LOCAL_EXECUTOR,
     MATMASTER_AGENT_NAME,
-    BohriumStorge,
 )
 from agents.matmaster_agent.llm_config import LLMConfig
 from agents.matmaster_agent.logger import matmodeler_logging_handler
@@ -20,10 +19,13 @@ from agents.matmaster_agent.sub_agents.vaspkit_agent.prompt import (
     VASPKITAgentDescription,
     VASPKITAgentInstruction,
 )
+from agents.matmaster_agent.sub_agents.vaspkit_agent.toolset import (
+    VASPKIT_BOHRIUM_STORAGE,
+)
 
 vaspkit_toolset = CalculationMCPToolset(
     connection_params=SseServerParams(url=VASPKIT_MCP_SERVER_URL),
-    storage=BohriumStorge,
+    storage=VASPKIT_BOHRIUM_STORAGE,
     executor=LOCAL_EXECUTOR,
     logging_callback=matmodeler_logging_handler,
 )
