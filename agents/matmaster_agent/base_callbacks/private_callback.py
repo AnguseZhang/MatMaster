@@ -166,13 +166,13 @@ def filter_function_calls(
             logger.warning(
                 f'{callback_context.session.id} current_function_calls empty， manually build one'
             )
-            current_step = callback_context.state['plan']['steps'][
+            current_step_tool = callback_context.state['plan']['steps'][
                 callback_context.state['plan_index']
-            ]
+            ]['tools'][callback_context.state['tool_index']]
             function_call_id = f"added_{str(uuid.uuid4()).replace('-', '')[:24]}"
             current_function_calls = [
                 {
-                    'name': current_step['tool_name'],
+                    'name': current_step_tool['tool_name'],
                     'args': None,
                     'id': function_call_id,
                 }

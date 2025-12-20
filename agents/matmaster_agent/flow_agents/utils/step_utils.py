@@ -1,7 +1,9 @@
+from typing import Literal
+
 from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
 
 
-def get_step_status(step):
+def get_step_status(step) -> Literal[tuple(PlanStepStatusEnum.__members__.values())]:
     step_relationship = step['relationship']
     if step_relationship == 'any':
         if all(tool['status'] == PlanStepStatusEnum.PLAN for tool in step['tools']):

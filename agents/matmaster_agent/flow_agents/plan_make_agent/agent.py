@@ -8,7 +8,6 @@ from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
 from agents.matmaster_agent.core_agents.base_agents.schema_agent import (
     DisallowTransferAndContentLimitSchemaAgent,
 )
-from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.utils.event_utils import update_state_event
 
@@ -31,8 +30,8 @@ class PlanMakeAgent(DisallowTransferAndContentLimitSchemaAgent):
         exist_step = 0
         update_plan_steps = []
         for step in update_plan['steps']:
-            if not step['tool_name']:
-                step['tool_name'] = 'llm_tool'
+            if not step['tools'][0]['tool_name']:
+                step['tools'][0]['tool_name'] = 'llm_tool'
             update_plan_steps.append(step)
         update_plan['steps'] = update_plan_steps
 

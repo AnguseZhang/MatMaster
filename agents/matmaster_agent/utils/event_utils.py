@@ -501,7 +501,9 @@ async def display_failed_result_or_consume(
             status = PlanStepStatusEnum.SUCCESS  # real-time
         else:
             status = PlanStepStatusEnum.SUBMITTED  # job-type
-        update_plan['steps'][ctx.session.state['plan_index']]['status'] = status
+        update_plan['steps'][ctx.session.state['plan_index']]['tools'][
+            ctx.session.state['tool_index']
+        ]['status'] = status
         yield update_state_event(ctx, state_delta={'plan': update_plan})
 
         if USE_PHOTON:

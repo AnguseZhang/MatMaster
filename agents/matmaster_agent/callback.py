@@ -17,7 +17,7 @@ from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.model import UserContent
 from agents.matmaster_agent.prompt import get_user_content_lang
 from agents.matmaster_agent.services.quota import check_quota_service, use_quota_service
-from agents.matmaster_agent.state import ERROR_DETAIL, PLAN, UPLOAD_FILE
+from agents.matmaster_agent.state import ERROR_DETAIL, PLAN, TOOL_INDEX, UPLOAD_FILE
 from agents.matmaster_agent.utils.helper_func import get_user_id
 
 logger = logging.getLogger(__name__)
@@ -104,9 +104,7 @@ async def matmaster_prepare_state(
         'plan_index', None
     )
     # 当前 step 调用的第几个 tool
-    callback_context.state['tool_index'] = callback_context.state.get(
-        'tool_index', None
-    )
+    callback_context.state[TOOL_INDEX] = callback_context.state.get(TOOL_INDEX, None)
     callback_context.state['tool_call_info'] = callback_context.state.get(
         'tool_call_info', {}
     )

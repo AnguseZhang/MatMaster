@@ -464,12 +464,17 @@ class MatMasterFlowAgent(LlmAgent):
                         # Skip summary for single-tool plans
                         plan_steps = ctx.session.state['plan'].get('steps', [])
                         tool_count = sum(
-                            1 for step in plan_steps if step.get('tool_name')
+                            1
+                            for step in plan_steps
+                            for step_tool in step['tools']
+                            if step_tool.get('tool_name')
                         )
 
                         is_async_agent = issubclass(
                             AGENT_CLASS_MAPPING[
-                                ALL_TOOLS[plan_steps[0]['tool_name']]['belonging_agent']
+                                ALL_TOOLS[plan_steps[0]['tools'][0]['tool_name']][
+                                    'belonging_agent'
+                                ]
                             ],
                             BaseAsyncJobAgent,
                         )

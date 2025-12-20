@@ -166,10 +166,10 @@ class BaseAgentWithRecAndSum(
     @override
     async def _run_events(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
         # 根据计划来
-        current_step = ctx.session.state['plan']['steps'][
+        current_step_tool = ctx.session.state['plan']['steps'][
             ctx.session.state['plan_index']
-        ]
-        current_step_tool_name = current_step['tool_name']
+        ]['tools'][ctx.session.state['tool_index']]
+        current_step_tool_name = current_step_tool['tool_name']
 
         # 连接 tool-server，获取doc和函数声明
         async for tool_connect_evenet in self.tool_connect_agent.run_async(ctx):
@@ -191,7 +191,7 @@ class BaseAgentWithRecAndSum(
             'args_setting', ''
         )
         self.tool_call_info_agent.instruction = gen_tool_call_info_instruction(
-            user_prompt=current_step['description'],
+            user_prompt=current_step_tool['description'],
             agent_prompt=self.instruction,
             tool_doc=tool_doc,
             tool_schema=current_function_declaration[0]['parameters'],
@@ -220,7 +220,7 @@ class BaseAgentWithRecAndSum(
         # modify tool_name
         if (
             ctx.session.state['tool_call_info']['tool_name']
-            != current_step['tool_name']
+            != current_step_tool['tool_name']
         ):
             update_tool_call_info['tool_name'] = current_step_tool_name
 
@@ -298,6 +298,6 @@ class BaseAgentWithRecAndSum(
             self.summary_agent.instruction = ALL_TOOLS[current_step_tool_name].get(
                 'summary_prompt'
             )
-        if current_step['status'] != PlanStepStatusEnum.SUBMITTED:
+        if current_step_tool['status'] != PlanStepStatusEnum.SUBMITTED:
             async for summary_event in self.summary_agent.run_async(ctx):
                 yield summary_event
