@@ -25,12 +25,19 @@ Return a JSON structure with the following format:
 CRITICAL GUIDELINES:
 1. Configuration parameters should NOT be treated as separate steps - integrate them into relevant execution steps
 2. **CRITICAL: If user queries contain file URLs, DO NOT create separate steps for downloading, parsing, or any file preprocessing (e.g., "download and prepare structure", "prepare input structure"). Treat file URLs as direct inputs to relevant end-processing tools.**
-3. **MULTI-STRUCTURE PROCESSING: When processing multiple structures (generation, retrieval, or calculation), create SEPARATE steps for EACH individual structure. Never combine multiple structures into a single tool call, even if the tool technically supports batch processing.**
-4. Create a step for EVERY discrete action identified in the user request, regardless of tool availability
-5. Use null for tool_name only when no appropriate tool exists in the available tools list
-6. Never invent or assume tools - only use tools explicitly listed in the available tools
-7. Match tools precisely to requirements - if functionality doesn't align exactly, use null
-8. Ensure steps array represents the complete execution sequence for the request
+3. **PARALLEL TOOL EXECUTION: When multiple tools can be executed independently and simultaneously (i.e., they don't depend on each other's outputs), group them in a SINGLE step with "relationship": "all". Only create separate steps when:**
+   - Tools have sequential dependencies (output of one is input to another)
+   - Tools operate on the same resource with potential conflicts
+   - Tools require different timing or execution contexts
+4. **MULTI-STRUCTURE PROCESSING: When processing multiple structures with the SAME operation type (e.g., generation → structure1, generation → structure2), group them in ONE step if they can run in parallel. Create separate steps only when:**
+   - Operations are different types (generation vs retrieval vs calculation)
+   - There are resource conflicts or dependencies
+   - Sequential processing is explicitly required
+5. Create a step for EVERY discrete action group identified in the user request
+6. Use null for tool_name only when no appropriate tool exists in the available tools list
+7. Never invent or assume tools - only use tools explicitly listed in the available tools
+8. Match tools precisely to requirements - if functionality doesn't align exactly, use null
+9. Ensure steps array represents the complete execution sequence for the request
 
 EXECUTION PRINCIPLES:
 - Make sure that the previous steps can provide the input information required for the current step, such as the file URL
@@ -38,15 +45,15 @@ EXECUTION PRINCIPLES:
 - **File URLs should be treated as direct inputs to processing tools - no separate download, parsing, or preparation steps**
 - **Assume processing tools can handle URLs directly and include all necessary preprocessing capabilities**
 - **Skip any intermediate file preparation steps - go directly to the core processing task**
-- **For multiple structures: Always use one step per structure per operation type (generation → structure1, generation → structure2; retrieval → structure1, retrieval → structure2; etc.)**
-- **Maintain strict sequential processing: complete all operations for one structure before moving to the next, or group by operation type across all structures**
+- **PARALLEL OPTIMIZATION: Group independent operations together whenever possible to minimize execution time and steps**
+- **For dependent operations: Maintain strict sequential processing - complete all operations for one structure before moving to the next**
 - Prioritize accuracy over assumptions
 - Maintain logical flow in step sequencing
 - Ensure descriptions clearly communicate purpose
 - Validate tool compatibility before assignment
 
 STEP RELATIONSHIP SEMANTICS:
-- "any": The step succeeds if ANY of the tools in the step completes successfully. This allows multiple alternative approaches to achieve the same goal.
-- "all": The step succeeds only if ALL tools in the step complete successfully. This ensures all parallel operations are completed before proceeding.
+- "any": The step succeeds if ANY of the tools in the step completes successfully. Use for alternative approaches to achieve the same goal.
+- "all": The step succeeds only if ALL tools in the step complete successfully. Use for parallel independent operations that all need to complete.
 - This design enables flexible execution strategies where a single step objective can be achieved through multiple parallel pathways.
 """
