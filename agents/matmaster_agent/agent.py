@@ -1,7 +1,6 @@
 import logging
 
 from google.adk.agents import LlmAgent
-from opik.integrations.adk import track_adk_agent_recursive
 
 from agents.matmaster_agent.callback import (
     matmaster_check_quota,
@@ -26,6 +25,8 @@ logger.setLevel(logging.INFO)
 
 
 def init_matmaster_agent() -> LlmAgent:
+    from opik.integrations.adk import track_adk_agent_recursive
+
     matmaster_agent = MatMasterFlowAgent(
         name=MATMASTER_AGENT_NAME,
         model=MatMasterLlmConfig.default_litellm_model,
@@ -42,4 +43,5 @@ def init_matmaster_agent() -> LlmAgent:
 
 
 # Global instance of the agent
+logger.info("xxxxxx")
 root_agent = init_matmaster_agent()

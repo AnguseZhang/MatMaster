@@ -11,10 +11,8 @@ from deepmerge import always_merger
 from google.adk.agents import LlmAgent
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events import Event, EventActions
-from google.adk.models.lite_llm import LiteLlm
 from google.adk.tools import BaseTool
 from google.genai.types import Content, FunctionCall, FunctionResponse, Part
-from opik.integrations.adk import track_adk_agent_recursive
 
 from agents.matmaster_agent.base_callbacks.private_callback import _get_userId
 from agents.matmaster_agent.config import USE_PHOTON
@@ -331,6 +329,9 @@ def cherry_pick_events(ctx: InvocationContext):
 
 
 async def send_error_event(err, ctx: InvocationContext, author):
+    from opik.integrations.adk import track_adk_agent_recursive
+    from google.adk.models.lite_llm import LiteLlm
+
     # 更新 plan 为失败
     update_plan = copy.deepcopy(ctx.session.state[PLAN])
     if update_plan.get('steps'):

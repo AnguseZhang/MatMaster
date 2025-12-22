@@ -2,8 +2,6 @@ import logging
 import os
 
 from dotenv import load_dotenv
-from google.adk.models.lite_llm import LiteLlm
-from opik.integrations.adk import OpikTracer
 
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
 
@@ -67,66 +65,114 @@ class LLMConfig:
         if self._initialized:
             return
 
-        azure_provider = 'azure'
-        litellm_provider = 'litellm_proxy'
-        deepseek_provider = 'deepseek'
+        self._model_cache = {}  # 真正的 LiteLlm 实例缓存
+        self._model_specs = {}  # model_name -> provider model string
+        self._lazy_objects = {}
 
-        gpt_4o = 'gpt-4o'
-        gpt_4o_mini = 'gpt-4o-mini'
-        gemini_2_5_flash = 'gemini-2.5-flash'
-        gemini_2_0_flash = 'gemini-2.0-flash'
-        gemini_2_5_pro = 'gemini-2.5-pro'
-        claude_sonnet_4 = 'claude-sonnet-4'
-        deepseek_chat = 'deepseek-chat'
-        gpt_5 = 'gpt-5'
-        gpt_5_nano = 'gpt-5-nano'
-        gpt_5_mini = 'gpt-5-mini'
-        gpt_5_chat = 'gpt-5-chat'
+        azure = 'azure'
+        litellm = 'litellm_proxy'
+        deepseek = 'deepseek'
 
-        # Helper to init any provider model
-        def _init_model(model: str):
-            llm_kwargs = {}
-            if model.endswith(gpt_5_chat) and 'litellm' in model:
-                llm_kwargs = {'stream_options': {'include_usage': True}}
-            logger.info(
-                f'[{MATMASTER_AGENT_NAME}] model = {model}, llm_kwargs = {llm_kwargs}'
-            )
+        # 注册模型（不初始化）
+        self._register('gpt_4o_mini', (azure, 'gpt-4o-mini'))
+        self._register('gpt_4o', (azure, 'gpt-4o'))
 
-            return LiteLlm(model=model, **llm_kwargs)
+        self._register('gemini_2_0_flash', (litellm, 'gemini-2.0-flash'))
+        self._register('gemini_2_5_flash', (litellm, 'gemini-2.5-flash'))
+        self._register('gemini_2_5_pro', (litellm, 'gemini-2.5-pro'))
 
-        self.gpt_4o_mini = _init_model(MODEL_MAPPING.get((azure_provider, gpt_4o_mini)))
-        self.gpt_4o = _init_model(MODEL_MAPPING.get((azure_provider, gpt_4o)))
-        self.gemini_2_0_flash = _init_model(
-            MODEL_MAPPING.get((litellm_provider, gemini_2_0_flash))
-        )
-        self.gemini_2_5_flash = _init_model(
-            MODEL_MAPPING.get((litellm_provider, gemini_2_5_flash))
-        )
-        self.gemini_2_5_pro = _init_model(
-            MODEL_MAPPING.get((litellm_provider, gemini_2_5_pro))
-        )
-        self.claude_sonnet_4 = _init_model(
-            MODEL_MAPPING.get((litellm_provider, claude_sonnet_4))
-        )
-        self.deepseek_chat = _init_model(
-            MODEL_MAPPING.get((deepseek_provider, deepseek_chat))
-        )
+        self._register('claude_sonnet_4', (litellm, 'claude-sonnet-4'))
+        self._register('deepseek_chat', (deepseek, 'deepseek-chat'))
 
-        # GPT-5 models
-        self.gpt_5 = _init_model(MODEL_MAPPING.get((litellm_provider, gpt_5)))
-        self.gpt_5_nano = _init_model(MODEL_MAPPING.get((litellm_provider, gpt_5_nano)))
-        self.gpt_5_mini = _init_model(MODEL_MAPPING.get((litellm_provider, gpt_5_mini)))
-        self.gpt_5_chat = _init_model(MODEL_MAPPING.get((litellm_provider, gpt_5_chat)))
+        # GPT-5
+        self._register('gpt_5', (litellm, 'gpt-5'))
+        self._register('gpt_5_nano', (litellm, 'gpt-5-nano'))
+        self._register('gpt_5_mini', (litellm, 'gpt-5-mini'))
+        self._register('gpt_5_chat', (litellm, 'gpt-5-chat'))
 
-        # Default Model
-        self.default_litellm_model = _init_model(DEFAULT_MODEL)
-        self.tool_schema_model = _init_model(TOOL_SCHEMA_MODEL)
-
-        # tracing
-        self.opik_tracer = OpikTracer()
+        self._register('default_litellm_model', DEFAULT_MODEL)
+        self._register('tool_schema_model', TOOL_SCHEMA_MODEL)
 
         self._initialized = True
 
+    def _register(self, attr_name, model_key):
+        self._model_specs[attr_name] = model_key
+
+    def _get_model(self, name: str):
+        if name in self._model_cache:
+            return self._model_cache[name]
+
+        # ⬇️ 延迟 import
+        from google.adk.models.lite_llm import LiteLlm
+
+        model_key = self._model_specs[name]
+        model = model_key if name in ['default_litellm_model', 'tool_schema_model'] else MODEL_MAPPING.get(model_key)
+
+        llm_kwargs = {}
+        if isinstance(model, str) and model.endswith('gpt-5-chat') and 'litellm' in model:
+            llm_kwargs = {'stream_options': {'include_usage': True}}
+
+        logger.info(
+            f'[{MATMASTER_AGENT_NAME}] lazy init model_key={model_key}, model={model}, kwargs={llm_kwargs}'
+        )
+
+        instance = LiteLlm(model=model, **llm_kwargs)
+        self._model_cache[name] = instance
+        return instance
+
+    def _get_opik_tracer(self):
+        if 'opik_tracer' in self._lazy_objects:
+            return self._lazy_objects['opik_tracer']
+
+        from opik.integrations.adk import OpikTracer
+
+        logger.info(
+            f'[{MATMASTER_AGENT_NAME}] lazy init OpikTracer'
+        )
+
+        tracer = OpikTracer()
+        self._lazy_objects['opik_tracer'] = tracer
+        return tracer
+
+    @property
+    def gpt_4o_mini(self):
+        return self._get_model('gpt_4o_mini')
+
+    @property
+    def gpt_4o(self):
+        return self._get_model('gpt_4o')
+
+    @property
+    def gemini_2_5_flash(self):
+        return self._get_model('gemini_2_5_flash')
+
+    @property
+    def gpt_5_chat(self):
+        return self._get_model('gpt_5_chat')
+
+    @property
+    def gpt_5_mini(self):
+        return self._get_model('gpt_5_mini')
+
+    @property
+    def gemini_2_5_pro(self):
+        return self._get_model('gemini_2_5_pro')
+
+    @property
+    def deepseek_chat(self):
+        return self._get_model('deepseek_chat')
+
+    @property
+    def default_litellm_model(self):
+        return self._get_model('default_litellm_model')
+
+    @property
+    def tool_schema_model(self):
+        return self._get_model('tool_schema_model')
+
+    @property
+    def opik_tracer(self):
+        return self._get_opik_tracer()
 
 def create_default_config() -> LLMConfig:
     return LLMConfig()

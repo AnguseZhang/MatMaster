@@ -19,10 +19,6 @@ from agents.matmaster_agent.sub_agents.built_in_agent.llm_tool_agent.agent impor
 from agents.matmaster_agent.sub_agents.built_in_agent.llm_tool_agent.constant import (
     TOOL_AGENT_NAME,
 )
-from agents.matmaster_agent.sub_agents.chembrain_agent.agent import ChemBrainAgent
-from agents.matmaster_agent.sub_agents.chembrain_agent.constant import (
-    CHEMBRAIN_AGENT_NAME,
-)
 from agents.matmaster_agent.sub_agents.chembrain_agent.retrosyn_agent.agent import (
     retrosyn_toolset,
 )
@@ -313,7 +309,6 @@ ALL_TOOLSET_DICT = {
 AGENT_CLASS_MAPPING = {
     ABACUS_AGENT_NAME: ABACUSCalculatorAgent,
     ApexAgentName: ApexAgent,
-    CHEMBRAIN_AGENT_NAME: ChemBrainAgent,
     COMPDART_AGENT_NAME: CompDARTAgent,
     DOE_AGENT_NAME: DoEAgent,
     DocumentParserAgentName: DocumentParserAgentBase,
@@ -357,7 +352,6 @@ AGENT_CLASS_MAPPING = {
 class MatMasterSubAgentsEnum(str, Enum):
     ABACUSAgent = ABACUS_AGENT_NAME
     APEXAgent = ApexAgentName
-    ChemBrainAgent = CHEMBRAIN_AGENT_NAME
     DocumentParserAgent = DocumentParserAgentName
     DPACalculatorAgent = DPACalulator_AGENT_NAME
     HEAAssistantAgent = HEA_assistant_AgentName

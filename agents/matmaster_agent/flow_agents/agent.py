@@ -7,6 +7,7 @@ from google.adk.agents import InvocationContext, LlmAgent
 from google.adk.events import Event
 from pydantic import computed_field, model_validator
 
+print("111111")
 from agents.matmaster_agent.base_agents.disallow_transfer_agent import (
     DisallowTransferLlmAgent,
 )
@@ -88,6 +89,7 @@ from agents.matmaster_agent.utils.event_utils import (
     send_error_event,
     update_state_event,
 )
+print("111111")
 
 logger = logging.getLogger(__name__)
 logger.addFilter(PrefixFilter(MATMASTER_AGENT_NAME))
@@ -258,6 +260,7 @@ class MatMasterFlowAgent(LlmAgent):
     async def _run_async_impl(
         self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
+        logger.info("yyyyyy")
         try:
             if not ctx.session.state['quota_remaining']:
                 for quota_remaining_event in all_text_event(

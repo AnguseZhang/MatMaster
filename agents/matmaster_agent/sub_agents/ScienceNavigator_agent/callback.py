@@ -2,7 +2,7 @@ import json
 import logging
 import re
 
-import litellm
+
 from google.adk.tools import ToolContext
 from mcp.types import CallToolResult, TextContent
 
@@ -111,6 +111,8 @@ def contains_chinese(text: str) -> bool:
 
 
 def translate_word_list_to_english(chinese_words: list) -> list:
+    import litellm
+
     if not isinstance(chinese_words, list) or not chinese_words:
         return chinese_words
 

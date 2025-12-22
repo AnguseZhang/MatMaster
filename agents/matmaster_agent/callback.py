@@ -4,7 +4,6 @@ import logging
 from datetime import datetime
 from typing import Optional
 
-import litellm
 from google.adk.agents.callback_context import CallbackContext
 from google.genai import types
 from google.genai.types import Part
@@ -127,6 +126,8 @@ async def matmaster_prepare_state(
 async def matmaster_set_lang(
     callback_context: CallbackContext,
 ) -> Optional[types.Content]:
+    import litellm
+
     user_content = callback_context.user_content.parts[0].text
     prompt = get_user_content_lang().format(user_content=user_content)
     response = litellm.completion(

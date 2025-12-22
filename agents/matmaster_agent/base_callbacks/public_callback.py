@@ -4,7 +4,7 @@ import uuid
 from enum import Enum
 from typing import Optional, Type
 
-import litellm
+
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.agents.llm_agent import AfterModelCallback
 from google.adk.models import LlmResponse
@@ -21,6 +21,8 @@ def check_transfer(prompt: str, target_agent_enum: Type[Enum]) -> AfterModelCall
     async def wrapper(
         callback_context: CallbackContext, llm_response: LlmResponse
     ) -> Optional[LlmResponse]:
+        import litellm
+
         # 检查响应是否有效
         if not (
             llm_response
