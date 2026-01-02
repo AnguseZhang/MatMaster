@@ -59,6 +59,7 @@ class StructureGenerateAgent(BaseAsyncJobAgent):
             dflow_flag=False,
             sync_tools=[
                 'add_hydrogens',
+                'generate_ordered_replicas',
                 'build_bulk_structure_by_template',
                 'build_bulk_structure_by_wyckoff',
                 'make_supercell_structure',

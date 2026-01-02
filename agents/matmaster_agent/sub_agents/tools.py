@@ -1121,6 +1121,26 @@ ALL_TOOLS = {
         'alternative': [],
         'bypass_confirmation': True,
     },
+    'generate_ordered_replicas': {
+        'belonging_agent': StructureGenerateAgentName,
+        'scene': [SceneEnum.STRUCTURE_GENERATE, SceneEnum.STRUCTURE_SANITIZE],
+        'description': (
+            'What it does: Process disordered CIF files to generate ordered replica structures.\n'
+            'When to use: When you have a disordered structure and need to resolve disorder to create ordered structures.\n'
+            'Prerequisites / Inputs: Disordered CIF file path; optional number of structures to generate, method for generation.\n'
+            'Outputs: List of paths to the generated ordered structure files.\n'
+            'Cannot do / Limits: Only processes disordered structures to ordered ones; requires valid CIF input.\n'
+            'Cost / Notes: Medium.'
+        ),
+        'args_setting': (
+            'Parameter guidance: structure_path: Required. Input disordered structure file (CIF format). '
+            'generate_count: Optional. Number of ordered structures to generate (default: 1). '
+            'method: Optional. Method for generation ("optimal" for single best structure, "random" for ensemble of structures) (default: "random"). '
+            'output_file: Optional. Directory to save output files; defaults to subdirectory of input file location.'
+        ),
+        'alternative': [],
+        'bypass_confirmation': True,
+    },
     'run_superconductor_optimization': {
         'belonging_agent': SuperconductorAgentName,
         'scene': [SceneEnum.SUPERCONDUCTOR],
