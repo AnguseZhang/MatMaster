@@ -61,7 +61,6 @@ from agents.matmaster_agent.flow_agents.step_validation_agent.schema import (
     StepValidationSchema,
 )
 from agents.matmaster_agent.flow_agents.style import (
-    all_summary_card,
     separate_card,
 )
 from agents.matmaster_agent.flow_agents.utils import (
@@ -415,6 +414,15 @@ class MatMasterFlowAgent(LlmAgent):
                             yield plan_event
 
                         # 总结计划
+                        for matmaster_flow_event in context_function_event(
+                            ctx,
+                            self.name,
+                            'matmaster_flow',
+                            None,
+                            ModelRole,
+                            {'title': '制定计划', 'status': 'start'},
+                        ):
+                            yield matmaster_flow_event
                         plan_steps = ctx.session.state['plan'].get('steps', [])
                         tool_names = [
                             step.get('tool_name')
@@ -428,6 +436,15 @@ class MatMasterFlowAgent(LlmAgent):
                             ctx
                         ):
                             yield plan_summary_event
+                        for matmaster_flow_event in context_function_event(
+                            ctx,
+                            self.name,
+                            'matmaster_flow',
+                            None,
+                            ModelRole,
+                            {'title': '制定计划', 'status': 'end'},
+                        ):
+                            yield matmaster_flow_event
 
                         # 更新计划为可执行的计划
                         update_plan = copy.deepcopy(ctx.session.state['plan'])
@@ -511,10 +528,15 @@ class MatMasterFlowAgent(LlmAgent):
 
                             # 渲染总结
                             if tool_count > 1 or is_async_agent:
-                                for all_summary_event in all_text_event(
-                                    ctx, self.name, all_summary_card(i18n), ModelRole
+                                for matmaster_flow_event in context_function_event(
+                                    ctx,
+                                    self.name,
+                                    'matmaster_flow',
+                                    None,
+                                    ModelRole,
+                                    {'title': i18n.t('PlanSummary'), 'status': 'start'},
                                 ):
-                                    yield all_summary_event
+                                    yield matmaster_flow_event
                                 self._analysis_agent.instruction = (
                                     get_analysis_instruction(ctx.session.state['plan'])
                                 )
@@ -522,6 +544,15 @@ class MatMasterFlowAgent(LlmAgent):
                                     analysis_event
                                 ) in self.analysis_agent.run_async(ctx):
                                     yield analysis_event
+                                for matmaster_flow_event in context_function_event(
+                                    ctx,
+                                    self.name,
+                                    'matmaster_flow',
+                                    None,
+                                    ModelRole,
+                                    {'title': i18n.t('PlanSummary'), 'status': 'end'},
+                                ):
+                                    yield matmaster_flow_event
 
                             # 渲染追问组件
                             follow_up_list = await get_random_questions(i18n=i18n)
