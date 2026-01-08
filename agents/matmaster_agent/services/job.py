@@ -8,7 +8,6 @@ import aiohttp
 import jsonpickle
 
 from agents.matmaster_agent.constant import (
-    BOHRIUM_ACCESS_KEY,
     MATMASTER_AGENT_NAME,
     OPENAPI_FILE_TOKEN_API,
     OPENAPI_HOST,
@@ -104,11 +103,11 @@ async def check_status_and_download_file(
     logger.error(f'`{file_download_path}` url returned status code: {status_code}')
 
 
-async def get_token(file_path, job_id):
+async def get_token(file_path, job_id, access_key):
     request_body = {'filePath': file_path, 'jobId': job_id}
     async with aiohttp.ClientSession() as session:
         async with session.post(
-            f"{OPENAPI_FILE_TOKEN_API}?accessKey={BOHRIUM_ACCESS_KEY}",
+            f"{OPENAPI_FILE_TOKEN_API}?accessKey={access_key}",
             json=request_body,
         ) as response:
             response.raise_for_status()
@@ -122,9 +121,9 @@ async def get_token(file_path, job_id):
     return response_file_host, response_file_path, response_file_token
 
 
-async def get_token_and_download_file(file_path, job_id):
+async def get_token_and_download_file(file_path, job_id, access_key):
     response_file_host, response_file_path, response_file_token = await get_token(
-        file_path, job_id
+        file_path, job_id, access_key
     )
 
     # 构建log文件URL并检查状态
@@ -140,8 +139,8 @@ async def get_token_and_download_file(file_path, job_id):
         logger.error(f"Incomplete {file_path} information - cannot construct file URL")
 
 
-async def get_token_and_download_dir(dir_path, job_id):
-    host, path, token = await get_token('', job_id)
+async def get_token_and_download_dir(dir_path, job_id, access_key):
+    host, path, token = await get_token('', job_id, access_key)
     prefix = path.replace('results.txt', '')
     request_body = {
         'targetDir': dir_path,
@@ -162,13 +161,15 @@ async def get_token_and_download_dir(dir_path, job_id):
                 f.write(blob)
 
 
-async def get_iterate_files(job_id: str, prefix: str | None = None):
+async def get_iterate_files(
+    job_id: str, prefix: str | None = None, access_key: str = ''
+):
     """
     兼容版：支持列根目录，也支持列任意子目录 prefix。
     - 若 prefix=None：沿用你原来的逻辑，从 get_token("", job_id) 里拿 results.txt 的 path 推出根 prefix
     - 若 prefix!=None：直接用传入 prefix 去 iterate
     """
-    host, path, token = await get_token('', job_id)
+    host, path, token = await get_token('', job_id, access_key)
 
     if prefix is None:
         # path 形如 jobs/xxx/xxx/results.txt
@@ -192,7 +193,7 @@ async def get_iterate_files(job_id: str, prefix: str | None = None):
     return prefix, iterate_json
 
 
-async def parse_and_prepare_results(job_id: str = ''):
+async def parse_and_prepare_results(job_id: str = '', access_key: str = ''):
     def norm(p: str) -> str:
         p = p.replace('\\', '/')
         if p.endswith('/') and p != '/':
@@ -210,7 +211,9 @@ async def parse_and_prepare_results(job_id: str = ''):
         if dp in listing_cache:
             return listing_cache[dp]
 
-        _prefix, iterate_json = await get_iterate_files(job_id, prefix=dp)
+        _prefix, iterate_json = await get_iterate_files(
+            job_id, prefix=dp, access_key=access_key
+        )
         objects = iterate_json.get('data', {}).get('objects', [])
         idx = {norm(o['path']): o for o in objects}
 
@@ -248,10 +251,13 @@ async def parse_and_prepare_results(job_id: str = ''):
 
     # Download results.txt & Prepare Parse
     RESULTS_TXT = 'results.txt'
-    await get_token_and_download_file(RESULTS_TXT, job_id)
+    await get_token_and_download_file(RESULTS_TXT, job_id, access_key)
 
     with open(RESULTS_TXT) as f:
-        results_txt_parsed = jsonpickle.loads(f.read())
+        results_txt_parsed = jsonpickle.loads(
+            f.read().replace('pathlib._local.PosixPath', 'pathlib.PosixPath')
+        )
+        logger.info(f"results_txt_parsed = {results_txt_parsed}")
     os.remove(RESULTS_TXT)
 
     final_results = {}
@@ -260,7 +266,7 @@ async def parse_and_prepare_results(job_id: str = ''):
     listing_cache: dict[str, dict] = {}
 
     # 先拿 job 根 prefix（jobs/xxx/xxx/）
-    job_root_prefix, _ = await get_iterate_files(job_id)
+    job_root_prefix, _ = await get_iterate_files(job_id, access_key=access_key)
     job_root_prefix = job_root_prefix.replace('\\', '/')
     if not job_root_prefix.endswith('/'):
         job_root_prefix += '/'
@@ -280,10 +286,10 @@ async def parse_and_prepare_results(job_id: str = ''):
 
         is_dir = bool(obj.get('isDir'))
         if not is_dir:
-            await get_token_and_download_file(rel, job_id)
+            await get_token_and_download_file(rel, job_id, access_key)
             filename = Path(rel)
         else:
-            await get_token_and_download_dir(obj['path'], job_id)
+            await get_token_and_download_dir(obj['path'], job_id, access_key)
             filename = Path(f"{obj['path'].split("/")[-2]}.zip")
 
         # 上传文件到 OSS
@@ -300,4 +306,9 @@ async def parse_and_prepare_results(job_id: str = ''):
 
 
 if __name__ == '__main__':
-    asyncio.run(parse_and_prepare_results(job_id='1d6f38571cc843a58762d5b9da71af4a'))
+    asyncio.run(
+        parse_and_prepare_results(
+            job_id='c045ddda55fc4542b5845c25519f7464',
+            access_key='a59507ca580649b0a890b45ed5e545a3',
+        )
+    )

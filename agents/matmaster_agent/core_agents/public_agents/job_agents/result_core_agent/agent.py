@@ -33,7 +33,6 @@ from agents.matmaster_agent.services.job import (
 from agents.matmaster_agent.utils.event_utils import (
     all_text_event,
     context_function_event,
-    context_text_event,
     update_state_event,
 )
 from agents.matmaster_agent.utils.io_oss import update_tgz_dict
@@ -68,10 +67,7 @@ class ResultMCPAgent(MCPAgent):
 
     @override
     async def _run_events(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
-        logger.info(
-            f"[{MATMASTER_AGENT_NAME}]:[{self.name}] state: {ctx.session.state}"
-        )
-        await self.tools[0].get_tools()
+        logger.info(f"{ctx.session.id} state: {ctx.session.state}")
         if not ctx.session.state['dflow']:
             access_key, Executor, BohriumStorge = _inject_ak(
                 ctx, get_BohriumExecutor(), get_BohriumStorage()
@@ -108,17 +104,11 @@ class ResultMCPAgent(MCPAgent):
                 ):
                     continue
 
-            if self.tools[0].query_tool is None:
-                yield context_text_event(
-                    ctx, self.name, 'Query Tool is None, Failed', ModelRole
-                )
-                break
-
             job_id = ctx.session.state['long_running_jobs'][origin_job_id]['job_id']
             query_res = await get_job_detail(job_id=job_id, access_key=access_key)
             status = mapping_status(query_res.get('data', {}).get('status', -999))
             logger.info(
-                f'[{MATMASTER_AGENT_NAME}]:[{self.name}] origin_job_id = {origin_job_id}, executor = {Executor}, '
+                f'{ctx.session.id} origin_job_id = {origin_job_id}, executor = {Executor}, '
                 f'status = {status}'
             )
             if status != 'Running':
@@ -145,7 +135,9 @@ class ResultMCPAgent(MCPAgent):
                 if status == 'Failed':  # Job Failed
                     pass
                 else:  # Job Success
-                    dict_result = await parse_and_prepare_results(job_id=job_id)
+                    dict_result = await parse_and_prepare_results(
+                        job_id=job_id, access_key=access_key
+                    )
                     logger.info(f"{ctx.session.id} dict_result = {dict_result}")
 
                     if self.enable_tgz_unpack:
