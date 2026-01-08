@@ -1,3 +1,4 @@
+import asyncio
 from typing import AsyncGenerator, final
 
 from google.adk.agents import BaseAgent, InvocationContext, LlmAgent, SequentialAgent
@@ -17,6 +18,8 @@ class ErrorHandlerMixin(BaseMixin):
         try:
             async for event in self._process_events(ctx):
                 yield event
+        except (GeneratorExit, asyncio.CancelledError):
+            raise
         except BaseException as err:
             async for error_event in send_error_event(err, ctx, self.name):
                 yield error_event
