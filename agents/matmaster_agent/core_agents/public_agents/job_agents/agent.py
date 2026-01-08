@@ -125,6 +125,9 @@ class BaseAsyncJobAgent(BaseAgentWithRecAndSum):
                 'sync_tools': self.sync_tools,
             },
         )
+        yield Event(
+            author=self.name, invocation_id=ctx.invocation_id
+        )  # 发送一个空消息，尝试不让消息列表消失
 
         # 更新任务状态
         async for result_event in self.result_agent.run_async(ctx):
