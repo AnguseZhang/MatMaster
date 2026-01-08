@@ -139,6 +139,28 @@ async def get_token_and_download_file(file_path, job_id):
         logger.error(f"Incomplete {file_path} information - cannot construct file URL")
 
 
+async def get_token_and_download_dir(dir_path, job_id):
+    host, path, token = await get_token('', job_id)
+    prefix = path.replace('results.txt', '')
+    request_body = {
+        'targetDir': dir_path,
+        'tempDir': prefix,
+        'maxCompressSize': 1073741824,
+    }
+    async with aiohttp.ClientSession() as session:
+        async with session.post(
+            'https://tiefblue-nas-acs-bj.test.bohrium.com/api/downloadr',
+            json=request_body,
+            headers={
+                'Authorization': f"Bearer {token}",
+                'Content-Type': 'application/json',
+            },
+        ) as response:
+            blob = await response.read()
+            with open(f"{dir_path.split("/")[-2]}.zip", 'wb') as f:
+                f.write(blob)
+
+
 def norm(p: str) -> str:
     p = p.replace('\\', '/')
     if p.endswith('/') and p != '/':
@@ -256,21 +278,15 @@ async def parse_results_txt(job_id: str = ''):
             continue
 
         is_dir = bool(obj.get('isDir'))
+        if not is_dir:
+            await get_token_and_download_file(rel, job_id)
+        else:
+            await get_token_and_download_dir(obj['path'], job_id)
+
         final_results[k] = {
             'path': obj['path'],  # 远端完整路径（含 jobs/... 前缀）
             'type': 'dir' if is_dir else 'file',
         }
-
-        # 文件才下载；目录不下载（除非你要打包目录）
-        if not is_dir:
-            await get_token_and_download_file(rel, job_id)
-        else:
-            # 如果你还想“嵌套列目录内容”，可以这样：
-            # dir_prefix = norm(job_root_prefix + rel) + "/"
-            # listing = await list_dir(dir_prefix)
-            # final_results[k]["children"] = listing["objects"]
-            pass
-
     return final_results
 
 
