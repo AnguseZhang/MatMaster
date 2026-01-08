@@ -11,10 +11,12 @@ from dotenv import find_dotenv, load_dotenv
 from toolsy.logger import init_colored_logger
 
 from agents.matmaster_agent.constant import OpenAPIJobAPI
-from agents.matmaster_agent.utils.job_utils import mapping_status
-from scripts.sandbox_api import (
+from agents.matmaster_agent.services.job import (
     check_status_and_download_file,
     get_token_and_download_file,
+)
+from agents.matmaster_agent.utils.job_utils import mapping_status
+from scripts.sandbox_api import (
     kill_job,
 )
 
