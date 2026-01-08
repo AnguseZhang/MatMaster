@@ -4,7 +4,6 @@ import logging
 import os
 from typing import Any, AsyncGenerator, override
 
-import jsonpickle
 from google.adk.agents import InvocationContext
 from google.adk.events import Event
 from pydantic import model_validator
@@ -27,12 +26,14 @@ from agents.matmaster_agent.core_agents.public_agents.job_agents.result_core_age
     ResultCoreAgentDescription,
 )
 from agents.matmaster_agent.logger import PrefixFilter
-from agents.matmaster_agent.services.job import get_job_detail
+from agents.matmaster_agent.services.job import (
+    get_job_detail,
+    parse_and_prepare_results,
+)
 from agents.matmaster_agent.utils.event_utils import (
     all_text_event,
     context_function_event,
     context_text_event,
-    frontend_text_event,
     update_state_event,
 )
 from agents.matmaster_agent.utils.io_oss import update_tgz_dict
@@ -141,33 +142,10 @@ class ResultMCPAgent(MCPAgent):
                 )
 
                 # 获取任务结果
-                results_res = await self.tools[0].results_tool.run_async(
-                    args={
-                        'job_id': origin_job_id,
-                        'executor': Executor,
-                        'storage': BohriumStorge,
-                    },
-                    tool_context=None,
-                )
-                if results_res.isError:  # Job Result Retrival Failed
-                    err_msg = results_res.content[0].text
-                    if err_msg.startswith('Error executing tool'):
-                        err_msg = err_msg[err_msg.find(':') + 2 :]
-                    yield frontend_text_event(
-                        ctx,
-                        self.name,
-                        f"Job {origin_job_id} failed: {err_msg}",
-                        ModelRole,
-                    )
-                elif status == 'Failed':  # Job Failed
+                if status == 'Failed':  # Job Failed
                     pass
                 else:  # Job Success
-                    await self.tools[0].query_tool.run_async(
-                        args={'job_id': origin_job_id, 'executor': Executor},
-                        tool_context=None,
-                    )
-                    raw_result = results_res.content[0].text
-                    dict_result = jsonpickle.loads(raw_result)
+                    dict_result = await parse_and_prepare_results(job_id=job_id)
                     logger.info(f"{ctx.session.id} dict_result = {dict_result}")
 
                     if self.enable_tgz_unpack:

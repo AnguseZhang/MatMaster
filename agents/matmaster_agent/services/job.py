@@ -16,6 +16,7 @@ from agents.matmaster_agent.constant import (
 )
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.utils.callback_utils import _get_ak, _get_projectId
+from agents.matmaster_agent.utils.io_oss import file_to_base64, upload_to_oss_wrapper
 
 logger = logging.getLogger(__name__)
 logger.addFilter(PrefixFilter(MATMASTER_AGENT_NAME))
@@ -161,13 +162,6 @@ async def get_token_and_download_dir(dir_path, job_id):
                 f.write(blob)
 
 
-def norm(p: str) -> str:
-    p = p.replace('\\', '/')
-    if p.endswith('/') and p != '/':
-        p = p[:-1]
-    return p
-
-
 async def get_iterate_files(job_id: str, prefix: str | None = None):
     """
     兼容版：支持列根目录，也支持列任意子目录 prefix。
@@ -198,7 +192,13 @@ async def get_iterate_files(job_id: str, prefix: str | None = None):
     return prefix, iterate_json
 
 
-async def parse_results_txt(job_id: str = ''):
+async def parse_and_prepare_results(job_id: str = ''):
+    def norm(p: str) -> str:
+        p = p.replace('\\', '/')
+        if p.endswith('/') and p != '/':
+            p = p[:-1]
+        return p
+
     async def list_dir(dir_prefix: str):
         """
         dir_prefix: jobs/xxx/xxx/ 或 jobs/xxx/xxx/trajs_files/
@@ -247,12 +247,12 @@ async def parse_results_txt(job_id: str = ''):
         return obj
 
     # Download results.txt & Prepare Parse
-    results_txt = 'results.txt'
-    await get_token_and_download_file(results_txt, job_id)
+    RESULTS_TXT = 'results.txt'
+    await get_token_and_download_file(RESULTS_TXT, job_id)
 
-    with open(results_txt) as f:
-        result = jsonpickle.loads(f.read())
-    os.remove(results_txt)
+    with open(RESULTS_TXT) as f:
+        results_txt_parsed = jsonpickle.loads(f.read())
+    os.remove(RESULTS_TXT)
 
     final_results = {}
 
@@ -265,7 +265,8 @@ async def parse_results_txt(job_id: str = ''):
     if not job_root_prefix.endswith('/'):
         job_root_prefix += '/'
 
-    for k, v in result.items():
+    for k, v in results_txt_parsed.items():
+        # 非文件型
         if not isinstance(v, Path):
             final_results[k] = v
             continue
@@ -274,21 +275,29 @@ async def parse_results_txt(job_id: str = ''):
         obj = await find_obj(rel)
 
         if obj is None:
-            final_results[k] = {'path': rel, 'type': 'unknown_not_found'}
+            logger.warning(f"`{rel}` is not exist")
             continue
 
         is_dir = bool(obj.get('isDir'))
         if not is_dir:
             await get_token_and_download_file(rel, job_id)
+            filename = Path(rel)
         else:
             await get_token_and_download_dir(obj['path'], job_id)
+            filename = Path(f"{obj['path'].split("/")[-2]}.zip")
 
-        final_results[k] = {
-            'path': obj['path'],  # 远端完整路径（含 jobs/... 前缀）
-            'type': 'dir' if is_dir else 'file',
-        }
+        # 上传文件到 OSS
+        file_path, b64_data = await file_to_base64(filename)
+        filename = file_path.name
+        oss_path = f"agent/{job_root_prefix}{filename}"
+        oss_url = await upload_to_oss_wrapper(b64_data, oss_path, filename)
+        final_results[k] = list(oss_url.values())[0]
+
+        # 删除文件
+        os.remove(filename)
+
     return final_results
 
 
 if __name__ == '__main__':
-    asyncio.run(parse_results_txt(job_id='1d6f38571cc843a58762d5b9da71af4a'))
+    asyncio.run(parse_and_prepare_results(job_id='1d6f38571cc843a58762d5b9da71af4a'))

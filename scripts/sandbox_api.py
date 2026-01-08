@@ -15,7 +15,7 @@ from agents.matmaster_agent.constant import (
 )
 from agents.matmaster_agent.services.job import (
     get_token_and_download_file,
-    parse_results_txt,
+    parse_and_prepare_results,
 )
 
 logger = init_colored_logger(__name__)
@@ -96,4 +96,4 @@ if __name__ == '__main__':
     # get_token()
     file_path = '20251204072612.abacus_cal_elastic.d53401f9'
     get_token_and_download_file(file_path, job_id)
-    result = parse_results_txt(job_id=job_id)
+    result = parse_and_prepare_results(job_id=job_id)
