@@ -133,6 +133,9 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                                 {
                                     'title': f"{i18n.t(separate_card_info)} {index + 1}",
                                     'status': 'start',
+                                    'font_color': '#0E6DE8',
+                                    'bg_color': '#EBF2FB',
+                                    'border_color': '#B7D3F7',
                                 },
                             ):
                                 yield matmaster_flow_event
@@ -147,6 +150,9 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                                 {
                                     'title': f"{i18n.t(separate_card_info)} {index + 1}",
                                     'status': 'end',
+                                    'font_color': '#0E6DE8',
+                                    'bg_color': '#EBF2FB',
+                                    'border_color': '#B7D3F7',
                                 },
                             ):
                                 yield matmaster_flow_event
