@@ -14,7 +14,6 @@ from agents.matmaster_agent.constant import (
     OpenAPIJobAPI,
 )
 from agents.matmaster_agent.logger import PrefixFilter
-from agents.matmaster_agent.utils.callback_utils import _get_ak, _get_projectId
 from agents.matmaster_agent.utils.io_oss import file_to_base64, upload_to_oss_wrapper
 
 logger = logging.getLogger(__name__)
@@ -22,10 +21,8 @@ logger.addFilter(PrefixFilter(MATMASTER_AGENT_NAME))
 logger.setLevel(logging.INFO)
 
 
-async def check_job_create_service(ctx):
+async def check_job_create_service(access_key, project_id):
     job_create_url = f"{OPENAPI_HOST}/openapi/v1/sandbox/job/create"
-    access_key = _get_ak(ctx)
-    project_id = _get_projectId(ctx)
     payload = {
         'projectId': project_id,
         'name': 'check_job_create',
@@ -307,8 +304,7 @@ async def parse_and_prepare_results(job_id: str = '', access_key: str = ''):
 
 if __name__ == '__main__':
     asyncio.run(
-        parse_and_prepare_results(
-            job_id='c045ddda55fc4542b5845c25519f7464',
-            access_key='a59507ca580649b0a890b45ed5e545a3',
+        check_job_create_service(
+            access_key='9ddb6476f9bb472d8b2b1e181a0b16de', project_id=441938
         )
     )
