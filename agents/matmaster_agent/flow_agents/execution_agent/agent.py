@@ -64,6 +64,10 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
     def validation_agent(self):
         return self.sub_agents[-1]
 
+    @property
+    def title_agent(self):
+        return self.sub_agents[-2]
+
     @override
     async def _run_events(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
         plan = ctx.session.state['plan']
@@ -124,6 +128,13 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                             else:
                                 separate_card_info = 'Step'
 
+                            async for title_event in self.title_agent.run_async(ctx):
+                                yield title_event
+
+                            step_title = ctx.session.state.get('step_title', {}).get(
+                                'title',
+                                f"{i18n.t(separate_card_info)} {index + 1}: {current_tool_name}",
+                            )
                             for matmaster_flow_event in context_function_event(
                                 ctx,
                                 self.name,
@@ -131,7 +142,7 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                                 None,
                                 ModelRole,
                                 {
-                                    'title': f"{i18n.t(separate_card_info)} {index + 1}: {current_tool_name}",
+                                    'title': step_title,
                                     'status': 'start',
                                     'font_color': '#0E6DE8',
                                     'bg_color': '#EBF2FB',
@@ -148,7 +159,7 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                                 None,
                                 ModelRole,
                                 {
-                                    'title': f"{i18n.t(separate_card_info)} {index + 1}: {current_tool_name}",
+                                    'title': step_title,
                                     'status': 'end',
                                     'font_color': '#0E6DE8',
                                     'bg_color': '#EBF2FB',
