@@ -262,19 +262,6 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                                 and retry_count < MAX_TOOL_RETRIES
                             ):
                                 retry_count += 1
-
-                                # 向用户显示重试信息
-                                retry_message = (
-                                    f"步骤 {index + 1} 执行失败，正在准备重试..."
-                                )
-                                for retry_event in all_text_event(
-                                    ctx,
-                                    self.name,
-                                    retry_message,
-                                    ModelRole,
-                                ):
-                                    yield retry_event
-
                                 update_plan = copy.deepcopy(ctx.session.state['plan'])
                                 update_plan['steps'][index][
                                     'status'
