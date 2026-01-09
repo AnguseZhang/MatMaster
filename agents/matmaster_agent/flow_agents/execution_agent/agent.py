@@ -300,17 +300,6 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                                     if alt not in tried_tools
                                 ]
                                 if available_alts:
-                                    # 向用户显示工具替换信息
-                                    for tool_replace_event in all_text_event(
-                                        ctx,
-                                        self.name,
-                                        separate_card(
-                                            f"步骤 {index + 1} 多次重试失败，已找到合适的替代工具：{step['tool_name']} → {available_alts[0]}"
-                                        ),
-                                        ModelRole,
-                                    ):
-                                        yield tool_replace_event
-
                                     # 尝试替换工具
                                     next_tool = available_alts[0]
                                     tried_tools.append(next_tool)
