@@ -131,7 +131,7 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                                 None,
                                 ModelRole,
                                 {
-                                    'title': f"{i18n.t(separate_card_info)} {index + 1}",
+                                    'title': f"{i18n.t(separate_card_info)} {index + 1}: {current_tool_name}",
                                     'status': 'start',
                                     'font_color': '#0E6DE8',
                                     'bg_color': '#EBF2FB',
@@ -148,7 +148,7 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                                 None,
                                 ModelRole,
                                 {
-                                    'title': f"{i18n.t(separate_card_info)} {index + 1}",
+                                    'title': f"{i18n.t(separate_card_info)} {index + 1}: {current_tool_name}",
                                     'status': 'end',
                                     'font_color': '#0E6DE8',
                                     'bg_color': '#EBF2FB',
