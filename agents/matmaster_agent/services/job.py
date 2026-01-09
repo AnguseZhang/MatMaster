@@ -62,6 +62,13 @@ async def check_status_and_download_file(
     response: aiohttp.ClientResponse, file_download_path: str
 ):
     async def download_file(resp: aiohttp.ClientResponse, output_path: str):
+        # --- 新增：确保父目录存在 ---
+        dest_path = Path(output_path)
+        dest_path.parent.mkdir(parents=True, exist_ok=True)
+        # parents=True 表示递归创建所有不存在的父目录
+        # exist_ok=True 表示如果目录已存在则不报错
+        # ------------------------
+
         total_size = int(resp.headers.get('content-length', 0))
         downloaded_size = 0
 
@@ -246,6 +253,39 @@ async def parse_and_prepare_results(job_id: str = '', access_key: str = ''):
         obj = parent_listing['idx'].get(rf) or parent_listing['idx'].get(rd)
         return obj
 
+    async def safe_cleanup_file(file_download_path: Path):
+        """
+        删除文件，并由内向外清理空的父目录，直到当前工作目录为止。
+        """
+        file_path = file_download_path.resolve()
+        root_dir = Path.cwd().resolve()  # 获取当前工作目录的绝对路径
+
+        # 1. 删除文件本身
+        try:
+            if file_path.exists():
+                file_path.unlink()
+                logger.info(f"已删除文件: {file_path}")
+        except Exception as e:
+            logger.error(f"无法删除文件 {file_path}: {e}")
+            return
+
+        # 2. 逐级向上清理空目录
+        # target_dir 从文件所在的直接父目录开始
+        target_dir = file_path.parent
+
+        # 循环条件：目标目录属于当前目录的子目录，且不是当前目录本身
+        while target_dir.is_relative_to(root_dir) and target_dir != root_dir:
+            try:
+                # rmdir 仅在目录为空时才会成功
+                target_dir.rmdir()
+                logger.info(f"清理空目录: {target_dir}")
+                # 移动到上一层
+                target_dir = target_dir.parent
+            except OSError:
+                # 如果目录非空（比如里面还有其他 band.png）或权限不足，停止向上清理
+                logger.info(f"停止清理：目录 {target_dir} 非空或无权限")
+                break
+
     # Download results.txt & Prepare Parse
     RESULTS_TXT = 'results.txt'
     await get_token_and_download_file(RESULTS_TXT, job_id, access_key)
@@ -291,20 +331,20 @@ async def parse_and_prepare_results(job_id: str = '', access_key: str = ''):
 
         # 上传文件到 OSS
         file_path, b64_data = await file_to_base64(filename)
-        filename = file_path.name
-        oss_path = f"agent/{job_root_prefix}{filename}"
-        oss_url = await upload_to_oss_wrapper(b64_data, oss_path, filename)
+        oss_path = f"agent/{job_root_prefix}{file_path.name}"
+        oss_url = await upload_to_oss_wrapper(b64_data, oss_path, file_path.name)
         final_results[k] = list(oss_url.values())[0]
 
         # 删除文件
-        os.remove(filename)
+        await safe_cleanup_file(filename)
 
     return final_results
 
 
 if __name__ == '__main__':
     asyncio.run(
-        check_job_create_service(
-            access_key='9ddb6476f9bb472d8b2b1e181a0b16de', project_id=441938
+        parse_and_prepare_results(
+            job_id='2bdc71b918aa46d3ada0ae5d40d3d43b',
+            access_key=os.getenv('BOHRIUM_ACCESS_KEY'),
         )
     )
