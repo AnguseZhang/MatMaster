@@ -93,7 +93,7 @@ async def _find_all_files(directory: Path) -> List[Path]:
         return [
             p
             for p in directory.rglob('*')
-            if p.is_file() and not p.suffix.lower() in {'.tgz'}
+            if p.is_file() and not p.suffix.lower() in {'.tgz', '.zip'}
         ]
 
     return await loop.run_in_executor(None, _sync_list)
