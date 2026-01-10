@@ -97,6 +97,9 @@ def filter_safety_content(func: BeforeModelCallback) -> BeforeModelCallback:
                     f'{callback_context.session.id} {callback_context.agent_name} Content too long, use latest {index+1} part'
                 )
                 break
+            if callback_context.agent_name == 'step_title_agent' and index == 0:
+                break
+
         logger.info(
             f'{callback_context.session.id} {callback_context.agent_name} index={index}, record_tokens = {record_tokens}'
         )

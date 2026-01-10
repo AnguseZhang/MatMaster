@@ -64,6 +64,10 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
     def validation_agent(self):
         return self.sub_agents[-1]
 
+    @property
+    def title_agent(self):
+        return self.sub_agents[-2]
+
     @override
     async def _run_events(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
         plan = ctx.session.state['plan']
@@ -124,18 +128,45 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                             else:
                                 separate_card_info = 'Step'
 
-                            for step_event in all_text_event(
+                            async for title_event in self.title_agent.run_async(ctx):
+                                yield title_event
+
+                            step_title = ctx.session.state.get('step_title', {}).get(
+                                'title',
+                                f"{i18n.t(separate_card_info)} {index + 1}: {current_tool_name}",
+                            )
+                            for matmaster_flow_event in context_function_event(
                                 ctx,
                                 self.name,
-                                separate_card(
-                                    f"{i18n.t(separate_card_info)} {index + 1}"
-                                ),
+                                'matmaster_flow',
+                                None,
                                 ModelRole,
+                                {
+                                    'title': step_title,
+                                    'status': 'start',
+                                    'font_color': '#0E6DE8',
+                                    'bg_color': '#EBF2FB',
+                                    'border_color': '#B7D3F7',
+                                },
                             ):
-                                yield step_event
-
+                                yield matmaster_flow_event
                             async for event in target_agent.run_async(ctx):
                                 yield event
+                            for matmaster_flow_event in context_function_event(
+                                ctx,
+                                self.name,
+                                'matmaster_flow',
+                                None,
+                                ModelRole,
+                                {
+                                    'title': step_title,
+                                    'status': 'end',
+                                    'font_color': '#0E6DE8',
+                                    'bg_color': '#EBF2FB',
+                                    'border_color': '#B7D3F7',
+                                },
+                            ):
+                                yield matmaster_flow_event
                             logger.info(
                                 f'{ctx.session.id} After Run: plan = {ctx.session.state['plan']}, {check_plan(ctx)}'
                             )
@@ -242,19 +273,6 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                                 and retry_count < MAX_TOOL_RETRIES
                             ):
                                 retry_count += 1
-
-                                # 向用户显示重试信息
-                                retry_message = (
-                                    f"步骤 {index + 1} 执行失败，正在准备重试..."
-                                )
-                                for retry_event in all_text_event(
-                                    ctx,
-                                    self.name,
-                                    retry_message,
-                                    ModelRole,
-                                ):
-                                    yield retry_event
-
                                 update_plan = copy.deepcopy(ctx.session.state['plan'])
                                 update_plan['steps'][index][
                                     'status'
@@ -293,17 +311,6 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                                     if alt not in tried_tools
                                 ]
                                 if available_alts:
-                                    # 向用户显示工具替换信息
-                                    for tool_replace_event in all_text_event(
-                                        ctx,
-                                        self.name,
-                                        separate_card(
-                                            f"步骤 {index + 1} 多次重试失败，已找到合适的替代工具：{step['tool_name']} → {available_alts[0]}"
-                                        ),
-                                        ModelRole,
-                                    ):
-                                        yield tool_replace_event
-
                                     # 尝试替换工具
                                     next_tool = available_alts[0]
                                     tried_tools.append(next_tool)
