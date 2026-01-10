@@ -4,7 +4,6 @@ import logging
 import os
 from typing import Any, AsyncGenerator, override
 
-import jsonpickle
 from google.adk.agents import InvocationContext
 from google.adk.events import Event
 from pydantic import model_validator
@@ -27,14 +26,17 @@ from agents.matmaster_agent.core_agents.public_agents.job_agents.result_core_age
     ResultCoreAgentDescription,
 )
 from agents.matmaster_agent.logger import PrefixFilter
+from agents.matmaster_agent.services.job import (
+    get_job_detail,
+    parse_and_prepare_results,
+)
 from agents.matmaster_agent.utils.event_utils import (
     all_text_event,
     context_function_event,
-    context_text_event,
-    frontend_text_event,
     update_state_event,
 )
 from agents.matmaster_agent.utils.io_oss import update_tgz_dict
+from agents.matmaster_agent.utils.job_utils import mapping_status
 from agents.matmaster_agent.utils.result_parse_utils import (
     csv_to_markdown_table,
     get_csv_result,
@@ -65,10 +67,7 @@ class ResultMCPAgent(MCPAgent):
 
     @override
     async def _run_events(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
-        logger.info(
-            f"[{MATMASTER_AGENT_NAME}]:[{self.name}] state: {ctx.session.state}"
-        )
-        await self.tools[0].get_tools()
+        logger.info(f"{ctx.session.id} state: {ctx.session.state}")
         if not ctx.session.state['dflow']:
             access_key, Executor, BohriumStorge = _inject_ak(
                 ctx, get_BohriumExecutor(), get_BohriumStorage()
@@ -105,27 +104,16 @@ class ResultMCPAgent(MCPAgent):
                 ):
                     continue
 
-            if self.tools[0].query_tool is None:
-                yield context_text_event(
-                    ctx, self.name, 'Query Tool is None, Failed', ModelRole
-                )
-                break
-
-            query_res = await self.tools[0].query_tool.run_async(
-                args={'job_id': origin_job_id, 'executor': Executor},
-                tool_context=None,
-            )
-            if query_res.isError:
-                logger.error(f'[{MATMASTER_AGENT_NAME}] {query_res.content[0].text}')
-                raise RuntimeError(query_res.content[0].text)
-            status = query_res.content[0].text
+            job_id = ctx.session.state['long_running_jobs'][origin_job_id]['job_id']
+            query_res = await get_job_detail(job_id=job_id, access_key=access_key)
+            status = mapping_status(query_res.get('data', {}).get('status', -999))
             logger.info(
-                f'[{MATMASTER_AGENT_NAME}]:[{self.name}] origin_job_id = {origin_job_id}, executor = {Executor}, '
+                f'{ctx.session.id} origin_job_id = {origin_job_id}, executor = {Executor}, '
                 f'status = {status}'
             )
             if status != 'Running':
                 # 更新状态
-                plan_status = 'success' if status == 'Succeeded' else 'failed'
+                plan_status = 'success' if status == 'Finished' else 'failed'
                 update_plan = copy.deepcopy(ctx.session.state['plan'])
                 update_plan['steps'][ctx.session.state['plan_index']][
                     'status'
@@ -144,32 +132,13 @@ class ResultMCPAgent(MCPAgent):
                 )
 
                 # 获取任务结果
-                results_res = await self.tools[0].results_tool.run_async(
-                    args={
-                        'job_id': origin_job_id,
-                        'executor': Executor,
-                        'storage': BohriumStorge,
-                    },
-                    tool_context=None,
-                )
-                if results_res.isError:  # Job Result Retrival Failed
-                    err_msg = results_res.content[0].text
-                    if err_msg.startswith('Error executing tool'):
-                        err_msg = err_msg[err_msg.find(':') + 2 :]
-                    yield frontend_text_event(
-                        ctx,
-                        self.name,
-                        f"Job {origin_job_id} failed: {err_msg}",
-                        ModelRole,
-                    )
-                elif status == 'Failed':  # Job Failed
+                if status == 'Failed':  # Job Failed
                     pass
                 else:  # Job Success
-                    raw_result = results_res.content[0].text
-                    dict_result = jsonpickle.loads(raw_result)
-                    logger.info(
-                        f"[{MATMASTER_AGENT_NAME}]:[{self.name}] dict_result = {dict_result}"
+                    dict_result = await parse_and_prepare_results(
+                        job_id=job_id, access_key=access_key
                     )
+                    logger.info(f"{ctx.session.id} dict_result = {dict_result}")
 
                     if self.enable_tgz_unpack:
                         tgz_flag, new_tool_result = await update_tgz_dict(dict_result)

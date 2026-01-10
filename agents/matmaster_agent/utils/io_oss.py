@@ -1,10 +1,12 @@
 import asyncio
 import base64
+import logging
 import os
 import re
 import shutil
 import tarfile
 import time
+import zipfile
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -14,6 +16,13 @@ import aiofiles
 import aiohttp
 import oss2
 from oss2.credentials import EnvironmentVariableCredentialsProvider
+
+from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
+from agents.matmaster_agent.logger import PrefixFilter
+
+logger = logging.getLogger(__name__)
+logger.addFilter(PrefixFilter(MATMASTER_AGENT_NAME))
+logger.setLevel(logging.INFO)
 
 
 @asynccontextmanager
@@ -55,15 +64,23 @@ async def _download_file(session: aiohttp.ClientSession, url: str, dest: Path) -
                 await f.write(chunk)
 
 
-async def _extract_tarfile(tgz_path: Path, extract_to: Path) -> None:
-    """异步解压tar文件(实际解压是同步操作)"""
-    # 使用run_in_executor避免阻塞事件循环
+async def _extract_compressed_file(compressed_path: Path, extract_to: Path) -> None:
     loop = asyncio.get_running_loop()
 
     def _sync_extract():
-        # 使用 with 语句确保 tarfile 正确关闭
-        with tarfile.open(tgz_path) as tf:
-            tf.extractall(extract_to)
+        extract_to.mkdir(parents=True, exist_ok=True)
+        logger.info(
+            f"Extracting {compressed_path}, file exists? {Path(compressed_path).exists()}"
+        )
+
+        if tarfile.is_tarfile(compressed_path):
+            with tarfile.open(compressed_path) as tf:
+                tf.extractall(extract_to)
+        elif zipfile.is_zipfile(compressed_path):
+            with zipfile.ZipFile(compressed_path) as zf:
+                zf.extractall(extract_to)
+        else:
+            raise ValueError(f"Unsupported archive: {compressed_path}")
 
     await loop.run_in_executor(None, _sync_extract)
 
@@ -76,19 +93,28 @@ async def _find_all_files(directory: Path) -> List[Path]:
         return [
             p
             for p in directory.rglob('*')
-            if p.is_file() and not p.suffix.lower() in {'.tgz'}
+            if p.is_file() and not p.suffix.lower() in {'.tgz', '.zip'}
         ]
 
     return await loop.run_in_executor(None, _sync_list)
 
 
-async def extract_files_from_tgz_url(tgz_url: str, temp_path: Path) -> List[Path]:
+async def extract_files_from_compressed_file_url(
+    compressed_file_url: str, temp_path: Path
+) -> List[Path]:
     """使用指定临时目录处理文件"""
     async with aiohttp.ClientSession() as session:
-        tgz_path = temp_path / 'downloaded.tgz'
+        temp_compressed_file = (
+            'downloaded.tgz'
+            if compressed_file_url.endswith('.tgz')
+            else 'downloaded.zip'
+        )
+        compressed_path = temp_path / temp_compressed_file
 
-        await _download_file(session, tgz_url, tgz_path)
-        await _extract_tarfile(tgz_path, temp_path)
+        await _download_file(session, compressed_file_url, compressed_path)
+        await _extract_compressed_file(
+            compressed_path=compressed_path, extract_to=temp_path
+        )
 
         return await _find_all_files(temp_path)
 
@@ -136,14 +162,14 @@ async def upload_to_oss_wrapper(
 
 
 async def extract_convert_and_upload(
-    tgz_url: str, temp_dir_path: str = './tmp'
+    compressed_url: str, temp_dir_path: str = './tmp'
 ) -> dict:
     """
     下载 TGZ → 解压 → JPG 转 Base64 → 上传 OSS → 自动清理
     """
     async with temp_dir(temp_dir_path) as temp_path:
         # 获取所有JPG文件的Base64编码
-        files = await extract_files_from_tgz_url(tgz_url, temp_path)
+        files = await extract_files_from_compressed_file_url(compressed_url, temp_path)
         conversion_tasks = [file_to_base64(file) for file in files]
         base64_results = await asyncio.gather(*conversion_tasks)
 
@@ -163,14 +189,14 @@ async def extract_convert_and_upload(
 
 async def update_tgz_dict(tool_result: dict):
     new_tool_result = {}
-    tgz_flag = False
+    compressed_flag = False
     for k, v in tool_result.items():
         new_tool_result[k] = v
-        if isinstance(v, str) and v.startswith('https') and v.endswith('tgz'):
-            tgz_flag = True
+        if isinstance(v, str) and v.startswith('https') and v.endswith(('tgz', 'zip')):
+            compressed_flag = True
             new_tool_result.update(**await extract_convert_and_upload(v))
 
-    return tgz_flag, new_tool_result
+    return compressed_flag, new_tool_result
 
 
 async def extract_file_content(file_url: str, temp_dir_path: str = './tmp') -> dict:
@@ -183,3 +209,9 @@ async def extract_file_content(file_url: str, temp_dir_path: str = './tmp') -> d
 
         content = await read_file_bytes(temp_file_path)
         return {'file_content': content}
+
+
+if __name__ == '__main__':
+    invalid_zip = 'https://bohrium-agent-test.oss-cn-zhangjiakou.aliyuncs.com/agent/jobs/337612/72f4337ea51448edacabf9559bc630b3/outputs.zip'
+    valid_zip = 'https://bohrium-agent-test.oss-cn-zhangjiakou.aliyuncs.com/agent/jobs/110680/c15113bb106b46f1a49800e776a2b8fc/outputs.zip'
+    asyncio.run(extract_convert_and_upload(invalid_zip, './tmp'))
