@@ -1733,5 +1733,7 @@ ALL_TOOLS = {
         'alternative': [],
         'bypass_confirmation': True,
         'self_check': False,
+        'needs_file_input': True,
+        'generates_file_output': False,
     },
 }
