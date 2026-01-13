@@ -562,8 +562,12 @@ def frontend_render_event(ctx, event, author, parsed_tool_result, render_tool_re
             None,
             ModelRole,
             {
-                'tool_name': first_part.function_response.name,
-                'literature_list_result': parsed_tool_result,
+                'literature_list_result': json.dumps(
+                    {
+                        'tool_name': first_part.function_response.name,
+                        'literature_list_result': parsed_tool_result,
+                    }
+                )
             },
         )
     # Web 检索列表
@@ -578,8 +582,12 @@ def frontend_render_event(ctx, event, author, parsed_tool_result, render_tool_re
             None,
             ModelRole,
             {
-                'tool_name': first_part.function_response.name,
-                'web_search_result': parsed_tool_result,
+                'web_search_result': json.dumps(
+                    {
+                        'tool_name': first_part.function_response.name,
+                        'web_search_result': parsed_tool_result,
+                    }
+                )
             },
         )
     else:
