@@ -425,18 +425,13 @@ class MatMasterFlowAgent(LlmAgent):
                         available_tools = get_tools_list(ctx, scenes)
                         if not available_tools:
                             available_tools = ALL_AGENT_TOOLS_LIST
-                        available_tools_with_info = {
-                            item: {
-                                'scene': ALL_TOOLS[item]['scene'],
-                                'description': ALL_TOOLS[item]['description'],
-                            }
-                            for item in available_tools
-                        }
                         available_tools_with_info_str = '\n'.join(
-                            [
-                                f"{key}\n    scene: {', '.join(value['scene'])}\n    description: {value['description']}"
-                                for key, value in available_tools_with_info.items()
-                            ]
+                            f"{tool}\n"
+                            f"    scene: {', '.join(ALL_TOOLS[tool]['scene'])}\n"
+                            f"    description: {ALL_TOOLS[tool]['description']}\n"
+                            f"    needs_file_input: {ALL_TOOLS[tool].get('needs_file_input', None)}\n"
+                            f"    generates_file_output: {ALL_TOOLS[tool].get('generates_file_output', None)}\n"
+                            for tool in available_tools
                         )
                         self.plan_make_agent.instruction = get_plan_make_instruction(
                             available_tools_with_info_str
