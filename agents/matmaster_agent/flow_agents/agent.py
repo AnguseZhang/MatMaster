@@ -1,6 +1,7 @@
 import copy
 import json
 import logging
+from asyncio import CancelledError
 from typing import AsyncGenerator
 
 from google.adk.agents import InvocationContext, LlmAgent
@@ -642,6 +643,9 @@ class MatMasterFlowAgent(LlmAgent):
                 # 退出循环
                 if not loop_continue:
                     break
+        # 用户触发中止会话
+        except CancelledError:
+            raise
         except BaseException as err:
             async for error_event in send_error_event(err, ctx, self.name):
                 yield error_event
