@@ -1,5 +1,6 @@
 RECOMMEND_PARAMS = 'recommend_params'
 EXPAND = 'expand'
 PLAN = 'plan'
+ERROR_OCCURRED = 'error_occurred'
 ERROR_DETAIL = 'error_detail'
 UPLOAD_FILE = 'upload_file'

@@ -28,6 +28,7 @@ from agents.matmaster_agent.llm_config import MatMasterLlmConfig
 from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.prompt import MatMasterCheckTransferPrompt
+from agents.matmaster_agent.state import ERROR_DETAIL, ERROR_OCCURRED
 from agents.matmaster_agent.sub_agents.mapping import (
     MatMasterSubAgentsEnum,
 )
@@ -98,6 +99,7 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                         validation_reason = ''
                         # 同一工具重试
                         while retry_count <= MAX_TOOL_RETRIES:
+                            # 制造工具调用上下文，已提交的任务跳过该步骤
                             if step['status'] != PlanStepStatusEnum.SUBMITTED:
                                 update_plan = copy.deepcopy(ctx.session.state['plan'])
                                 update_plan['steps'][index][
@@ -138,6 +140,7 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                                 },
                             )
 
+                            # 引导标题
                             async for title_event in self.title_agent.run_async(ctx):
                                 yield title_event
 
@@ -160,6 +163,8 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                                 },
                             ):
                                 yield matmaster_flow_event
+
+                            # 核心执行工具
                             async for event in target_agent.run_async(ctx):
                                 yield event
                             logger.info(
@@ -167,14 +172,13 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                             )
 
                             current_steps = ctx.session.state['plan']['steps']
-
-                            # 异步任务，直接退出当前函数
-                            if (
-                                current_steps[index]['status']
-                                == PlanStepStatusEnum.SUBMITTED
-                            ):
-                                return
-
+                            DOWNLOAD_RESULTS_TXT_FAILED = (
+                                ctx.session.state[ERROR_OCCURRED]
+                                and ctx.session.state[ERROR_DETAIL].startswith(
+                                    'ClientResponseError'
+                                )
+                                and 'results.txt' in ctx.session.state[ERROR_DETAIL]
+                            )
                             # 工具调用结果返回【成功】
                             if (
                                 current_steps[index]['status']
@@ -262,11 +266,15 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                                     # 无需校验，步骤完成
                                     tool_attempt_success = True
                                     break
+                            # 工具调用失败，且符合重试条件
                             elif (
                                 current_steps[index]['status']
                                 == PlanStepStatusEnum.FAILED
                                 and retry_count < MAX_TOOL_RETRIES
                             ):
+                                # 下载 results.txt 失败，退出同一工具重试
+                                if DOWNLOAD_RESULTS_TXT_FAILED:
+                                    break
                                 retry_count += 1
                                 update_plan = copy.deepcopy(ctx.session.state['plan'])
                                 update_plan['steps'][index][
@@ -290,54 +298,57 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                                 yield update_state_event(
                                     ctx, state_delta={'plan': update_plan}
                                 )
+                            # 异步任务，直接退出当前函数
+                            elif (
+                                current_steps[index]['status']
+                                == PlanStepStatusEnum.SUBMITTED
+                            ):
+                                return
                             else:
                                 # 其他状态（SUBMITTED等），退出循环
                                 break
 
-                        # 如果同一工具重试 MAX_TOOL_RETRIES 后仍未成功，尝试其他工具
+                        # 更换其他工具重试
                         if (
-                            current_steps[index]['status']
+                            not tool_attempt_success
+                            and current_steps[index]['status']
                             != PlanStepStatusEnum.SUBMITTED
                         ):
-                            if not tool_attempt_success:
-                                available_alts = [
-                                    alt
-                                    for alt in alternatives
-                                    if alt not in tried_tools
-                                ]
-                                if available_alts:
-                                    # 尝试替换工具
-                                    next_tool = available_alts[0]
-                                    tried_tools.append(next_tool)
-                                    current_tool_name = next_tool
-                                    logger.info(
-                                        f'{ctx.session.id} Switching to alternative tool: {next_tool} for step {index + 1}'
-                                    )
+                            available_alts = [
+                                alt for alt in alternatives if alt not in tried_tools
+                            ]
+                            if available_alts:
+                                # 尝试替换工具
+                                next_tool = available_alts[0]
+                                tried_tools.append(next_tool)
+                                current_tool_name = next_tool
+                                logger.info(
+                                    f'{ctx.session.id} Switching to alternative tool: {next_tool} for step {index + 1}'
+                                )
 
-                                    # 更新plan中的tool_name和status
-                                    update_plan = copy.deepcopy(
-                                        ctx.session.state['plan']
-                                    )
-                                    update_plan['steps'][index]['tool_name'] = next_tool
-                                    update_plan['steps'][index][
-                                        'status'
-                                    ] = PlanStepStatusEnum.PROCESS
-                                    original_description = step['description'].split(
-                                        '\n\n注意：'
-                                    )[
-                                        0
-                                    ]  # 移除之前的失败原因
-                                    update_plan['steps'][index][
-                                        'description'
-                                    ] = original_description
-                                    yield update_state_event(
-                                        ctx, state_delta={'plan': update_plan}
-                                    )
-                                else:
-                                    logger.warning(
-                                        f'{ctx.session.id} No more alternative tools for step {index + 1}'
-                                    )
-                                    break  # 退出tool while
+                                # 更新plan中的tool_name和status
+                                update_plan = copy.deepcopy(ctx.session.state['plan'])
+                                update_plan['steps'][index]['tool_name'] = next_tool
+                                update_plan['steps'][index][
+                                    'status'
+                                ] = PlanStepStatusEnum.PROCESS
+                                original_description = step['description'].split(
+                                    '\n\n注意：'
+                                )[
+                                    0
+                                ]  # 移除之前的失败原因
+                                update_plan['steps'][index][
+                                    'description'
+                                ] = original_description
+                                yield update_state_event(
+                                    ctx, state_delta={'plan': update_plan}
+                                )
+                            else:
+                                logger.warning(
+                                    f'{ctx.session.id} No more alternative tools for step {index + 1}'
+                                )
+                                break  # 退出tool while
 
+                # 最终仍然没有成功，中止计划
                 if not tool_attempt_success:
-                    break  # 如果没有成功，退出step for
+                    break

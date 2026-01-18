@@ -25,9 +25,11 @@ from agents.matmaster_agent.core_agents.public_agents.job_agents.submit_render_a
     SubmitRenderAgent,
 )
 from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
+from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.utils.event_utils import (
     all_text_event,
+    context_function_event,
     update_state_event,
 )
 
@@ -133,13 +135,32 @@ class BaseAsyncJobAgent(BaseAgentWithRecAndSum):
         current_step = ctx.session.state['plan']['steps'][
             ctx.session.state['plan_index']
         ]
+        current_step_tool_name = current_step['tool_name']
         current_step_status = current_step['status']
         if current_step_status in [
             PlanStepStatusEnum.SUCCESS,
             PlanStepStatusEnum.FAILED,
         ]:
             # Only Query Job Result
-            pass
+            step_title = ctx.session.state.get('step_title', {}).get(
+                'title',
+                f"{i18n.t(ctx.session.state['separate_card_info'])} {ctx.session.state['plan_index'] + 1}: {current_step_tool_name}",
+            )
+            for matmaster_flow_event in context_function_event(
+                ctx,
+                self.name,
+                'matmaster_flow',
+                None,
+                ModelRole,
+                {
+                    'title': step_title,
+                    'status': 'end',
+                    'font_color': '#0E6DE8',
+                    'bg_color': '#EBF2FB',
+                    'border_color': '#B7D3F7',
+                },
+            ):
+                yield matmaster_flow_event
         elif current_step_status == PlanStepStatusEnum.SUBMITTED:
             for submit_event in all_text_event(
                 ctx,
