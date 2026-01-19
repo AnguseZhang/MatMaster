@@ -277,7 +277,7 @@ def update_tool_args(func: AfterModelCallback) -> AfterModelCallback:
     ) -> Optional[LlmResponse]:
         # 先调用被装饰的 after_model_callback
         llm_response = await func(callback_context, llm_response)
-        logger.info(llm_response)
+        logger.info(f"llm_response = {llm_response}")
 
         # 检查响应是否有效
         if not (
