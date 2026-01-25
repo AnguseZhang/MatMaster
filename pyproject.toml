@@ -20,7 +20,7 @@ dependencies = [
     "deepmerge>=2.0",
     "deepdiff>=8.6.1",
     "fastmcp>=2.13.0.2",
-    "mcp==1.22.0",
+    "mcp==1.26.0",
 ]
 
 [build-system]
