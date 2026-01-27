@@ -1,8 +1,8 @@
 import logging
-from typing import List, Literal, Optional
+from typing import List
 
 from google.adk.agents import InvocationContext
-from pydantic import BaseModel, create_model
+from google.genai.types import Content
 
 from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
 from agents.matmaster_agent.flow_agents.scene_agent.model import SceneEnum
@@ -80,30 +80,6 @@ def check_plan(ctx: InvocationContext):
         return FlowStatusEnum.PROCESS
 
 
-def create_dynamic_plan_schema(available_tools: list):
-    # 动态创建 PlanStepSchema
-    DynamicPlanStepSchema = create_model(
-        'DynamicPlanStepSchema',
-        tool_name=(Optional[Literal[tuple(available_tools)]], None),
-        description=(str, ...),
-        feasibility=(str, ...),
-        status=(
-            Literal[tuple(PlanStepStatusEnum.__members__.values())],
-            PlanStepStatusEnum.PLAN.value,
-        ),
-        __base__=BaseModel,
-    )
-
-    # 动态创建 PlanSchema
-    DynamicPlanSchema = create_model(
-        'DynamicPlanSchema',
-        steps=(List[DynamicPlanStepSchema], ...),
-        __base__=BaseModel,
-    )
-
-    return DynamicPlanSchema
-
-
 def should_bypass_confirmation(ctx: InvocationContext) -> bool:
     """Determine whether to skip plan confirmation based on the tools in the plan."""
     plan_steps = ctx.session.state['plan'].get('steps', [])
@@ -148,3 +124,13 @@ def get_self_check(current_tool_name: str) -> bool:
     if not tool:
         return False
     return tool.get('self_check', False)
+
+
+def is_content_has_keywords(content: Content, keywords: List[str]) -> bool:
+    tokens = [f'[{k}]' if k.endswith('agent') else f'`{k}`' for k in keywords]
+
+    return any(
+        isinstance((text := getattr(part, 'text', None)), str)
+        and any(token in text for token in tokens)
+        for part in content.parts
+    )

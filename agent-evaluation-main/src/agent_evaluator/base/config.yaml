@@ -1,0 +1,32 @@
+description: MatMaster agent evaluation (Promptfoo + Python provider)
+
+# Note:
+# - Promptfoo will execute this Python provider with your local Python interpreter.
+# - If you rely on `uv`/venv, set `PROMPTFOO_PYTHON` to your interpreter, e.g.
+#   PROMPTFOO_PYTHON="$(uv run which python)"
+# - Provider docs: https://www.promptfoo.dev/docs/providers/python/
+
+providers:
+  - id: file://promptfoo_provider.py
+    config:
+      # Capture ADK tool/function calls from events (best-effort).
+      capture_function_call: true
+
+      # If true, provider will return JSON string: {"text": "...", "function_call": {...}}
+      # so you can assert on function_call via regex/contains.
+      annotate_output_json: false
+
+prompts:
+  - "{{prompt}}"
+
+tests:
+  # Minimal smoke test based on `evaluate/experiments/single_turn/answer_qa_exp.json`.
+  - vars:
+      prompt: "请帮我构建一个TiO2"
+    assert:
+      - type: contains
+        value: "生成结构"
+      - type: contains
+        value: "检索结构"
+
+

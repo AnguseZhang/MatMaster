@@ -6,7 +6,7 @@ DPACalulator_AGENT_NAME = 'dpa_calculator_agent'
 if CURRENT_ENV == 'test':
     DPAMCPServerUrl = 'http://qpus1389933.bohrium.tech:50001/mcp'
 elif CURRENT_ENV == 'uat':
-    DPAMCPServerUrl = 'https://1415fe9fea0fa1e45dddcff5682239a0.appspace.uat.bohrium.com/sse?token=f812b4cc79ef47b4b2a1bb81c415367d'  # TODO: update uat url to mcp
+    DPAMCPServerUrl = 'https://dpa-calculator-uat-2-uuid1767842102.appspace.uat.bohrium.com/mcp?token=7b67a2e7778d4eb3b2c255d2f975d585'
 else:
     # DPAMCPServerUrl = 'http://pfmx1355864.bohrium.tech:50001/sse' # TODO: update backup prod url to mcp
     DPAMCPServerUrl = 'https://dpa-uuid1750659890.appspace.bohrium.com/mcp?token=b2b94c52d10141e992514f9d17bcca23'

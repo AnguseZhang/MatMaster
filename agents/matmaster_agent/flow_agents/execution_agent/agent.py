@@ -1,4 +1,5 @@
 import copy
+import json
 import logging
 from typing import AsyncGenerator, override
 
@@ -28,6 +29,7 @@ from agents.matmaster_agent.llm_config import MatMasterLlmConfig
 from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.prompt import MatMasterCheckTransferPrompt
+from agents.matmaster_agent.state import ERROR_DETAIL, ERROR_OCCURRED
 from agents.matmaster_agent.sub_agents.mapping import (
     MatMasterSubAgentsEnum,
 )
@@ -98,6 +100,7 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                         validation_reason = ''
                         # 同一工具重试
                         while retry_count <= MAX_TOOL_RETRIES:
+                            # 制造工具调用上下文，已提交的任务跳过该步骤
                             if step['status'] != PlanStepStatusEnum.SUBMITTED:
                                 update_plan = copy.deepcopy(ctx.session.state['plan'])
                                 update_plan['steps'][index][
@@ -138,6 +141,7 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                                 },
                             )
 
+                            # 引导标题
                             async for title_event in self.title_agent.run_async(ctx):
                                 yield title_event
 
@@ -160,21 +164,85 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                                 },
                             ):
                                 yield matmaster_flow_event
+
+                            # 核心执行工具
+                            truncation_mode = ctx.session.state.get('truncation_mode', False)
+                            l1b_truncated = False
+                            captured_function_calls = []
+                            
                             async for event in target_agent.run_async(ctx):
+                                # L1b 截断模式：检查 state 中是否有记录的 function_call
+                                if truncation_mode == 'L1b':
+                                    # 优先使用 private_callback 记录的原始工具信息
+                                    state_captured = ctx.session.state.get('l1b_captured_function_calls', [])
+                                    if state_captured and not l1b_truncated:
+                                        captured_function_calls = state_captured
+                                        logger.info(
+                                            f'{ctx.session.id} L1b truncation: using captured function_calls from state, '
+                                            f'count={len(captured_function_calls)}'
+                                        )
+                                        l1b_truncated = True
+                                    # 如果 state 中没有，则尝试从 event 中捕获（备用方案）
+                                    elif event.content and event.content.parts:
+                                        for part in event.content.parts:
+                                            if part.function_call:
+                                                func_name = getattr(part.function_call, 'name', '')
+                                                func_args = getattr(part.function_call, 'args', {})
+                                                # 跳过内部 agent 调用，只在没有 state 记录时使用
+                                                if not state_captured:
+                                                    captured_function_calls.append({
+                                                        'tool_name': func_name,
+                                                        'tool_args': func_args,
+                                                    })
+                                                    logger.info(
+                                                        f'{ctx.session.id} L1b truncation: captured function_call from event '
+                                                        f'tool={func_name}, args={func_args}'
+                                                    )
+                                                    l1b_truncated = True
+                                
                                 yield event
+                                
+                                # 捕获到 function_call 后立即截断，不等待执行结果
+                                if l1b_truncated:
+                                    # 输出 L1b 截断事件
+                                    for truncation_event in context_function_event(
+                                        ctx,
+                                        self.name,
+                                        'matmaster_l1b_truncation',
+                                        None,
+                                        ModelRole,
+                                        {
+                                            'status': 'truncated_with_args',
+                                            'step_index': index,
+                                            'tool_name': current_tool_name,
+                                            'function_calls': json.dumps(
+                                                captured_function_calls,
+                                                ensure_ascii=False
+                                            ),
+                                            'plan': json.dumps(
+                                                ctx.session.state.get('plan', {}),
+                                                ensure_ascii=False
+                                            ),
+                                        },
+                                    ):
+                                        yield truncation_event
+                                    logger.info(
+                                        f'{ctx.session.id} L1b truncation mode: '
+                                        f'captured {len(captured_function_calls)} function calls, exiting'
+                                    )
+                                    return  # 截断退出
                             logger.info(
                                 f'{ctx.session.id} After Run: plan = {ctx.session.state['plan']}, {check_plan(ctx)}'
                             )
 
                             current_steps = ctx.session.state['plan']['steps']
-
-                            # 异步任务，直接退出当前函数
-                            if (
-                                current_steps[index]['status']
-                                == PlanStepStatusEnum.SUBMITTED
-                            ):
-                                return
-
+                            DOWNLOAD_RESULTS_TXT_FAILED = (
+                                ctx.session.state[ERROR_OCCURRED]
+                                and ctx.session.state[ERROR_DETAIL].startswith(
+                                    'ClientResponseError'
+                                )
+                                and 'results.txt' in ctx.session.state[ERROR_DETAIL]
+                            )
                             # 工具调用结果返回【成功】
                             if (
                                 current_steps[index]['status']
@@ -262,11 +330,15 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                                     # 无需校验，步骤完成
                                     tool_attempt_success = True
                                     break
+                            # 工具调用失败，且符合重试条件
                             elif (
                                 current_steps[index]['status']
                                 == PlanStepStatusEnum.FAILED
                                 and retry_count < MAX_TOOL_RETRIES
                             ):
+                                # 下载 results.txt 失败，退出同一工具重试
+                                if DOWNLOAD_RESULTS_TXT_FAILED:
+                                    break
                                 retry_count += 1
                                 update_plan = copy.deepcopy(ctx.session.state['plan'])
                                 update_plan['steps'][index][
@@ -290,54 +362,57 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                                 yield update_state_event(
                                     ctx, state_delta={'plan': update_plan}
                                 )
+                            # 异步任务，直接退出当前函数
+                            elif (
+                                current_steps[index]['status']
+                                == PlanStepStatusEnum.SUBMITTED
+                            ):
+                                return
                             else:
                                 # 其他状态（SUBMITTED等），退出循环
                                 break
 
-                        # 如果同一工具重试 MAX_TOOL_RETRIES 后仍未成功，尝试其他工具
+                        # 更换其他工具重试
                         if (
-                            current_steps[index]['status']
+                            not tool_attempt_success
+                            and current_steps[index]['status']
                             != PlanStepStatusEnum.SUBMITTED
                         ):
-                            if not tool_attempt_success:
-                                available_alts = [
-                                    alt
-                                    for alt in alternatives
-                                    if alt not in tried_tools
-                                ]
-                                if available_alts:
-                                    # 尝试替换工具
-                                    next_tool = available_alts[0]
-                                    tried_tools.append(next_tool)
-                                    current_tool_name = next_tool
-                                    logger.info(
-                                        f'{ctx.session.id} Switching to alternative tool: {next_tool} for step {index + 1}'
-                                    )
+                            available_alts = [
+                                alt for alt in alternatives if alt not in tried_tools
+                            ]
+                            if available_alts:
+                                # 尝试替换工具
+                                next_tool = available_alts[0]
+                                tried_tools.append(next_tool)
+                                current_tool_name = next_tool
+                                logger.info(
+                                    f'{ctx.session.id} Switching to alternative tool: {next_tool} for step {index + 1}'
+                                )
 
-                                    # 更新plan中的tool_name和status
-                                    update_plan = copy.deepcopy(
-                                        ctx.session.state['plan']
-                                    )
-                                    update_plan['steps'][index]['tool_name'] = next_tool
-                                    update_plan['steps'][index][
-                                        'status'
-                                    ] = PlanStepStatusEnum.PROCESS
-                                    original_description = step['description'].split(
-                                        '\n\n注意：'
-                                    )[
-                                        0
-                                    ]  # 移除之前的失败原因
-                                    update_plan['steps'][index][
-                                        'description'
-                                    ] = original_description
-                                    yield update_state_event(
-                                        ctx, state_delta={'plan': update_plan}
-                                    )
-                                else:
-                                    logger.warning(
-                                        f'{ctx.session.id} No more alternative tools for step {index + 1}'
-                                    )
-                                    break  # 退出tool while
+                                # 更新plan中的tool_name和status
+                                update_plan = copy.deepcopy(ctx.session.state['plan'])
+                                update_plan['steps'][index]['tool_name'] = next_tool
+                                update_plan['steps'][index][
+                                    'status'
+                                ] = PlanStepStatusEnum.PROCESS
+                                original_description = step['description'].split(
+                                    '\n\n注意：'
+                                )[
+                                    0
+                                ]  # 移除之前的失败原因
+                                update_plan['steps'][index][
+                                    'description'
+                                ] = original_description
+                                yield update_state_event(
+                                    ctx, state_delta={'plan': update_plan}
+                                )
+                            else:
+                                logger.warning(
+                                    f'{ctx.session.id} No more alternative tools for step {index + 1}'
+                                )
+                                break  # 退出tool while
 
+                # 最终仍然没有成功，中止计划
                 if not tool_attempt_success:
-                    break  # 如果没有成功，退出step for
+                    break

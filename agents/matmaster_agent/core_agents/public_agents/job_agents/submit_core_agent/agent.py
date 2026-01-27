@@ -1,5 +1,4 @@
 import copy
-import json
 import logging
 from typing import AsyncGenerator, override
 
@@ -8,7 +7,6 @@ from google.adk.events import Event
 
 from agents.matmaster_agent.config import USE_PHOTON
 from agents.matmaster_agent.constant import (
-    JOB_RESULT_KEY,
     MATMASTER_AGENT_NAME,
     SANDBOX_JOB_DETAIL_URL,
     ModelRole,
@@ -22,10 +20,10 @@ from agents.matmaster_agent.model import BohrJobInfo, DFlowJobInfo
 from agents.matmaster_agent.style import tool_response_failed_card
 from agents.matmaster_agent.utils.event_utils import (
     all_text_event,
-    context_function_event,
     context_multipart2function_event,
     display_failed_result_or_consume,
     display_future_consume_event,
+    frontend_render_event,
     get_function_call_indexes,
     is_function_call,
     is_function_response,
@@ -38,8 +36,6 @@ from agents.matmaster_agent.utils.helper_func import (
 )
 from agents.matmaster_agent.utils.io_oss import update_tgz_dict
 from agents.matmaster_agent.utils.result_parse_utils import (
-    get_kv_result,
-    get_markdown_image_result,
     parse_result,
 )
 
@@ -123,34 +119,19 @@ class SubmitCoreMCPAgent(DisallowTransferAndContentLimitMCPAgent):
                     tgz_flag, new_tool_result = await update_tgz_dict(dict_result)
                 else:
                     new_tool_result = dict_result
-                parsed_result = await parse_result(ctx, new_tool_result)
-                markdown_image_result = get_markdown_image_result(parsed_result)
-                job_result_comp_data = get_kv_result(parsed_result)
 
-                for frontend_job_result_event in all_text_event(
+                parsed_tool_result = await parse_result(ctx, new_tool_result)
+                logger.info(
+                    f'{ctx.session.id} parsed_tool_result = {parsed_tool_result}'
+                )
+                for _frontend_render_event in frontend_render_event(
                     ctx,
+                    event,
                     self.name,
-                    f"<bohrium-chat-msg>{json.dumps(job_result_comp_data)}</bohrium-chat-msg>",
-                    ModelRole,
+                    parsed_tool_result,
+                    render_tool_response=self.render_tool_response,
                 ):
-                    yield frontend_job_result_event
-
-                if markdown_image_result:
-                    for item in markdown_image_result:
-                        for markdown_image_event in all_text_event(
-                            ctx, self.name, item['data'], ModelRole
-                        ):
-                            yield markdown_image_event
-
-                # 包装成function_call，来避免在历史记录中展示；同时模型可以在上下文中感知
-                for db_job_result_event in context_function_event(
-                    ctx,
-                    self.name,
-                    'system_job_result',
-                    {JOB_RESULT_KEY: parsed_result},
-                    ModelRole,
-                ):
-                    yield db_job_result_event
+                    yield _frontend_render_event
             # END
 
             # Only for Long Running Tools Call

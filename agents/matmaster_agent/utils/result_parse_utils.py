@@ -173,13 +173,13 @@ async def parse_result(
                 )
             )
         elif type(v) is str:
-            if not v.startswith('http'):
+            if v.startswith('```') and v.endswith('```'):
                 parsed_result.append(
-                    JobResult(name=k, data=v, type=JobResultType.Value).model_dump(
-                        mode='json'
-                    )
+                    JobResult(
+                        name=k, data=v, type=JobResultType.MarkdownCode
+                    ).model_dump(mode='json')
                 )
-            else:
+            elif v.startswith('http'):
                 # 写入数据库
                 await insert_session_files(session_id=ctx.session.id, files=[v])
 
@@ -218,6 +218,12 @@ async def parse_result(
                             type=JobResultType.Value,
                         ).model_dump(mode='json')
                     )
+            else:
+                parsed_result.append(
+                    JobResult(name=k, data=v, type=JobResultType.Value).model_dump(
+                        mode='json'
+                    )
+                )
         elif await is_float_sequence(v):
             parsed_result.append(
                 JobResult(
@@ -307,6 +313,16 @@ def get_csv_result(parsed_tool_result: List[JobResult]) -> List[JobResult]:
         and type(item['data']) is str
         and item['data'].endswith('csv')
         and item['type'] == JobResultType.RegularFile
+    ]
+
+
+def get_markdown_code_result(parsed_tool_result: List[JobResult]) -> List[JobResult]:
+    return [
+        item
+        for item in parsed_tool_result
+        if item.get('data')
+        and type(item['data']) is str
+        and item['type'] == JobResultType.MarkdownCode
     ]
 
 

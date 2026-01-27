@@ -1,3 +1,4 @@
+from asyncio import CancelledError
 from typing import AsyncGenerator, final
 
 from google.adk.agents import BaseAgent, InvocationContext, LlmAgent, SequentialAgent
@@ -17,6 +18,9 @@ class ErrorHandlerMixin(BaseMixin):
         try:
             async for event in self._process_events(ctx):
                 yield event
+        # 用户触发中止会话
+        except CancelledError:
+            raise
         except BaseException as err:
             async for error_event in send_error_event(err, ctx, self.name):
                 yield error_event

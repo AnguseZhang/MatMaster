@@ -97,8 +97,6 @@ def filter_safety_content(func: BeforeModelCallback) -> BeforeModelCallback:
                     f'{callback_context.session.id} {callback_context.agent_name} Content too long, use latest {index+1} part'
                 )
                 break
-            if callback_context.agent_name == 'step_title_agent' and index == 0:
-                break
 
         logger.info(
             f'{callback_context.session.id} {callback_context.agent_name} index={index}, record_tokens = {record_tokens}'
@@ -353,6 +351,19 @@ async def remove_function_call(
                 logger.info(
                     f"[{MATMASTER_AGENT_NAME}] FunctionCall will be removed, name = {function_name}, args = {function_args}"
                 )
+                # L1b 截断模式：记录被移除的 function_call 信息到 state
+                # 这样截断时可以获取到真正的工具名称和参数
+                if callback_context.state.get('truncation_mode') == 'L1b':
+                    if 'l1b_captured_function_calls' not in callback_context.state:
+                        callback_context.state['l1b_captured_function_calls'] = []
+                    callback_context.state['l1b_captured_function_calls'].append({
+                        'tool_name': function_name,
+                        'tool_args': function_args,
+                    })
+                    logger.info(
+                        f"[{MATMASTER_AGENT_NAME}] L1b: recorded function_call to state, "
+                        f"name={function_name}, args={function_args}"
+                    )
                 part.function_call = None
 
         if (

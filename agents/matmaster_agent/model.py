@@ -18,6 +18,7 @@ class JobResultType(str, Enum):
     MatModelerFile = 'MatModelerFile'
     EchartsFile = 'EchartsFile'
     Value = 'Value'
+    MarkdownCode = 'MarkdownCode'
 
 
 class RenderTypeEnum(str, Enum):

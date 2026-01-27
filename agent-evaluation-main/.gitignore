@@ -1,0 +1,11 @@
+.env
+depracated/
+cases/logs
+logs/
+*.log
+
+# python
+__pycache__/
+.venv
+
+

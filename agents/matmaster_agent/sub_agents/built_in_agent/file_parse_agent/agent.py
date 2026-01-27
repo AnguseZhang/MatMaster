@@ -19,7 +19,7 @@ from agents.matmaster_agent.sub_agents.built_in_agent.file_parse_agent.tools imp
 class FileParseAgent(BaseSyncAgentWithToolValidator):
     def __init__(self, llm_config: LLMConfig):
         super().__init__(
-            model=llm_config.default_litellm_model,
+            model=llm_config.gemini_3_flash,
             name=FILE_PARSE_AGENT_NAME,
             description='',
             instruction=FileParseAgentInstruction,

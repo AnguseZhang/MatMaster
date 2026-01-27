@@ -78,6 +78,7 @@ class LLMConfig:
         gemini_2_0_flash = 'gemini-2.0-flash'
         gemini_2_5_pro = 'gemini-2.5-pro'
         gemini_3_flash = 'gemini-3-flash'
+        gemini_3_pro = 'gemini-3-pro'
         claude_sonnet_4 = 'claude-sonnet-4'
         deepseek_chat = 'deepseek-chat'
         gpt_5 = 'gpt-5'
@@ -109,9 +110,16 @@ class LLMConfig:
         self.gemini_3_flash = _init_model(
             MODEL_MAPPING.get((litellm_provider, gemini_3_flash))
         )
+        self.gemini_3_pro = _init_model(
+            MODEL_MAPPING.get((litellm_provider, gemini_3_pro))
+        )
+
+        # Claude Models
         self.claude_sonnet_4 = _init_model(
             MODEL_MAPPING.get((litellm_provider, claude_sonnet_4))
         )
+
+        # Deepseek Models
         self.deepseek_chat = _init_model(
             MODEL_MAPPING.get((deepseek_provider, deepseek_chat))
         )

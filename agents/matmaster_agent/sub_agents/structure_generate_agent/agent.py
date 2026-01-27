@@ -60,6 +60,7 @@ class StructureGenerateAgent(BaseAsyncJobAgent):
             sync_tools=[
                 'add_hydrogens',
                 'generate_ordered_replicas',
+                'remove_solvents',
                 'build_bulk_structure_by_template',
                 'build_bulk_structure_by_wyckoff',
                 'make_supercell_structure',

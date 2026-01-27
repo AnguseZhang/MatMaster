@@ -1,0 +1,105 @@
+{
+  "cases": [
+    {
+      "case_id": "mof-001",
+      "tool_name": "fetch_mofs_sql",
+      "args": {
+        "sql": "SELECT * FROM mofs WHERE name = 'tobmof-27'"
+      },
+      "expect": {
+        "kind": "json",
+        "must_have": ["name"]
+      }
+    },
+    {
+      "case_id": "mof-002",
+      "tool_name": "fetch_mofs_sql",
+      "args": {
+        "sql": "SELECT * FROM mofs WHERE database = 'Tobacco' AND surface_area_m2g BETWEEN 500 AND 1000 ORDER BY surface_area_m2g DESC"
+      },
+      "expect": {
+        "kind": "json"
+      }
+    },
+    {
+      "case_id": "mof-003",
+      "tool_name": "fetch_mofs_sql",
+      "args": {
+        "sql": "SELECT DISTINCT m.name, m.database FROM mofs m JOIN elements e ON m.id = e.mof_id WHERE e.element_symbol = 'Cu' AND m.n_atom < 100"
+      },
+      "expect": {
+        "kind": "json"
+      }
+    },
+    {
+      "case_id": "mof-004",
+      "tool_name": "fetch_mofs_sql",
+      "args": {
+        "sql": "SELECT database, COUNT(*) as count FROM mofs GROUP BY database"
+      },
+      "expect": {
+        "kind": "json"
+      }
+    },
+    {
+      "case_id": "mof-005",
+      "tool_name": "fetch_mofs_sql",
+      "args": {
+        "sql": "SELECT name, lcd, pld FROM mofs WHERE lcd > 10 AND pld > 5 LIMIT 5"
+      },
+      "expect": {
+        "kind": "json"
+      }
+    },
+    {
+      "case_id": "mof-006",
+      "tool_name": "fetch_mofs_sql",
+      "args": {
+        "sql": "SELECT m.name, i.temperature FROM mofs m JOIN isotherms i ON m.id = i.mof_id WHERE i.temperature = 298"
+      },
+      "expect": {
+        "kind": "json"
+      }
+    },
+    {
+      "case_id": "mof-007",
+      "tool_name": "fetch_mofs_sql",
+      "args": {
+        "sql": "SELECT name, void_fraction FROM mofs WHERE void_fraction > 0.8"
+      },
+      "expect": {
+        "kind": "json"
+      }
+    },
+    {
+      "case_id": "mof-008",
+      "tool_name": "fetch_mofs_sql",
+      "args": {
+        "sql": "SELECT a.name, COUNT(*) as count FROM adsorbates a JOIN mof_adsorbates ma ON a.id = ma.adsorbate_id GROUP BY a.name"
+      },
+      "expect": {
+        "kind": "json"
+      }
+    },
+    {
+      "case_id": "mof-009",
+      "tool_name": "fetch_mofs_sql",
+      "args": {
+        "sql": "SELECT name FROM mofs WHERE surface_area_m2cm3 > 2000"
+      },
+      "expect": {
+        "kind": "json"
+      }
+    },
+    {
+      "case_id": "mof-010",
+      "tool_name": "fetch_mofs_sql",
+      "args": {
+        "sql": "WITH avg_sa AS (SELECT AVG(surface_area_m2g) as val FROM mofs) SELECT name, surface_area_m2g FROM mofs, avg_sa WHERE surface_area_m2g > avg_sa.val LIMIT 5"
+      },
+      "expect": {
+        "kind": "json"
+      }
+    }
+  ]
+}

@@ -51,6 +51,7 @@ from agents.matmaster_agent.utils.helper_func import (
 from agents.matmaster_agent.utils.result_parse_utils import (
     get_echarts_result,
     get_kv_result,
+    get_markdown_code_result,
     get_markdown_image_result,
 )
 
@@ -621,3 +622,9 @@ def frontend_render_event(ctx, event, author, parsed_tool_result, render_tool_re
             ModelRole,
             {'echarts_url': [item['url'] for item in echarts_result]},
         )
+
+    # 渲染 Markdown Code
+    markdown_code_result = get_markdown_code_result(parsed_tool_result)
+    if markdown_code_result:
+        for item in markdown_code_result:
+            yield from all_text_event(ctx, author, item['data'], ModelRole)

@@ -22,31 +22,35 @@ class PlanMakeAgent(DisallowTransferAndContentLimitSchemaAgent):
         async for event in super()._run_events(ctx):
             yield event
 
-        logger.info(f'{ctx.session.id} plan = {ctx.session.state["plan"]}')
+        logger.info(
+            f'{ctx.session.id} multi_plans = {ctx.session.state["multi_plans"]}'
+        )
+
         # 计算 feasibility
-        update_plan = ctx.session.state['plan']
-        update_plan['feasibility'] = 'null'
-        total_steps = len(update_plan.get('steps', []))
-        exist_step = 0
-        update_plan_steps = []
-        for step in update_plan.get('steps', []):
-            if not step['tool_name']:
-                step['tool_name'] = 'llm_tool'
-            update_plan_steps.append(step)
-        update_plan['steps'] = update_plan_steps
+        update_multi_plans = ctx.session.state['multi_plans']
+        for update_plan in update_multi_plans['plans']:
+            update_plan['feasibility'] = 'null'
+            total_steps = len(update_plan.get('steps', []))
+            exist_step = 0
+            update_plan_steps = []
+            for step in update_plan.get('steps', []):
+                if not step['tool_name']:
+                    step['tool_name'] = 'llm_tool'
+                update_plan_steps.append(step)
+            update_plan['steps'] = update_plan_steps
 
-        for index, step in enumerate(update_plan['steps']):
-            if index == 0 and not step['tool_name']:
-                break
-            if step['tool_name']:
-                exist_step += 1
+            for index, step in enumerate(update_plan['steps']):
+                if index == 0 and not step['tool_name']:
+                    break
+                if step['tool_name']:
+                    exist_step += 1
+                else:
+                    break
+            if not exist_step:
+                pass
+            elif exist_step != total_steps:
+                update_plan['feasibility'] = 'part'
             else:
-                break
-        if not exist_step:
-            pass
-        elif exist_step != total_steps:
-            update_plan['feasibility'] = 'part'
-        else:
-            update_plan['feasibility'] = 'full'
+                update_plan['feasibility'] = 'full'
 
-        yield update_state_event(ctx, state_delta={'plan': update_plan})
+        yield update_state_event(ctx, state_delta={'multi_plans': update_multi_plans})

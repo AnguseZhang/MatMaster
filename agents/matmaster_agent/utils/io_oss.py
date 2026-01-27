@@ -8,8 +8,9 @@ import tarfile
 import time
 import zipfile
 from contextlib import asynccontextmanager
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 from urllib.parse import unquote
 
 import aiofiles
@@ -23,6 +24,25 @@ from agents.matmaster_agent.logger import PrefixFilter
 logger = logging.getLogger(__name__)
 logger.addFilter(PrefixFilter(MATMASTER_AGENT_NAME))
 logger.setLevel(logging.INFO)
+
+
+@dataclass(frozen=True, slots=True)
+class ReportUploadParams:
+    """Parameters for uploading a markdown report to OSS."""
+
+    report_markdown: str
+    session_id: str
+    invocation_id: str
+    oss_prefix: str = 'agent/reports'
+
+
+@dataclass(frozen=True, slots=True)
+class ReportUploadResult:
+    """Result for uploading a markdown report to OSS."""
+
+    oss_url: str
+    oss_path: str
+    filename: str
 
 
 @asynccontextmanager
@@ -139,7 +159,11 @@ async def file_to_base64(file_path: Path) -> Tuple[Path, str]:
 
 # Step3: Upload to OSS
 async def upload_to_oss_wrapper(
-    b64_data: str, oss_path: str, filename: str
+    b64_data: str,
+    oss_path: str,
+    filename: str,
+    *,
+    with_download_headers: bool = False,
 ) -> Dict[str, dict]:
     def _sync_upload_base64_to_oss(data: str, oss_path: str) -> str:
         try:
@@ -147,7 +171,13 @@ async def upload_to_oss_wrapper(
             endpoint = os.environ['OSS_ENDPOINT']
             bucket_name = os.environ['OSS_BUCKET_NAME']
             bucket = oss2.Bucket(auth, endpoint, bucket_name)
-            bucket.put_object(oss_path, base64.b64decode(data))
+            headers = None
+            if with_download_headers:
+                headers = {
+                    'Content-Disposition': f'attachment; filename="{filename}"',
+                    'Content-Type': 'text/markdown',
+                }
+            bucket.put_object(oss_path, base64.b64decode(data), headers=headers)
             return f"https://{bucket_name}.oss-cn-zhangjiakou.aliyuncs.com/{oss_path}"
         except Exception as e:
             return str(e)
@@ -159,6 +189,34 @@ async def upload_to_oss_wrapper(
     result = await upload_base64_to_oss(b64_data, oss_path)
 
     return {filename: result}
+
+
+async def upload_report_md_to_oss(
+    params: ReportUploadParams,
+) -> Optional[ReportUploadResult]:
+    """Upload markdown report content to OSS and return its URL."""
+
+    report_markdown = (params.report_markdown or '').strip()
+    if not report_markdown:
+        return None
+
+    tmp_path = f'./tmp/report_{params.session_id}_{params.invocation_id}'
+    async with temp_dir(tmp_path) as tdir:
+        filename = f'matmaster_report_{params.invocation_id}.md'
+        md_file_path = tdir / filename
+        md_file_path.write_text(report_markdown, encoding='utf-8')
+
+        _, b64_data = await file_to_base64(md_file_path)
+        oss_path = f"agent/{int(time.time())}_{filename}"
+        oss_result = await upload_to_oss_wrapper(
+            b64_data, oss_path, filename, with_download_headers=True
+        )
+        oss_url = list(oss_result.values())[0]
+        return ReportUploadResult(
+            oss_url=oss_url,
+            oss_path=oss_path,
+            filename=filename,
+        )
 
 
 async def extract_convert_and_upload(

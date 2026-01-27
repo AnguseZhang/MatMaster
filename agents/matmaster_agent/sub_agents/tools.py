@@ -1231,6 +1231,27 @@ ALL_TOOLS = {
         'bypass_confirmation': True,
         'self_check': False,
     },
+    'remove_solvents': {
+        'belonging_agent': StructureGenerateAgentName,
+        'scene': [SceneEnum.STRUCTURE_GENERATE, SceneEnum.STRUCTURE_SANITIZE],
+        'description': (
+            'What it does: Remove specified solvent molecules from a molecular crystal structure.\n'
+            'When to use: When desolvating molecular crystals to obtain solvent-free or partially desolvated structures for analysis or simulation.\n'
+            'Prerequisites / Inputs: CIF structure file containing identifiable solvent molecules; target solvent names or formulas.\n'
+            'Outputs: Path to the desolvated structure file.\n'
+            'Cannot do / Limits: Only removes whole solvent molecules that can be identified by composition; does not modify framework atoms or resolve disorder.\n'
+            'Prior step: It is recommended to call get_structure_info first to inspect molecular components and confirm solvent identities.\n'
+            'Cost / Notes: Low. Recommended to inspect molecular components first.'
+        ),
+        'args_setting': (
+            'Parameter guidance: structure_path: Required. Input CIF file containing solvent molecules. '
+            'output_file: Required. Path to save the desolvated structure. '
+            'targets: Required. List of solvent names or chemical formulas to remove (e.g., "H2O", "DMF"). '
+        ),
+        'alternative': [],
+        'bypass_confirmation': True,
+        'self_check': False,
+    },
     'run_superconductor_optimization': {
         'belonging_agent': SuperconductorAgentName,
         'scene': [SceneEnum.SUPERCONDUCTOR],
@@ -1727,7 +1748,7 @@ ALL_TOOLS = {
         'description': (
             'What it does: Parse various file contents to extract key information.\n'
             'When to use: When you need to extract information from a file but there is no dedicated information extraction tool available.\n'
-            'Prerequisites / Inputs: File (TXT, PDF, Word, Excel, etc.).\n'
+            'Prerequisites / Inputs: File (TXT, PDF, Word, Excel, PNG, JPG, etc.).\n'
             'Outputs: Extracted information in text form.\n'
             'Cannot do / Limits: Only return text and do not support generating files in any format.\n'
             'Cost / Notes: Low.'

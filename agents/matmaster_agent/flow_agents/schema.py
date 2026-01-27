@@ -1,23 +1,4 @@
 from enum import Enum
-from typing import List, Literal, Optional
-
-from pydantic import BaseModel
-
-from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
-from agents.matmaster_agent.sub_agents.mapping import ALL_AGENT_TOOLS_LIST
-
-
-class PlanStepSchema(BaseModel):
-    tool_name: Optional[Literal[tuple(ALL_AGENT_TOOLS_LIST)]] = None
-    description: str
-    feasibility: str
-    status: Literal[tuple(PlanStepStatusEnum.__members__.values())] = (
-        PlanStepStatusEnum.PLAN
-    )
-
-
-class PlanSchema(BaseModel):
-    steps: List[PlanStepSchema]
 
 
 class FlowStatusEnum(str, Enum):
