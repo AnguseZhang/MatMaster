@@ -6,11 +6,14 @@ from google.adk.models import LlmRequest, LlmResponse
 from google.genai.types import Content, Part
 
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME, ModelRole
-from agents.matmaster_agent.flow_agents.constant import (
-    UNIVERSAL_CONTEXT_FILTER_KEYWORDS,
+from agents.matmaster_agent.flow_agents.expand_agent.constant import EXPAND_AGENT
+from agents.matmaster_agent.flow_agents.intent_agent.constant import INTENT_AGENT
+from agents.matmaster_agent.flow_agents.plan_confirm_agent.constant import (
+    PLAN_CONFIRM_AGENT,
 )
+from agents.matmaster_agent.flow_agents.scene_agent.constant import SCENE_AGENT
+from agents.matmaster_agent.flow_agents.utils import is_content_has_keywords
 from agents.matmaster_agent.logger import PrefixFilter
-from agents.matmaster_agent.utils.context_utils import is_content_has_keywords
 
 logger = logging.getLogger(__name__)
 logger.addFilter(PrefixFilter(MATMASTER_AGENT_NAME))
@@ -24,7 +27,12 @@ async def filter_plan_make_llm_contents(
     for content in llm_request.contents[::-1]:
         if is_content_has_keywords(
             content,
-            UNIVERSAL_CONTEXT_FILTER_KEYWORDS,
+            [
+                PLAN_CONFIRM_AGENT,
+                SCENE_AGENT,
+                INTENT_AGENT,
+                EXPAND_AGENT.replace('_agent', '_schema'),
+            ],
         ):
             continue
         else:

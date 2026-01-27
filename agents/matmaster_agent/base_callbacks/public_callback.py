@@ -34,6 +34,7 @@ def check_transfer(prompt: str, target_agent_enum: Type[Enum]) -> AfterModelCall
 
         llm_prompt = prompt.format(response_text=llm_response.content.parts[0].text)
         response = litellm.completion(
+            # model='deepseek/deepseek-chat',
             model='azure/gpt-4o',
             messages=[{'role': 'user', 'content': llm_prompt}],
             response_format=create_transfer_check_model(target_agent_enum),

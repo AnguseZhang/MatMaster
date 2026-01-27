@@ -161,7 +161,6 @@ class BaseAsyncJobAgent(BaseAgentWithRecAndSum):
                 },
             ):
                 yield matmaster_flow_event
-            yield update_state_event(ctx, state_delta={'matmaster_flow_active': None})
         elif current_step_status == PlanStepStatusEnum.SUBMITTED:
             for submit_event in all_text_event(
                 ctx,

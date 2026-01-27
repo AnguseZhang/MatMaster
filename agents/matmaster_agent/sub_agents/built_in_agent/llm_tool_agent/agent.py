@@ -62,7 +62,6 @@ class LLMToolAgent(DisallowTransferAndContentLimitLlmAgent):
             },
         ):
             yield matmaster_flow_event
-        yield update_state_event(ctx, state_delta={'matmaster_flow_active': None})
 
 
 def init_tool_agent(llm_config) -> LLMToolAgent:

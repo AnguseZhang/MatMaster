@@ -50,8 +50,8 @@ When uploading input files, ensure the correct file suffixes:
             dflow_flag=False,
             supervisor_agent=MATMASTER_AGENT_NAME,
             sync_tools=[
-                'orchestrate_input',
-                'convert_structural_format',
+                'orchestrate_lammps_input',
+                'convert_lammps_structural_format',
             ],
             before_tool_callback=before_tool_callback,
         )

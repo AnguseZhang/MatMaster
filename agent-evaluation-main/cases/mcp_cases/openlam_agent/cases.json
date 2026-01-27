@@ -1,0 +1,116 @@
+{
+  "cases": [
+    {
+      "case_id": "openlam-001",
+      "tool_name": "fetch_openlam_structures",
+      "args": {
+        "formula": "Fe2O3",
+        "n_results": 5,
+        "output_formats": ["cif"]
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "openlam-002",
+      "tool_name": "fetch_openlam_structures",
+      "args": {
+        "min_energy": -10.0,
+        "max_energy": 20.0,
+        "min_submission_time": "2024-01-01T00:00:00Z"
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "openlam-003",
+      "tool_name": "fetch_openlam_structures",
+      "args": {
+        "n_results": 3,
+        "output_formats": ["json"]
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "openlam-004",
+      "tool_name": "fetch_openlam_structures",
+      "args": {
+        "formula": "Si",
+        "min_energy": -5.0
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "openlam-005",
+      "tool_name": "fetch_openlam_structures",
+      "args": {
+        "max_submission_time": "2023-12-31T23:59:59Z",
+        "n_results": 2
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "openlam-006",
+      "tool_name": "fetch_openlam_structures",
+      "args": {
+        "formula": "NaCl",
+        "output_formats": ["cif", "json"]
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "openlam-007",
+      "tool_name": "fetch_openlam_structures",
+      "args": {
+        "min_energy": 100.0
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "openlam-008",
+      "tool_name": "fetch_openlam_structures",
+      "args": {
+        "min_submission_time": "2025-01-01T00:00:00Z",
+        "max_energy": 0.0
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "openlam-009",
+      "tool_name": "fetch_openlam_structures",
+      "args": {
+        "formula": "C",
+        "n_results": 10
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "openlam-010",
+      "tool_name": "fetch_openlam_structures",
+      "args": {
+        "min_energy": -20.0,
+        "max_energy": -10.0,
+        "output_formats": ["json"]
+      },
+      "expect": {
+        "kind": "any"
+      }
+    }
+  ]
+}

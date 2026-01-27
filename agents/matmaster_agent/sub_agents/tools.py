@@ -173,12 +173,12 @@ ALL_TOOLS = {
         'belonging_agent': ABACUS_AGENT_NAME,
         'scene': [SceneEnum.ABACUS, SceneEnum.VACANCY_FORMATION_ENERGY],
         'description': (
-            'What it does: Calculate formation energy of non-charged vacancy in metal atoms using DFT.Supports relaxation before calculation.\n'
+            'What it does: Calculate formation energy of non-charged vacancy in metal atoms using DFT.\n'
             'When to use: When you need vacancy formation energy for metal structures.\n'
             'Prerequisites / Inputs: Structure file in cif/VASP POSCAR/ABACUS STRU format; DFT parameters like functional, spin polarization, DFT+U, magnetic moments.\n'
             'Outputs: Vacancy formation energy.\n'
             'Cannot do / Limits: Only non-charged vacancy of metal atoms; requires supercell for calculation.\n'
-            'Cost / Notes: DFT calculation cost'
+            'Cost / Notes: DFT calculation cost; supports relaxation before calculation.'
         ),
         'alternative': ['apex_calculate_vacancy'],
         'self_check': False,
@@ -187,12 +187,12 @@ ALL_TOOLS = {
         'belonging_agent': ABACUS_AGENT_NAME,
         'scene': [SceneEnum.ABACUS, SceneEnum.PHONON],
         'description': (
-            'What it does: Calculate phonon dispersion curve using DFT. Supports relaxation before calculation.\n'
+            'What it does: Calculate phonon dispersion curve using DFT.\n'
             'When to use: When you need phonon properties and thermal corrections for a structure.\n'
             'Prerequisites / Inputs: Structure file in cif/VASP POSCAR/ABACUS STRU format; DFT parameters; optional supercell, high-symmetry points, k-path.\n'
             'Outputs: Plot of phonon dispersion band structure and thermal corrections.\n'
             'Cannot do / Limits: Requires DFT; may need supercell for accuracy.\n'
-            'Cost / Notes: DFT calculation cost.'
+            'Cost / Notes: DFT calculation cost; supports relaxation before calculation.'
         ),
         'alternative': ['apex_calculate_phonon', 'calculate_phonon'],
         'self_check': False,
@@ -201,12 +201,12 @@ ALL_TOOLS = {
         'belonging_agent': ABACUS_AGENT_NAME,
         'scene': [SceneEnum.ABACUS, SceneEnum.BAND],
         'description': (
-            'What it does: Calculate electronic band structure using DFT. Supports relaxation before calculation.\n'
+            'What it does: Calculate electronic band structure using DFT.\n'
             'When to use: When you need band structure and band gap for a material.\n'
             'Prerequisites / Inputs: Structure file in cif/VASP POSCAR/ABACUS STRU format; DFT parameters; optional high-symmetry points, k-path.\n'
             'Outputs: Plot of band structure and band gap.\n'
             'Cannot do / Limits: DFT-based; supports PYATB or ABACUS nscf.\n'
-            'Cost / Notes: DFT calculation cost.'
+            'Cost / Notes: DFT calculation cost; supports relaxation before calculation.'
         ),
         'alternative': [],
         'self_check': False,
@@ -229,12 +229,12 @@ ALL_TOOLS = {
         'belonging_agent': ABACUS_AGENT_NAME,
         'scene': [SceneEnum.ABACUS, SceneEnum.DENSITY_OF_STATES],
         'description': (
-            'What it does: Calculate DOS and PDOS using DFT. Supports relaxation before calculation.\n'
+            'What it does: Calculate DOS and PDOS using DFT.\n'
             'When to use: When you need density of states for electronic structure analysis.\n'
             "Prerequisites / Inputs: Structure file in cif/VASP POSCAR/ABACUS STRU format; DFT parameters; PDOS mode ('species', 'species+shell', 'species+orbital').\n"
             'Outputs: Plots for DOS and PDOS.\n'
             'Cannot do / Limits: DFT-based; requires relaxation support.\n'
-            'Cost / Notes: DFT calculation cost.'
+            'Cost / Notes: DFT calculation cost; supports relaxation before calculation.'
         ),
         'alternative': [],
         'self_check': False,
@@ -271,12 +271,12 @@ ALL_TOOLS = {
         'belonging_agent': ABACUS_AGENT_NAME,
         'scene': [SceneEnum.ABACUS, SceneEnum.WORK_FUNCTION],
         'description': (
-            'What it does: Calculate work function of slabs and 2D materials using DFT. Supports relaxation before calculation.\n'
+            'What it does: Calculate work function of slabs and 2D materials using DFT.\n'
             'When to use: When you need work function for surface materials.\n'
             'Prerequisites / Inputs: Structure file in cif/VASP POSCAR/ABACUS STRU format; DFT parameters; vacuum direction, dipole correction.\n'
             'Outputs: Plot of electrostatic potential and work function.\n'
             'Cannot do / Limits: For slabs and 2D materials; polar slabs have two work functions.\n'
-            'Cost / Notes: DFT calculation cost.'
+            'Cost / Notes: DFT calculation cost; supports relaxation before calculation.'
         ),
         'alternative': [],
         'self_check': False,
@@ -290,7 +290,7 @@ ALL_TOOLS = {
             'Prerequisites / Inputs: Structure file in cif/VASP POSCAR/ABACUS STRU format; DFT parameters; ensemble, steps, timestep, temperature.\n'
             'Outputs: ASE trajectory file.\n'
             'Cannot do / Limits: DFT-based MD; expensive for long simulations.\n'
-            'Cost / Notes: High DFT cost.'
+            'Cost / Notes: High DFT cost; supports relaxation before calculation.'
         ),
         'alternative': ['run_molecular_dynamics'],
         'self_check': False,
@@ -299,12 +299,12 @@ ALL_TOOLS = {
         'belonging_agent': ABACUS_AGENT_NAME,
         'scene': [SceneEnum.ABACUS, SceneEnum.Electron_Localization_Function],
         'description': (
-            'What it does: Calculate electron localization function using DFT. Supports relaxation before calculation.\n'
+            'What it does: Calculate electron localization function using DFT.\n'
             'When to use: When you need ELF for bonding analysis.\n'
             'Prerequisites / Inputs: Structure file in cif/VASP POSCAR/ABACUS STRU format; DFT parameters.\n'
             'Outputs: Cube file of ELF.\n'
             'Cannot do / Limits: DFT-based.\n'
-            'Cost / Notes: DFT calculation cost.'
+            'Cost / Notes: DFT calculation cost; supports relaxation before calculation.'
         ),
         'alternative': [],
         'self_check': False,
@@ -313,12 +313,12 @@ ALL_TOOLS = {
         'belonging_agent': ABACUS_AGENT_NAME,
         'scene': [SceneEnum.ABACUS, SceneEnum.EOS],
         'description': (
-            'What it does: Calculate equation of state using DFT.Supports relaxation before calculation.\n'
+            'What it does: Calculate equation of state using DFT.\n'
             'When to use: When you need EOS curve and bulk properties.\n'
             'Prerequisites / Inputs: Structure file in cif/VASP POSCAR/ABACUS STRU format; DFT parameters.\n'
             'Outputs: Plot of fitted EOS and fitting parameters.\n'
             'Cannot do / Limits: DFT-based.\n'
-            'Cost / Notes: DFT calculation cost.'
+            'Cost / Notes: DFT calculation cost; supports relaxation before calculation.'
         ),
         'alternative': ['apex_calculate_eos'],
         'self_check': False,
@@ -327,12 +327,12 @@ ALL_TOOLS = {
         'belonging_agent': ABACUS_AGENT_NAME,
         'scene': [SceneEnum.ABACUS, SceneEnum.ELASTIC_CONSTANT],
         'description': (
-            'What it does: Calculate elastic properties using DFT. Supports relaxation before calculation.\n'
+            'What it does: Calculate elastic properties using DFT.\n'
             'When to use: When you need elastic constants and moduli.\n'
             'Prerequisites / Inputs: Structure file in cif/VASP POSCAR/ABACUS STRU format; DFT parameters.\n'
             'Outputs: Elastic tensor (Voigt notation), bulk/shear/Young’s modulus, Poisson ratio.\n'
             'Cannot do / Limits: DFT-based.\n'
-            'Cost / Notes: DFT calculation cost.'
+            'Cost / Notes: DFT calculation cost; supports relaxation before calculation.'
         ),
         'alternative': ['apex_calculate_elastic', 'calculate_elastic_constants'],
         'self_check': False,
@@ -341,11 +341,11 @@ ALL_TOOLS = {
         'belonging_agent': ApexAgentName,
         'scene': [SceneEnum.APEX, SceneEnum.VACANCY_FORMATION_ENERGY],
         'description': (
-            'What it does: Evaluate vacancy formation energies by relaxing supercells after creating vacancies internally (removes one atom from a pristine supercell).\n'
-            'When to use: When you need vacancy formation energies for a material starting from a pristine crystal.\n'
-            'Prerequisites / Inputs: Pristine (defect-free) structure file of the bulk crystal (unit cell or supercell). Do NOT provide a structure that already contains vacancies/defects (missing atoms, partial occupancies, disordered sites), because the tool assumes a complete bulk lattice and will construct vacancies itself; defected inputs may cause errors or invalid energies.\n'
+            'What it does: Evaluate vacancy formation energies by relaxing supercells with one atom removed.\n'
+            'When to use: When you need vacancy formation energies for materials.\n'
+            'Prerequisites / Inputs: Structure file.\n'
             'Outputs: Vacancy formation energies.\n'
-            'Cannot do / Limits: DFT-based.; does not accept pre-defected structures.\n'
+            'Cannot do / Limits: DFT-based.\n'
             'Cost / Notes: DFT calculation cost.'
         ),
         'alternative': ['abacus_vacancy_formation_energy'],
@@ -369,11 +369,11 @@ ALL_TOOLS = {
         'belonging_agent': ApexAgentName,
         'scene': [SceneEnum.APEX, SceneEnum.INTERSTITIAL_FORMATION_ENERGY],
         'description': (
-            'What it does: Insert interstitial atoms into a host lattice to compute formation energies across candidate sites (generated internally).\n'
-            'When to use: When you need interstitial formation energies starting from a defect-free bulk crystal.\n'
-            'Prerequisites / Inputs: Pristine (defect-free) host lattice structure and interstitial atoms.\n The host structure must be a complete bulk lattice (no vacancies/antisites/substitutions, no missing atoms, no partial occupancies/disordered sites). Do NOT provide a structure that already contains defects or extra atoms; the tool assumes a pristine lattice and will place interstitials itself—defected inputs may cause errors or invalid energies.\n'
-            'Outputs: Interstitial formation energies for candidate sites.\n'
-            'Cannot do / Limits: DFT-based. Not intended for pre-defected host structures.\n'
+            'What it does: Insert interstitial atoms into a host lattice to compute formation energies across candidate sites.\n'
+            'When to use: When you need interstitial formation energies.\n'
+            'Prerequisites / Inputs: Host lattice structure and interstitial atoms.\n'
+            'Outputs: Formation energies for candidate sites.\n'
+            'Cannot do / Limits: DFT-based.\n'
             'Cost / Notes: DFT calculation cost.'
         ),
         'alternative': [],
@@ -397,12 +397,12 @@ ALL_TOOLS = {
         'belonging_agent': ApexAgentName,
         'scene': [SceneEnum.APEX, SceneEnum.SURFACE_ENERGY],
         'description': (
-            'What it does: Execute a workflow of surface energy calculation using a pristine Bulk crystal as input.\n'
-            'When to use: When you need surface energy starting from a Bulk structure.\n'
-            'Prerequisites / Inputs: Bulk structure file. \n'
+            'What it does: Execute a workflow of surface energy calculation.\n'
+            'When to use: When you need surface energy.\n'
+            'Prerequisites / Inputs: Structure file.\n'
             'Outputs: Surface energy.\n'
-            'Cannot do / Limits: Do NOT provide an already-cut slab/surface structure as input. Slab inputs can cause errors or lead to invalid surface energies.; DFT-based.\n'
-            'Cost / Notes: DFT calculation cost.ensure the input is a complete bulk lattice.'
+            'Cannot do / Limits: Cannot build slab structures; DFT-based.\n'
+            'Cost / Notes: DFT calculation cost.'
         ),
         'alternative': [],
         'self_check': False,
@@ -549,16 +549,16 @@ ALL_TOOLS = {
     #     'scene': [SceneEnum.MOLECULAR],
     #     'description': '',
     # },
-    'run_dart_ga': {
+    'run_ga': {
         'belonging_agent': COMPDART_AGENT_NAME,
         'scene': [SceneEnum.COMPOSITION_OPTIMIZATION],
         'description': (
-            'What it does: Perform compositional optimization for multi-component materials to target specific properties using genetic algorithm.\n'
-            'When to use: Search optimized compositions for target properties.\n'
-            'Prerequisites / Inputs: Target properties, optional initial compositions or structure templates, constrains, and surrogate model.\n'
+            'What it does: Perform composition optimization targeting specific properties using genetic algorithm.\n'
+            'When to use: When you need to optimize compositions for properties.\n'
+            'Prerequisites / Inputs: Proxy model file prepared.\n'
             'Outputs: Optimized compositions.\n'
-            'Cannot do / Limits: Cannot build doping structures; requires surrogate model.\n'
-            'Cost / Notes: High due to long iterations.'
+            'Cannot do / Limits: Cannot build doping structures; requires proxy model.\n'
+            'Cost / Notes: Medium.'
         ),
         'alternative': [],
         'self_check': False,
@@ -1463,28 +1463,14 @@ ALL_TOOLS = {
         'bypass_confirmation': True,
         'self_check': False,
     },
-    'orchestrate_input': {
+    'convert_lammps_structural_format': {
         'belonging_agent': LAMMPS_AGENT_NAME,
         'scene': [SceneEnum.MOLECULAR_DYNAMICS, SceneEnum.LAMMPS],
         'description': (
-            'What it does: Generate input scripts for simulation engines (Currently supports: LAMMPS).\n'
-            'When to use: Create input from description.\n'
-            'Prerequisites / Inputs: engine_type="lammps", natural language task.\n'
-            'Outputs: Input script content.\n'
-            'Cannot do / Limits: Script generation only.\n'
-            'Cost / Notes: Low.'
-        ),
-        'alternative': [],
-        'self_check': False,
-    },
-    'convert_structural_format': {
-        'belonging_agent': LAMMPS_AGENT_NAME,
-        'scene': [SceneEnum.MOLECULAR_DYNAMICS, SceneEnum.LAMMPS],
-        'description': (
-            'What it does: Convert structure to target format (Currently supports: lammps/lmp).\n'
-            'When to use: Prepare structures for simulation.\n'
-            'Prerequisites / Inputs: Structure file URL, target_format="lammps/lmp".\n'
-            'Outputs: Converted structure file.\n'
+            'What it does: Convert to LAMMPS format.\n'
+            'When to use: Prepare structures for LAMMPS.\n'
+            'Prerequisites / Inputs: Structure file URL.\n'
+            'Outputs: LAMMPS data file.\n'
             'Cannot do / Limits: Format conversion only.\n'
             'Cost / Notes: Low.'
         ),
@@ -1501,6 +1487,20 @@ ALL_TOOLS = {
             'Outputs: Simulation results.\n'
             'Cannot do / Limits: Requires LAMMPS format.\n'
             'Cost / Notes: High (simulation time).'
+        ),
+        'alternative': [],
+        'self_check': False,
+    },
+    'orchestrate_lammps_input': {
+        'belonging_agent': LAMMPS_AGENT_NAME,
+        'scene': [SceneEnum.MOLECULAR_DYNAMICS, SceneEnum.LAMMPS],
+        'description': (
+            'What it does: Generate LAMMPS scripts.\n'
+            'When to use: Create input from description.\n'
+            'Prerequisites / Inputs: Natural language task.\n'
+            'Outputs: LAMMPS input script.\n'
+            'Cannot do / Limits: Script generation only.\n'
+            'Cost / Notes: Low.'
         ),
         'alternative': [],
         'self_check': False,

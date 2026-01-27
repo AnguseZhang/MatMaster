@@ -1,0 +1,119 @@
+{
+  "cases": [
+    {
+      "case_id": "bohrium-001",
+      "tool_name": "fetch_bohrium_crystals",
+      "args": {
+        "formula": "SrTiO3",
+        "match_mode": 1,
+        "output_formats": ["json"]
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "bohrium-002",
+      "tool_name": "fetch_bohrium_crystals",
+      "args": {
+        "elements": ["O"],
+        "match_mode": 0,
+        "band_gap_range": ["2", "100"],
+        "n_results": 3
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "bohrium-003",
+      "tool_name": "fetch_bohrium_crystals",
+      "args": {
+        "spacegroup_number": 14,
+        "atom_count_range": ["50", "100"]
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "bohrium-004",
+      "tool_name": "fetch_bohrium_crystals",
+      "args": {
+        "elements": ["Fe", "Ni"],
+        "match_mode": 1
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "bohrium-005",
+      "tool_name": "fetch_bohrium_crystals",
+      "args": {
+        "formula": "SiO3",
+        "match_mode": 0
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "bohrium-006",
+      "tool_name": "fetch_bohrium_crystals",
+      "args": {
+        "formation_energy_range": ["-2", "0"],
+        "n_results": 5
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "bohrium-007",
+      "tool_name": "fetch_bohrium_crystals",
+      "args": {
+        "elements": ["N"],
+        "match_mode": 0,
+        "band_gap_range": ["5", "100"]
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "bohrium-008",
+      "tool_name": "fetch_bohrium_crystals",
+      "args": {
+        "atom_count_range": ["1", "10"]
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "bohrium-009",
+      "tool_name": "fetch_bohrium_crystals",
+      "args": {
+        "formula": "Al2O3",
+        "match_mode": 1,
+        "formation_energy_range": ["-5", "-1"]
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "bohrium-010",
+      "tool_name": "fetch_bohrium_crystals",
+      "args": {
+        "formula": "CH4",
+        "match_mode": 1,
+        "output_formats": ["cif"]
+      },
+      "expect": {
+        "kind": "any"
+      }
+    }
+  ]
+}

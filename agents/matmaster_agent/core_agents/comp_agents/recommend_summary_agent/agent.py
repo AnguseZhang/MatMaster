@@ -37,9 +37,6 @@ from agents.matmaster_agent.core_agents.comp_agents.recommend_summary_agent.reco
 from agents.matmaster_agent.core_agents.comp_agents.recommend_summary_agent.recommend_params_agent.schema import (
     create_tool_args_schema,
 )
-from agents.matmaster_agent.core_agents.comp_agents.recommend_summary_agent.subagent_summary_agent.callback import (
-    filter_summary_llm_contents,
-)
 from agents.matmaster_agent.core_agents.comp_agents.recommend_summary_agent.subagent_summary_agent.prompt import (
     get_subagent_summary_prompt,
 )
@@ -58,11 +55,7 @@ from agents.matmaster_agent.llm_config import MatMasterLlmConfig
 from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.model import ToolCallInfoSchema
-from agents.matmaster_agent.prompt import (
-    GLOBAL_INSTRUCTION,
-    GLOBAL_SCHEMA_INSTRUCTION,
-    get_vocabulary_enforce_prompt,
-)
+from agents.matmaster_agent.prompt import GLOBAL_INSTRUCTION, GLOBAL_SCHEMA_INSTRUCTION
 from agents.matmaster_agent.state import RECOMMEND_PARAMS
 from agents.matmaster_agent.sub_agents.tools import ALL_TOOLS
 from agents.matmaster_agent.utils.event_utils import (
@@ -127,7 +120,6 @@ class BaseAgentWithRecAndSum(
                 description=self.description,
                 global_instruction=GLOBAL_INSTRUCTION,
                 instruction=self.instruction,
-                before_model_callback=filter_summary_llm_contents,
             )
         else:
             self._summary_agent = DisallowTransferAndContentLimitLlmAgent(
@@ -335,15 +327,12 @@ class BaseAgentWithRecAndSum(
             },
         ):
             yield matmaster_flow_event
-        yield update_state_event(ctx, state_delta={'matmaster_flow_active': None})
 
         # TODO: needs a better way to handle customized summary prompt
         if ALL_TOOLS[current_step_tool_name].get('summary_prompt') is not None:
-            custom_prompt = ALL_TOOLS[current_step_tool_name].get('summary_prompt')
-            self.summary_agent.instruction = (
-                f"{custom_prompt}\n\n{get_vocabulary_enforce_prompt()}"
+            self.summary_agent.instruction = ALL_TOOLS[current_step_tool_name].get(
+                'summary_prompt'
             )
-
         if current_step['status'] != PlanStepStatusEnum.SUBMITTED:
             async for summary_event in self.summary_agent.run_async(ctx):
                 yield summary_event

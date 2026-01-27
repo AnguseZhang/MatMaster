@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import traceback
+import uuid
 from functools import wraps
 from typing import Optional, Union
 
@@ -44,7 +45,6 @@ from agents.matmaster_agent.utils.helper_func import (
     get_current_step_function_call,
     get_session_state,
     get_unique_function_call,
-    manual_build_current_function_call,
     update_llm_response,
 )
 from agents.matmaster_agent.utils.io_oss import update_tgz_dict
@@ -164,9 +164,20 @@ def filter_function_calls(
 
         # 如果没有函数调用，手动创建一个
         if not current_function_calls:
-            current_function_calls = manual_build_current_function_call(
-                callback_context
+            logger.warning(
+                f'{callback_context.session.id} current_function_calls empty， manually build one'
             )
+            current_step = callback_context.state['plan']['steps'][
+                callback_context.state['plan_index']
+            ]
+            function_call_id = f"added_{str(uuid.uuid4()).replace('-', '')[:24]}"
+            current_function_calls = [
+                {
+                    'name': current_step['tool_name'],
+                    'args': None,
+                    'id': function_call_id,
+                }
+            ]
 
         if (
             not callback_context.state.get('invocation_id_with_tool_call')
@@ -180,11 +191,6 @@ def filter_function_calls(
                 current_function_calls = get_current_step_function_call(
                     current_function_calls, callback_context
                 )
-                if not current_function_calls:
-                    current_function_calls = manual_build_current_function_call(
-                        callback_context
-                    )
-
                 logger.info(
                     f"{callback_context.session.id} current_function_calls = {function_calls_to_str(current_function_calls)}"
                 )
@@ -345,6 +351,19 @@ async def remove_function_call(
                 logger.info(
                     f"[{MATMASTER_AGENT_NAME}] FunctionCall will be removed, name = {function_name}, args = {function_args}"
                 )
+                # L1b 截断模式：记录被移除的 function_call 信息到 state
+                # 这样截断时可以获取到真正的工具名称和参数
+                if callback_context.state.get('truncation_mode') == 'L1b':
+                    if 'l1b_captured_function_calls' not in callback_context.state:
+                        callback_context.state['l1b_captured_function_calls'] = []
+                    callback_context.state['l1b_captured_function_calls'].append({
+                        'tool_name': function_name,
+                        'tool_args': function_args,
+                    })
+                    logger.info(
+                        f"[{MATMASTER_AGENT_NAME}] L1b: recorded function_call to state, "
+                        f"name={function_name}, args={function_args}"
+                    )
                 part.function_call = None
 
         if (

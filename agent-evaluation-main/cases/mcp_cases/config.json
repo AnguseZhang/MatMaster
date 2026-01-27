@@ -1,0 +1,13 @@
+{
+  "timeout_s": 20.0,
+  "budget_n_results_max": 50,
+  "threads": 4,
+  "print_tools": true,
+  "report_path": "reports",
+  "agents": {
+    "bohrium_public_agent": "http://bowd1412840.bohrium.tech:50001/sse",
+    "mofdb_agent": "http://bowd1412840.bohrium.tech:50002/sse",
+    "openlam_agent": "http://bowd1412840.bohrium.tech:50003/sse",
+    "optimade_agent": "http://bowd1412840.bohrium.tech:50004/sse"
+  }
+}

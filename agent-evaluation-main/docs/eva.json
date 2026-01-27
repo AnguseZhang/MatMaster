@@ -1,0 +1,33 @@
+[
+    {
+        "initial_question": "在 COD 中检索原子数不超过 4 的 BCC 金属，并返回文件下载链接",
+        "expected_tasks": {
+            "task1": {
+                "tool_name": "fetch_structures_with_spg",
+                "required_args": {
+                    "spg": 225,
+                    "max_atoms": 4
+                },
+                "optional_args": {
+                    "fields": "id,structure"
+                }
+            },
+            "task2": {
+                "tool_name": "返回文件下载链接",
+                "required_args": {
+                    "id": "id"
+                }
+            }
+        },
+        "expected_outcomes": [
+            "找到原子数 ≤4 的 BCC 金属",
+            "成功返回对应文件URL"
+        ],
+        "success_criteria": [
+            "所有结果为 BCC 金属",
+            "原子数 ≤4",
+            "文件 URL 完整",
+            "结果数量正确"
+        ]
+    }
+]

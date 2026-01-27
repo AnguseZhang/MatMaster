@@ -1,0 +1,117 @@
+{
+  "cases": [
+    {
+      "case_id": "optimade-001",
+      "tool_name": "fetch_structures_with_filter",
+      "args": {
+        "filter": "chemical_formula_reduced=\"Fe2O3\"",
+        "n_results": 2
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "optimade-002",
+      "tool_name": "fetch_structures_with_filter",
+      "args": {
+        "filter": "elements HAS ALL \"Li\", \"O\" AND nelements=2",
+        "as_format": "json"
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "optimade-003",
+      "tool_name": "fetch_structures_with_spg",
+      "args": {
+        "base_filter": "elements HAS \"Si\"",
+        "spg_number": 225,
+        "n_results": 3
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "optimade-004",
+      "tool_name": "fetch_structures_with_bandgap",
+      "args": {
+        "base_filter": "elements HAS \"O\"",
+        "min_bg": 1.0,
+        "max_bg": 3.0,
+        "as_format": "json"
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "optimade-005",
+      "tool_name": "fetch_structures_with_filter",
+      "args": {
+        "filter": "nsites > 10 AND nelements < 3",
+        "providers": ["mp", "cod"]
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "optimade-006",
+      "tool_name": "fetch_structures_with_spg",
+      "args": {
+        "base_filter": "chemical_formula_anonymous=\"AB2O4\"",
+        "spg_number": 227
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "optimade-007",
+      "tool_name": "fetch_structures_with_bandgap",
+      "args": {
+        "base_filter": "elements HAS ALL \"Ga\", \"N\"",
+        "min_bg": 3.0
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "optimade-008",
+      "tool_name": "fetch_structures_with_filter",
+      "args": {
+        "filter": "dimension_types HAS ALL 1, 1, 1"
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "optimade-009",
+      "tool_name": "fetch_structures_with_spg",
+      "args": {
+        "base_filter": "",
+        "spg_number": 194,
+        "n_results": 1
+      },
+      "expect": {
+        "kind": "any"
+      }
+    },
+    {
+      "case_id": "optimade-010",
+      "tool_name": "fetch_structures_with_bandgap",
+      "args": {
+        "base_filter": "chemical_formula_reduced=\"TiO2\"",
+        "max_bg": 4.0
+      },
+      "expect": {
+        "kind": "any"
+      }
+    }
+  ]
+}

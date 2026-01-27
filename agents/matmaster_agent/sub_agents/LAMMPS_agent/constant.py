@@ -16,7 +16,7 @@ LAMMPS_AGENT_NAME = 'LAMMPS_agent'
 LAMMPS_BOHRIUM_EXECUTOR = copy.deepcopy(BohriumExecutor)
 LAMMPS_BOHRIUM_EXECUTOR['machine']['remote_profile'][
     'image_address'
-] = 'registry.dp.tech/dptech/lammps-agent:a6d43c87'
+] = 'registry.dp.tech/dptech/lammps-agent:9ae769be'
 LAMMPS_BOHRIUM_EXECUTOR['machine']['remote_profile'][
     'machine_type'
 ] = 'c16_m64_1 * NVIDIA 4090'

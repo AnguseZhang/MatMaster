@@ -138,7 +138,9 @@ async def matmaster_set_lang(
 ) -> Optional[types.Content]:
     user_content = callback_context.user_content.parts[0].text
     prompt = get_user_content_lang().format(user_content=user_content)
+    # 使用通义千问支持 response_format
     response = litellm.completion(
+        # model='dashscope/qwen-plus',
         model='azure/gpt-4o',
         messages=[{'role': 'user', 'content': prompt}],
         response_format=UserContent,
