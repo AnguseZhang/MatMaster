@@ -1,6 +1,6 @@
 from dp.agent.adapter.adk import CalculationMCPToolset
 from google.adk.agents import BaseAgent
-from google.adk.tools.mcp_tool.mcp_session_manager import SseServerParams
+from google.adk.tools.mcp_tool.mcp_session_manager import StreamableHTTPServerParams
 
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
 from agents.matmaster_agent.core_agents.public_agents.job_agents.agent import (
@@ -20,7 +20,7 @@ from agents.matmaster_agent.sub_agents.CompDART_agent.prompt import (
 )
 
 compdart_toolset = CalculationMCPToolset(
-    connection_params=SseServerParams(url=COMPDART_MCPServerUrl),
+    connection_params=StreamableHTTPServerParams(url=COMPDART_MCPServerUrl),
     storage=COMPDART_BOHRIUM_STORAGE,
     executor=COMPDART_BOHRIUM_EXECUTOR,
     async_mode=True,

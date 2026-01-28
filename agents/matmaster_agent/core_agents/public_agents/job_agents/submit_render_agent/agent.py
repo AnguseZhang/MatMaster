@@ -43,9 +43,7 @@ class SubmitRenderAgent(ErrorHandleAndContentLimitLlmAgent):
 
     @override
     async def _run_events(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
-        logger.info(
-            f"[{MATMASTER_AGENT_NAME}]:[{self.name}] state: {ctx.session.state}"
-        )
+        logger.info(f"{ctx.session.id} state: {ctx.session.state}")
         async for event in super()._run_events(ctx):
             if is_text(event) and ctx.session.state['render_job_list']:
                 for cur_render_job_id in ctx.session.state['render_job_id']:

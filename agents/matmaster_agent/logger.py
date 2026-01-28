@@ -19,9 +19,33 @@ logger.addHandler(handler)
 
 
 async def matmodeler_logging_handler(
-    params: types.LoggingMessageNotificationParams, tool_context: ToolContext
+    params: types.LoggingMessageNotificationParams,
+    tool_context: ToolContext | None = None,
 ):
-    logger.log(getattr(logging, params.level.upper()), params.data)
+    session_id = None
+    function_call_id = None
+    tool_name = None
+    if tool_context is not None:
+        try:
+            session_id = tool_context.session.id
+        except Exception:
+            session_id = None
+        try:
+            function_call_id = tool_context.function_call_id
+        except Exception:
+            function_call_id = None
+        try:
+            tool = getattr(tool_context, 'tool', None)
+            if tool is not None:
+                tool_name = getattr(tool, 'name', None)
+        except Exception:
+            tool_name = None
+
+    prefix = (
+        f"[mcp_log session={session_id} tool={tool_name} "
+        f"call_id={function_call_id}] "
+    )
+    logger.log(getattr(logging, params.level.upper()), prefix + str(params.data))
 
 
 class PrefixFilter(logging.Filter):

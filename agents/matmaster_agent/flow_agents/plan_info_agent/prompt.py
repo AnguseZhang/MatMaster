@@ -29,27 +29,39 @@ Please provide a summary that includes:
 Additionally, your output MUST be a JSON object that conforms to this schema (no extra keys, no surrounding text):
 {{
   "intro": "<string>",
-  "plans": ["<string>", "..."],
+  "plans": [
+    {{
+      "plan_description": "<string>",
+      "steps": [
+        {{
+          "tool_name": "<string>",
+          "step_description": "<string>"
+        }}
+      ]
+    }}
+  ],
   "overall": "<string>"
 }}
 
 Where:
 - intro: a brief, user-friendly overview including total steps (do not start with the exact title "计划总结").
-- plans: list of plan strings. IMPORTANT: each plan string MUST be a multi-line, human-friendly “方案” block (not a single sentence), similar to:
-
-  方案 i：<方案标题（根据步骤内容自动概括）>
-  * 共 <N> 步
-    1. 使用 **<tool_name or no tool>** <更具体的动作描述（补全“做什么/为了什么/产出是什么”）>
-    2. 使用 **<tool_name or no tool>** <更具体的动作描述（补全“做什么/为了什么/产出是什么”）>
-    ...
-
-  Requirements for each step line:
-  - Must include the tool in bold: **tool_name** (or **no tool**).
-  - Must be explicit and concrete: include what is done + purpose/output (e.g., “并保存为 xxx / 得到 xxx / 提取出 xxx 字段”).
-  - Preserve step order and step count exactly as in input steps.
-  - Use Chinese numbering format “1.” “2.” ... as shown.
-
-  Note: even though the input is a single plan with steps, still format it as “方案 1 …”. If in the future multiple alternative plans are provided, put each alternative as one item in the `plans` list.
+- plans: list of plan objects. IMPORTANT:
+  - Even though the input is a single plan with steps, still output it as one item in the `plans` list (i.e., “方案 1 …”).
+  - If in the future multiple alternative plans are provided, put each alternative as one item in the `plans` list.
+  - For each plan item:
+    - plan_description: ONLY the plan title line, exactly in the form:
+      方案 i：<方案标题（根据步骤内容自动概括）>
+      Do NOT include step count, step list, numbering, or any other extra text in plan_description.
+    - steps: structured steps list derived from input steps, preserving order and count exactly.
+      For each step object:
+      - tool_name: tool name string, or "no tool" if no tool available.
+      - step_description: MUST include the Chinese numbering prefix and tool emphasis, exactly in the form:
+        k. 使用 *<tool_name or no tool>** <更具体的动作描述（补全“做什么/为了什么/产出是什么”）>
+        Requirements:
+        - Must start with "[k]. 使用".
+        - Must include the tool in the emphasized form "*<tool_name>**" (or "*no tool**").
+        - Must be explicit and concrete: include what is done + purpose/output (e.g., “并保存为 xxx / 得到 xxx / 提取出 xxx 字段”).
+        - k starts from 1 and follows the original step order.
 
 - overall: overall feasibility assessment; must clearly state fully/partially/cannot be executed (对应 full/part/null).
 

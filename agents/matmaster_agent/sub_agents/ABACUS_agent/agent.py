@@ -19,21 +19,24 @@ from agents.matmaster_agent.sub_agents.ABACUS_agent.prompt import (
     ABACUS_AGENT_NAME,
 )
 
-abacus_toolset = CalculationMCPToolset(
-    connection_params=SseServerParams(
-        url=ABACUS_CALCULATOR_URL,
-        sse_read_timeout=3600,
-    ),
-    executor=ABACUS_CALCULATOR_BOHRIUM_EXECUTOR,
-    storage=ABACUS_CALCULATOR_BOHRIUM_STORAGE,
-    async_mode=True,
-    wait=False,
-    logging_callback=matmodeler_logging_handler,
-)
+
+def _create_abacus_toolset() -> CalculationMCPToolset:
+    return CalculationMCPToolset(
+        connection_params=SseServerParams(
+            url=ABACUS_CALCULATOR_URL,
+            sse_read_timeout=3600,
+        ),
+        executor=ABACUS_CALCULATOR_BOHRIUM_EXECUTOR,
+        storage=ABACUS_CALCULATOR_BOHRIUM_STORAGE,
+        async_mode=True,
+        wait=False,
+        logging_callback=matmodeler_logging_handler,
+    )
 
 
 class ABACUSCalculatorAgent(BaseAsyncJobAgent):
     def __init__(self, llm_config: LLMConfig):
+        abacus_toolset = _create_abacus_toolset()
         super().__init__(
             model=llm_config.default_litellm_model,
             tools=[abacus_toolset],

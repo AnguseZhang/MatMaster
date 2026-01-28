@@ -71,7 +71,10 @@ class SceneEnum(DescriptiveEnum):
     REACTION = ('reaction', '')
     BADER_CHARGE_ANALYSIS = ('bader_charge_analysis', '')
     WORK_FUNCTION = ('work_function', '')
-    COMPOSITION_OPTIMIZATION = ('composition_optimization', '')
+    COMPOSITION_OPTIMIZATION = (
+        'composition_optimization',
+        'Search for optimized multi-component compositions (e.g. alloys) for target properties via genetic algorithm or run_dart_ga.',
+    )
     CONVEXHULL = ('convexhull', '')
     DOE = ('doe', '')
 

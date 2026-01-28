@@ -9,6 +9,7 @@ from agents.matmaster_agent.core_agents.base_agents.schema_agent import (
     DisallowTransferAndContentLimitSchemaAgent,
 )
 from agents.matmaster_agent.logger import PrefixFilter
+from agents.matmaster_agent.state import MULTI_PLANS
 from agents.matmaster_agent.utils.event_utils import update_state_event
 
 logger = logging.getLogger(__name__)
@@ -19,12 +20,22 @@ logger.setLevel(logging.INFO)
 class PlanMakeAgent(DisallowTransferAndContentLimitSchemaAgent):
     @override
     async def _run_events(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
-        async for event in super()._run_events(ctx):
-            yield event
+        for _ in range(2):
+            async for event in super()._run_events(ctx):
+                yield event
 
-        logger.info(
-            f'{ctx.session.id} multi_plans = {ctx.session.state["multi_plans"]}'
-        )
+            if ctx.session.state.get(MULTI_PLANS):
+                logger.info(
+                    f'{ctx.session.id} multi_plans = {ctx.session.state[MULTI_PLANS]}'
+                )
+                break
+            else:
+                logger.error(f'{ctx.session.id} Multi Plans Generate Error, Retry')
+
+        if not ctx.session.state.get(MULTI_PLANS):
+            raise RuntimeError(
+                f'{ctx.session.id} After Retry, Multi Plans Generate Still Error!!'
+            )
 
         # 计算 feasibility
         update_multi_plans = ctx.session.state['multi_plans']

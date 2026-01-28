@@ -31,7 +31,7 @@ async def validate_document_url(
         function_call = part.function_call
         if (
             function_call.name
-            in ['extract_material_data_from_pdf', 'extract_material_data_from_webpage']
+            in ['extract_material_data_from_pdf', 'extract_info_from_webpage']
             and function_call.args
         ):
             # Check if arguments contain URL(s)
@@ -113,12 +113,12 @@ def _correct_tool_call(current_tool: str, url: str) -> str:
         if '.' not in path or path.endswith(
             ('.html', '.htm', '.asp', '.aspx', '.jsp', '.php')
         ):
-            return 'extract_material_data_from_webpage'
+            return 'extract_info_from_webpage'
 
         # For URLs without clear extensions, check if it looks like a web page
         # (this is a heuristic, could be refined)
         if any(keyword in url.lower() for keyword in ['www', 'http', 'web', 'site']):
-            return 'extract_material_data_from_webpage'
+            return 'extract_info_from_webpage'
 
     # Default to current tool if we can't determine
     return current_tool

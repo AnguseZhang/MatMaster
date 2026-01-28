@@ -28,6 +28,7 @@ from agents.matmaster_agent.core_agents.public_agents.job_agents.result_core_age
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.services.job import (
     get_job_detail,
+    parse_and_prepare_err,
     parse_and_prepare_results,
 )
 from agents.matmaster_agent.utils.event_utils import (
@@ -115,6 +116,9 @@ class ResultMCPAgent(MCPAgent):
                 # 更新状态
                 plan_status = 'success' if status == 'Finished' else 'failed'
                 update_plan = copy.deepcopy(ctx.session.state['plan'])
+                logger.info(
+                    f'{ctx.session.id} plan_index = {ctx.session.state['plan_index']}'
+                )
                 update_plan['steps'][ctx.session.state['plan_index']][
                     'status'
                 ] = plan_status
@@ -133,129 +137,125 @@ class ResultMCPAgent(MCPAgent):
 
                 # 获取任务结果
                 if status == 'Failed':  # Job Failed
-                    pass
+                    dict_result = await parse_and_prepare_err(
+                        job_id=job_id, access_key=access_key
+                    )
                 else:  # Job Success
                     dict_result = await parse_and_prepare_results(
                         job_id=job_id, access_key=access_key
                     )
-                    logger.info(f"{ctx.session.id} dict_result = {dict_result}")
+                logger.info(f"{ctx.session.id} dict_result = {dict_result}")
 
-                    if self.enable_tgz_unpack:
-                        tgz_flag, new_tool_result = await update_tgz_dict(
-                            dict_result, session_id=ctx.session.id
-                        )
-                    else:
-                        new_tool_result = dict_result
-                    parsed_tool_result = await parse_result(ctx, new_tool_result)
-                    logger.info(
-                        f'{ctx.session.id} parsed_tool_result = {parsed_tool_result}'
+                if self.enable_tgz_unpack:
+                    tgz_flag, new_tool_result = await update_tgz_dict(
+                        dict_result, session_id=ctx.session.id
                     )
+                else:
+                    new_tool_result = dict_result
+                parsed_tool_result = await parse_result(ctx, new_tool_result)
+                logger.info(
+                    f'{ctx.session.id} parsed_tool_result = {parsed_tool_result}'
+                )
 
-                    update_long_running_jobs = copy.deepcopy(
-                        ctx.session.state['long_running_jobs']
+                update_long_running_jobs = copy.deepcopy(
+                    ctx.session.state['long_running_jobs']
+                )
+                update_long_running_jobs[origin_job_id][
+                    'job_result'
+                ] = parsed_tool_result
+                yield update_state_event(
+                    ctx,
+                    state_delta={'long_running_jobs': update_long_running_jobs},
+                )
+
+                # Only for debug
+                if os.getenv('MODE', None) == 'debug':
+                    ctx.session.state[FRONTEND_STATE_KEY]['biz'][
+                        'origin_id'
+                    ] = origin_job_id
+
+                # 如果用户请求这个id的任务结果，渲染前端组件
+                if origin_job_id == ctx.session.state[FRONTEND_STATE_KEY]['biz'].get(
+                    'origin_id', None
+                ):
+                    job_result_comp_data = get_kv_result(
+                        ctx.session.state['long_running_jobs'][origin_job_id][
+                            'job_result'
+                        ]
                     )
-                    update_long_running_jobs[origin_job_id][
-                        'job_result'
-                    ] = parsed_tool_result
-                    yield update_state_event(
-                        ctx,
-                        state_delta={'long_running_jobs': update_long_running_jobs},
-                    )
-
-                    # Only for debug
-                    if os.getenv('MODE', None) == 'debug':
-                        ctx.session.state[FRONTEND_STATE_KEY]['biz'][
-                            'origin_id'
-                        ] = origin_job_id
-
-                    # 如果用户请求这个id的任务结果，渲染前端组件
-                    if origin_job_id == ctx.session.state[FRONTEND_STATE_KEY][
-                        'biz'
-                    ].get('origin_id', None):
-                        job_result_comp_data = get_kv_result(
-                            ctx.session.state['long_running_jobs'][origin_job_id][
-                                'job_result'
-                            ]
-                        )
-                        for event in all_text_event(
-                            ctx,
-                            self.name,
-                            f"<bohrium-chat-msg>{json.dumps(job_result_comp_data)}</bohrium-chat-msg>",
-                            ModelRole,
-                        ):
-                            yield event
-
-                        # 渲染 Markdown 图片
-                        markdown_image_result = get_markdown_image_result(
-                            parsed_tool_result
-                        )
-                        if markdown_image_result:
-                            for item in markdown_image_result:
-                                for markdown_image_event in all_text_event(
-                                    ctx, self.name, item['data'], ModelRole
-                                ):
-                                    yield markdown_image_event
-
-                        # 渲染 Matrix 结果
-                        matrix_result = get_matrix_result(parsed_tool_result)
-                        if matrix_result:
-                            for item in matrix_result:
-                                for markdown_matrix_event in all_text_event(
-                                    ctx,
-                                    self.name,
-                                    matrix_to_markdown_table(item),
-                                    ModelRole,
-                                ):
-                                    yield markdown_matrix_event
-
-                        # 渲染 echarts
-                        echarts_result = get_echarts_result(parsed_tool_result)
-                        if echarts_result:
-                            for echarts_event in context_function_event(
-                                ctx,
-                                self.name,
-                                'matmaster_echarts',
-                                None,
-                                ModelRole,
-                                {
-                                    'echarts_url': [
-                                        item['url'] for item in echarts_result
-                                    ]
-                                },
-                            ):
-                                yield echarts_event
-
-                        # 渲染 csv
-                        csv_result = get_csv_result(parsed_tool_result)
-                        if csv_result:
-                            for item in csv_result:
-                                for csv_event in all_text_event(
-                                    ctx,
-                                    self.name,
-                                    await csv_to_markdown_table(item['url']),
-                                    ModelRole,
-                                ):
-                                    yield csv_event
-
-                        # Only for debug
-                        if os.getenv('MODE', None) == 'debug':
-                            ctx.session.state[FRONTEND_STATE_KEY]['biz'][
-                                'origin_id'
-                            ] = None
-
-                    # 包装成function_call，来避免在历史记录中展示；同时模型可以在上下文中感知
-                    for event in context_function_event(
+                    for event in all_text_event(
                         ctx,
                         self.name,
-                        'system_job_result',
-                        {
-                            JOB_RESULT_KEY: ctx.session.state['long_running_jobs'][
-                                origin_job_id
-                            ]['job_result']
-                        },
+                        f"<bohrium-chat-msg>{json.dumps(job_result_comp_data)}</bohrium-chat-msg>",
                         ModelRole,
                     ):
                         yield event
+
+                    # 渲染 Markdown 图片
+                    markdown_image_result = get_markdown_image_result(
+                        parsed_tool_result
+                    )
+                    if markdown_image_result:
+                        for item in markdown_image_result:
+                            for markdown_image_event in all_text_event(
+                                ctx, self.name, item['data'], ModelRole
+                            ):
+                                yield markdown_image_event
+
+                    # 渲染 Matrix 结果
+                    matrix_result = get_matrix_result(parsed_tool_result)
+                    if matrix_result:
+                        for item in matrix_result:
+                            for markdown_matrix_event in all_text_event(
+                                ctx,
+                                self.name,
+                                matrix_to_markdown_table(item),
+                                ModelRole,
+                            ):
+                                yield markdown_matrix_event
+
+                    # 渲染 echarts
+                    echarts_result = get_echarts_result(parsed_tool_result)
+                    if echarts_result:
+                        for echarts_event in context_function_event(
+                            ctx,
+                            self.name,
+                            'matmaster_echarts',
+                            None,
+                            ModelRole,
+                            {'echarts_url': [item['url'] for item in echarts_result]},
+                        ):
+                            yield echarts_event
+
+                    # 渲染 csv
+                    csv_result = get_csv_result(parsed_tool_result)
+                    if csv_result:
+                        for item in csv_result:
+                            for csv_event in all_text_event(
+                                ctx,
+                                self.name,
+                                await csv_to_markdown_table(item['url']),
+                                ModelRole,
+                            ):
+                                yield csv_event
+
+                    # Only for debug
+                    if os.getenv('MODE', None) == 'debug':
+                        ctx.session.state[FRONTEND_STATE_KEY]['biz']['origin_id'] = None
+
+                # 包装成function_call，来避免在历史记录中展示；同时模型可以在上下文中感知
+                for event in context_function_event(
+                    ctx,
+                    self.name,
+                    'system_job_result',
+                    {
+                        JOB_RESULT_KEY: ctx.session.state['long_running_jobs'][
+                            origin_job_id
+                        ]['job_result']
+                    },
+                    ModelRole,
+                ):
+                    yield event
 
                 update_long_running_jobs = copy.deepcopy(
                     ctx.session.state['long_running_jobs']

@@ -1,4 +1,7 @@
-from agents.matmaster_agent.prompt import HUMAN_FRIENDLY_FORMAT_REQUIREMENT
+from agents.matmaster_agent.prompt import (
+    HUMAN_FRIENDLY_FORMAT_REQUIREMENT,
+    get_vocabulary_enforce_prompt,
+)
 
 
 def get_subagent_summary_prompt() -> str:
@@ -11,6 +14,7 @@ As a specialized summary agent, your role is to provide domain-specific insights
 3. Providing expert commentary on the implications of the results
 4. Provide domain-specific considerations that contextualize the results (without actionable advices).
 
+{get_vocabulary_enforce_prompt()}
 
 # Format Requirements:
 {HUMAN_FRIENDLY_FORMAT_REQUIREMENT}

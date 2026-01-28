@@ -2,7 +2,6 @@ from enum import Enum
 
 from agents.matmaster_agent.sub_agents.ABACUS_agent.agent import (
     ABACUSCalculatorAgent,
-    abacus_toolset,
 )
 from agents.matmaster_agent.sub_agents.ABACUS_agent.constant import ABACUS_AGENT_NAME
 from agents.matmaster_agent.sub_agents.apex_agent.agent import ApexAgent, apex_toolset
@@ -278,7 +277,6 @@ from agents.matmaster_agent.sub_agents.XRD_agent.constant import (
 )
 
 ALL_TOOLSET_DICT = {
-    'abacus_toolset': abacus_toolset,
     'apex_toolset': apex_toolset,
     'smiles_conversion_toolset': smiles_conversion_toolset,
     'retrosyn_toolset': retrosyn_toolset,

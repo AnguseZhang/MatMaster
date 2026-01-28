@@ -1,3 +1,6 @@
+import copy
+
+from dp.agent.adapter.adk import CalculationMCPToolset
 from google.adk.agents import BaseAgent
 from google.adk.tools.mcp_tool import McpToolset
 from google.adk.tools.mcp_tool.mcp_session_manager import (
@@ -5,7 +8,10 @@ from google.adk.tools.mcp_tool.mcp_session_manager import (
     StreamableHTTPServerParams,
 )
 
-from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
+from agents.matmaster_agent.constant import (
+    MATMASTER_AGENT_NAME,
+    BohriumStorge,
+)
 from agents.matmaster_agent.core_agents.public_agents.sync_agent import (
     BaseSyncAgentWithToolValidator,
 )
@@ -43,12 +49,16 @@ science_navigator_toolset = McpToolset(
     ),
     tool_filter=sn_tools,
 )
-web_parser_toolset = McpToolset(
-    connection_params=StreamableHTTPServerParams(
-        url=DocumentParserServerUrl,
-        timeout=360,
-    ),
-    tool_filter=web_parser_tools,
+
+# Create Bohrium executor and storage instances for web parser
+WebParserBohriumStorge = copy.deepcopy(BohriumStorge)
+
+web_parser_mcp_params = StreamableHTTPServerParams(
+    url=DocumentParserServerUrl,
+    timeout=360,
+)
+web_parser_toolset = CalculationMCPToolset(
+    connection_params=web_parser_mcp_params, storage=WebParserBohriumStorge
 )
 
 

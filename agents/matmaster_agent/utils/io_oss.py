@@ -193,6 +193,7 @@ async def upload_to_oss_wrapper(
 
 async def upload_report_md_to_oss(
     params: ReportUploadParams,
+    temp_dir_path: str = './tmp',
 ) -> Optional[ReportUploadResult]:
     """Upload markdown report content to OSS and return its URL."""
 
@@ -200,8 +201,7 @@ async def upload_report_md_to_oss(
     if not report_markdown:
         return None
 
-    tmp_path = f'./tmp/report_{params.session_id}_{params.invocation_id}'
-    async with temp_dir(tmp_path) as tdir:
+    async with temp_dir(temp_dir_path) as tdir:
         filename = f'matmaster_report_{params.invocation_id}.md'
         md_file_path = tdir / filename
         md_file_path.write_text(report_markdown, encoding='utf-8')

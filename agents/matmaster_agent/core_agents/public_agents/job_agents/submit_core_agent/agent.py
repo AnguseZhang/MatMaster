@@ -14,9 +14,11 @@ from agents.matmaster_agent.constant import (
 from agents.matmaster_agent.core_agents.comp_agents.dntransfer_climit_mcp_agent import (
     DisallowTransferAndContentLimitMCPAgent,
 )
+from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
 from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.model import BohrJobInfo, DFlowJobInfo
+from agents.matmaster_agent.state import PLAN
 from agents.matmaster_agent.style import tool_response_failed_card
 from agents.matmaster_agent.utils.event_utils import (
     all_text_event,
@@ -250,11 +252,30 @@ class SubmitCoreMCPAgent(DisallowTransferAndContentLimitMCPAgent):
             # END
 
             # Send Normal LlmResponse to Frontend, function_call -> function_response -> Llm_response
-            if is_text(event):
+            if is_text(event) and is_function_call(event):
                 if not event.partial:
                     for multi_part_event in context_multipart2function_event(
                         ctx, self.name, event, 'matmaster_submit_core_info'
                     ):
                         yield multi_part_event
+            elif is_text(event):
+                if (
+                    not event.partial
+                    and event.content.parts[0].text
+                    == 'All Function Calls Are Occurred Before, Continue'
+                    and ctx.session.state[PLAN]['steps'][
+                        ctx.session.state['plan_index']
+                    ]['status']
+                    == PlanStepStatusEnum.PROCESS
+                ):
+                    for _info_event in all_text_event(
+                        ctx, self.name, '工具参数无变化，本次跳过执行', ModelRole
+                    ):
+                        yield _info_event
+                    update_plan = copy.deepcopy(ctx.session.state['plan'])
+                    update_plan['steps'][ctx.session.state['plan_index']][
+                        'status'
+                    ] = PlanStepStatusEnum.FAILED
+                    yield update_state_event(ctx, state_delta={'plan': update_plan})
             else:
                 yield event

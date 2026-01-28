@@ -2,12 +2,11 @@ import logging
 from typing import List
 
 from google.adk.agents import InvocationContext
-from google.genai.types import Content
 
 from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
 from agents.matmaster_agent.flow_agents.scene_agent.model import SceneEnum
 from agents.matmaster_agent.flow_agents.schema import FlowStatusEnum
-from agents.matmaster_agent.state import UPLOAD_FILE
+from agents.matmaster_agent.state import MULTI_PLANS, PLAN, UPLOAD_FILE
 from agents.matmaster_agent.sub_agents.mapping import ALL_AGENT_TOOLS_LIST
 from agents.matmaster_agent.sub_agents.tools import ALL_TOOLS
 
@@ -48,8 +47,14 @@ def get_agent_name(tool_name, sub_agents):
 
 
 def check_plan(ctx: InvocationContext):
-    if not ctx.session.state.get('plan'):
-        return FlowStatusEnum.NO_PLAN
+    logger.info(
+        f'{ctx.session.id} plan = {ctx.session.state.get(PLAN)} multi_plans = {ctx.session.state.get(MULTI_PLANS)}'
+    )
+    if not ctx.session.state.get(PLAN):
+        if not ctx.session.state.get(MULTI_PLANS):
+            return FlowStatusEnum.NO_PLAN
+        else:
+            return FlowStatusEnum.NEW_PLAN
 
     if ctx.session.state['plan']['feasibility'] == 'null':
         return FlowStatusEnum.NO_PLAN
@@ -118,19 +123,9 @@ def find_alternative_tool(current_tool_name: str) -> List[str]:
     return tool.get('alternative', [])
 
 
-def get_self_check(current_tool_name: str) -> bool:
+def has_self_check(current_tool_name: str) -> bool:
     """Return self check info for the current tool."""
     tool = ALL_TOOLS.get(current_tool_name)
     if not tool:
         return False
     return tool.get('self_check', False)
-
-
-def is_content_has_keywords(content: Content, keywords: List[str]) -> bool:
-    tokens = [f'[{k}]' if k.endswith('agent') else f'`{k}`' for k in keywords]
-
-    return any(
-        isinstance((text := getattr(part, 'text', None)), str)
-        and any(token in text for token in tokens)
-        for part in content.parts
-    )

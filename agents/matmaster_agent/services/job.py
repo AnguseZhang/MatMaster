@@ -344,10 +344,27 @@ async def parse_and_prepare_results(
     return final_results
 
 
+async def parse_and_prepare_err(
+    job_id: str = '', access_key: str = '', session_id: str = ''
+):
+    # Download err & Prepare Parse
+    ERR_FILE = 'err'
+    await get_token_and_download_file(ERR_FILE, job_id, access_key)
+
+    with open(ERR_FILE) as f:
+        final_err = {'err': f.read()}
+        logger.info(f"{session_id} final_err = {final_err}")
+    os.remove(ERR_FILE)
+
+    return final_err
+
+
 if __name__ == '__main__':
-    asyncio.run(
-        parse_and_prepare_results(
-            job_id='2bdc71b918aa46d3ada0ae5d40d3d43b',
-            access_key=os.getenv('BOHRIUM_ACCESS_KEY'),
+    print(
+        asyncio.run(
+            parse_and_prepare_err(
+                job_id='2e42dde813fa452f99aabde95ccbb7cd',
+                access_key=os.getenv('MATERIALS_ACCESS_KEY'),
+            )
         )
     )
