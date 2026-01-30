@@ -12,7 +12,12 @@ from pydantic import computed_field, model_validator
 from agents.matmaster_agent.base_callbacks.private_callback import (
     remove_function_call,
 )
-from agents.matmaster_agent.constant import CURRENT_ENV, MATMASTER_AGENT_NAME, ModelRole
+from agents.matmaster_agent.constant import (
+    CURRENT_ENV,
+    FRONTEND_STATE_KEY,
+    MATMASTER_AGENT_NAME,
+    ModelRole,
+)
 from agents.matmaster_agent.core_agents.base_agents.error_agent import (
     ErrorHandleBaseAgent,
 )
@@ -52,15 +57,6 @@ from agents.matmaster_agent.flow_agents.intent_agent.constant import INTENT_AGEN
 from agents.matmaster_agent.flow_agents.intent_agent.model import IntentEnum
 from agents.matmaster_agent.flow_agents.intent_agent.prompt import INTENT_INSTRUCTION
 from agents.matmaster_agent.flow_agents.intent_agent.schema import IntentSchema
-from agents.matmaster_agent.flow_agents.plan_confirm_agent.constant import (
-    PLAN_CONFIRM_AGENT,
-)
-from agents.matmaster_agent.flow_agents.plan_confirm_agent.prompt import (
-    PlanConfirmInstruction,
-)
-from agents.matmaster_agent.flow_agents.plan_confirm_agent.schema import (
-    PlanConfirmSchema,
-)
 from agents.matmaster_agent.flow_agents.plan_make_agent.agent import PlanMakeAgent
 from agents.matmaster_agent.flow_agents.plan_make_agent.callback import (
     filter_plan_make_llm_contents,
@@ -95,6 +91,7 @@ from agents.matmaster_agent.flow_agents.step_validation_agent.schema import (
 from agents.matmaster_agent.flow_agents.utils import (
     check_plan,
     get_tools_list,
+    is_plan_confirmed,
     should_bypass_confirmation,
 )
 from agents.matmaster_agent.llm_config import MatMasterLlmConfig
@@ -113,6 +110,7 @@ from agents.matmaster_agent.services.icl import (
 )
 from agents.matmaster_agent.services.questions import get_random_questions
 from agents.matmaster_agent.state import (
+    BIZ,
     EXPAND,
     MULTI_PLANS,
     PLAN,
@@ -192,15 +190,6 @@ class MatMasterFlowAgent(LlmAgent):
             before_model_callback=filter_plan_make_llm_contents,
         )
 
-        self._plan_confirm_agent = DisallowTransferAndContentLimitSchemaAgent(
-            name=PLAN_CONFIRM_AGENT,
-            model=MatMasterLlmConfig.tool_schema_model,
-            description='判断用户对计划是否认可',
-            instruction=PlanConfirmInstruction,
-            output_schema=PlanConfirmSchema,
-            state_key='plan_confirm',
-        )
-
         self._execution_agent = None
 
         self._analysis_agent = DisallowTransferAndContentLimitLlmAgent(
@@ -226,7 +215,6 @@ class MatMasterFlowAgent(LlmAgent):
             self.expand_agent,
             self.scene_agent,
             self.plan_make_agent,
-            self.plan_confirm_agent,
             self.analysis_agent,
             self.report_agent,
         ]
@@ -262,11 +250,6 @@ class MatMasterFlowAgent(LlmAgent):
     @property
     def plan_make_agent(self) -> LlmAgent:
         return self._plan_make_agent
-
-    @computed_field
-    @property
-    def plan_confirm_agent(self) -> LlmAgent:
-        return self._plan_confirm_agent
 
     @computed_field
     @property
@@ -387,29 +370,6 @@ class MatMasterFlowAgent(LlmAgent):
         scenes = list(set(before_scenes + single_scene + ['universal']))
         logger.info(f'{ctx.session.id} scenes = {scenes}')
         yield update_state_event(ctx, state_delta={'scenes': copy.deepcopy(scenes)})
-
-    async def _run_plan_confirm_agent(
-        self, ctx: InvocationContext
-    ) -> AsyncGenerator[Event, None]:
-        async for plan_confirm_event in self.plan_confirm_agent.run_async(ctx):
-            yield plan_confirm_event
-
-        # 用户说确认计划，但 plan_confirm 误判为 False
-        if ctx.user_content.parts[0].text == '确认计划' and not ctx.session.state[
-            'plan_confirm'
-        ].get('flag', False):
-            logger.warning(
-                f'{ctx.session.id} 确认计划 not confirm, manually setting it'
-            )
-            yield update_state_event(ctx, state_delta={'plan_confirm': {'flag': True}})
-        # 没有计划，但 plan_confirm 误判为 True
-        elif ctx.session.state['plan_confirm'].get(
-            'flag', False
-        ) and not ctx.session.state.get('multi_plans', {}):
-            logger.warning(
-                f'{ctx.session.id} plan_confirm = True, but no multi_plans, manually setting plan_confirm -> False'
-            )
-            yield update_state_event(ctx, state_delta={'plan_confirm': {'flag': False}})
 
     async def _run_plan_make_agent(
         self, ctx: InvocationContext, UPDATE_USER_CONTENT, TOOLCHAIN_EXAMPLES_PROMPT
@@ -700,23 +660,16 @@ class MatMasterFlowAgent(LlmAgent):
         ):
             yield _scene_event
 
-        # 判断计划是否确认（1. 上一步计划完成；2. 用户未确认计划）
-        if check_plan(ctx) == FlowStatusEnum.COMPLETE or not ctx.session.state[
-            'plan_confirm'
-        ].get('flag', False):
-            # 清空 Plan 和 MULTI_PLANS
-            if check_plan(ctx) == FlowStatusEnum.COMPLETE:
-                yield update_state_event(ctx, state_delta={PLAN: {}, MULTI_PLANS: {}})
-
-            async for _plan_confirm_event in self._run_plan_confirm_agent(ctx):
-                yield _plan_confirm_event
+        # 清空 Plan 和 MULTI_PLANS
+        if check_plan(ctx) == FlowStatusEnum.COMPLETE:
+            yield update_state_event(ctx, state_delta={PLAN: {}, MULTI_PLANS: {}})
 
         # 制定计划（1. 无计划；2. 计划已完成；3. 计划失败；4. 用户未确认计划）
         if check_plan(ctx) in [
             FlowStatusEnum.NO_PLAN,
             FlowStatusEnum.COMPLETE,
             FlowStatusEnum.FAILED,
-        ] or not ctx.session.state['plan_confirm'].get('flag', False):
+        ] or not is_plan_confirmed(ctx):
             async for _plan_make_event in self._run_plan_make_agent(
                 ctx, UPDATE_USER_CONTENT, TOOLCHAIN_EXAMPLES_PROMPT
             ):
@@ -724,11 +677,13 @@ class MatMasterFlowAgent(LlmAgent):
 
         # 从 MultiPlans 中选择某个计划
         logger.info(f'{ctx.session.id} check_plan = {check_plan(ctx)}')
-        if ctx.session.state['plan_confirm'].get('flag', False) and check_plan(ctx) in [
-            FlowStatusEnum.NEW_PLAN
-        ]:
-            selected_plan_id = ctx.session.state['plan_confirm'].get(
+        if is_plan_confirmed(ctx) and check_plan(ctx) in [FlowStatusEnum.NEW_PLAN]:
+            selected_plan_id = ctx.session.state[FRONTEND_STATE_KEY][BIZ].get(
                 'selected_plan_id', 0
+            )
+            logger.info(
+                f'{ctx.session.id} biz_state = {ctx.session.state[FRONTEND_STATE_KEY][BIZ]} '
+                f'selected_plan_id = {selected_plan_id}'
             )
             plans = ctx.session.state.get(MULTI_PLANS, {}).get('plans', [])
             if (
@@ -752,7 +707,7 @@ class MatMasterFlowAgent(LlmAgent):
             )
 
         # 计划未确认，暂停往下执行
-        if ctx.session.state['plan_confirm']['flag']:
+        if is_plan_confirmed(ctx):
             async for (
                 _plan_execute_and_summary_event
             ) in self._run_plan_execute_and_summary_agent(ctx):

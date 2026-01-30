@@ -1,12 +1,20 @@
 import logging
+import re
 from typing import List
 
 from google.adk.agents import InvocationContext
 
+from agents.matmaster_agent.constant import FRONTEND_STATE_KEY
 from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
 from agents.matmaster_agent.flow_agents.scene_agent.model import SceneEnum
 from agents.matmaster_agent.flow_agents.schema import FlowStatusEnum
-from agents.matmaster_agent.state import MULTI_PLANS, PLAN, UPLOAD_FILE
+from agents.matmaster_agent.state import (
+    BIZ,
+    MULTI_PLANS,
+    PLAN,
+    PLAN_CONFIRM,
+    UPLOAD_FILE,
+)
 from agents.matmaster_agent.sub_agents.mapping import ALL_AGENT_TOOLS_LIST
 from agents.matmaster_agent.sub_agents.tools import ALL_TOOLS
 
@@ -129,3 +137,22 @@ def has_self_check(current_tool_name: str) -> bool:
     if not tool:
         return False
     return tool.get('self_check', False)
+
+
+def is_plan_confirmed(ctx: InvocationContext) -> bool:
+    # 1) 原有：前端状态里已确认
+    biz_state = ctx.session.state.get(FRONTEND_STATE_KEY, {}).get(BIZ, {})
+    if biz_state.get(PLAN_CONFIRM, False):
+        return True
+
+    # 2) 新增：用户输入匹配“方案 + 数字”（方案和数字间允许空格）
+    try:
+        text = (ctx.user_content.parts[0].text or '').strip()
+    except Exception:
+        text = ''
+
+    # 仅匹配纯数字：方案1 / 方案 1 / 方案   12
+    if re.match(r'^\s*方案\s*\d+\s*$', text):
+        return True
+
+    return False
