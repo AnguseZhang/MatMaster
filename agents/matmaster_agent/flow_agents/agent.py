@@ -335,6 +335,13 @@ class MatMasterFlowAgent(LlmAgent):
             belonging_agent = ALL_TOOLS.get(tool_name, {}).get('belonging_agent')
             if belonging_agent and belonging_agent not in agent_names:
                 agent_names.append(belonging_agent)
+        # 无 tool_name 的步由 Step Executor 选工具，需包含 scene 下所有可用 agent
+        scenes = ctx.session.state.get('scenes', [])
+        available_tools = get_tools_list(ctx, scenes)
+        for tool_name in available_tools:
+            belonging_agent = ALL_TOOLS.get(tool_name, {}).get('belonging_agent')
+            if belonging_agent and belonging_agent not in agent_names:
+                agent_names.append(belonging_agent)
 
         sub_agents = [
             AGENT_CLASS_MAPPING[agent_name](MatMasterLlmConfig)
@@ -504,16 +511,19 @@ class MatMasterFlowAgent(LlmAgent):
         if plan_info_count != plan_make_count:
             logger.warning(f'{ctx.session.id} plan_info count mismatch')
             if plan_info_count == 1:
-                logger.warning(f'{ctx.session.id} prepare split plan_info')
-                final_plans = re.split(
-                    r'(?=方案\s*\d+\s*：)', ctx.session.state['plan_info']['plans'][0]
-                )
-                final_plans = [p.strip() for p in final_plans if p.strip()]
-                update_plan_info = copy.deepcopy(ctx.session.state['plan_info'])
-                update_plan_info['plans'] = final_plans
-                yield update_state_event(
-                    ctx, state_delta={'plan_info': update_plan_info}
-                )
+                first_plan = ctx.session.state['plan_info']['plans'][0]
+                # plan_info 可能返回 list[str] 或 list[dict]；仅当第一项为字符串时做 split
+                if isinstance(first_plan, str):
+                    logger.warning(f'{ctx.session.id} prepare split plan_info')
+                    final_plans = re.split(
+                        r'(?=方案\s*\d+\s*：)', first_plan
+                    )
+                    final_plans = [p.strip() for p in final_plans if p.strip()]
+                    update_plan_info = copy.deepcopy(ctx.session.state['plan_info'])
+                    update_plan_info['plans'] = final_plans
+                    yield update_state_event(
+                        ctx, state_delta={'plan_info': update_plan_info}
+                    )
 
         plan_info = ctx.session.state['plan_info']
         intro = plan_info['intro']
@@ -556,16 +566,11 @@ class MatMasterFlowAgent(LlmAgent):
             yield matmaster_flow_event
         yield update_state_event(ctx, state_delta={'matmaster_flow_active': None})
 
-        # 更新计划为可执行的计划
+        # 更新计划为可执行的计划（保留无 tool_name 的步，由 Step Executor 执行时选工具）
         update_multi_plans = copy.deepcopy(ctx.session.state[MULTI_PLANS])
         for update_plan in update_multi_plans['plans']:
             origin_steps = update_plan['steps']
-            actual_steps = []
-            for step in origin_steps:
-                if step.get('tool_name'):
-                    actual_steps.append(step)
-                else:
-                    break
+            actual_steps = list(origin_steps)
             update_plan['steps'] = actual_steps
         yield update_state_event(ctx, state_delta={'multi_plans': update_multi_plans})
 

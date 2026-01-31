@@ -7,7 +7,7 @@ from google.adk.events import Event
 from pydantic import model_validator
 
 from agents.matmaster_agent.base_callbacks.public_callback import check_transfer
-from agents.matmaster_agent.config import MAX_TOOL_RETRIES
+from agents.matmaster_agent.config import MAX_TOOL_RETRIES, USE_STEP_EXECUTOR
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME, ModelRole
 from agents.matmaster_agent.core_agents.comp_agents.dntransfer_climit_agent import (
     DisallowTransferAndContentLimitLlmAgent,
@@ -25,8 +25,14 @@ from agents.matmaster_agent.flow_agents.utils import (
     check_plan,
     find_alternative_tool,
     get_agent_name,
+    get_tools_list,
     has_self_check,
 )
+from agents.matmaster_agent.flow_agents.step_executor_agent import (
+    create_step_executor_agent,
+    get_step_executor_instruction,
+)
+from agents.matmaster_agent.sub_agents.tools import ALL_TOOLS
 from agents.matmaster_agent.llm_config import MatMasterLlmConfig
 from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.logger import PrefixFilter
@@ -49,6 +55,39 @@ logger.setLevel(logging.INFO)
 def _get_step_description(step: dict) -> str:
     """Step text: execution uses 'description'; plan schema uses 'step_description'."""
     return step.get('description') or step.get('step_description', '')
+
+
+def _get_available_tools_for_step_executor(sub_agents: list) -> list:
+    """Tool names that correspond to execution sub_agents (excluding title + validation)."""
+    agent_names = {s.name for s in sub_agents[:-2]}
+    return [
+        t
+        for t, info in ALL_TOOLS.items()
+        if info.get('belonging_agent') in agent_names
+    ]
+
+
+def _get_available_tools_str(tool_names: list) -> str:
+    """Format tool list for Step Executor instruction."""
+    return '\n'.join(
+        f"- {t}: {ALL_TOOLS.get(t, {}).get('description', '')}"
+        for t in tool_names
+    )
+
+
+def _get_prev_outputs_summary(ctx: InvocationContext, index: int) -> str:
+    """Brief summary of previous step outputs (description + status) for Step Executor."""
+    plan = ctx.session.state.get(PLAN, {})
+    steps = plan.get('steps', [])[:index]
+    if not steps:
+        return '(none)'
+    lines = []
+    for i, step in enumerate(steps):
+        desc = _get_step_description(step)
+        status = step.get('status', '')
+        short_desc = desc[:80] + ('...' if len(desc) > 80 else '')
+        lines.append(f"Step {i + 1}: {short_desc} status={status}")
+    return '\n'.join(lines)
 
 
 class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
@@ -298,15 +337,70 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
         update_plan['steps'][index]['description'] = original_description
         yield update_state_event(ctx, state_delta={'plan': update_plan})
 
+    async def _run_step_executor_and_update_plan(
+        self, ctx: InvocationContext, index: int
+    ) -> AsyncGenerator[Event, None]:
+        """When USE_STEP_EXECUTOR, run Step Executor and update plan step tool_name."""
+        plan = ctx.session.state[PLAN]
+        step = plan['steps'][index]
+        goal = _get_step_description(step)
+        suggested_tool = step.get('tool_name')
+        available_tool_names = _get_available_tools_for_step_executor(self.sub_agents)
+        if not available_tool_names:
+            logger.warning(
+                f'{ctx.session.id} Step Executor: no available tools for step {index + 1}, keep suggested_tool={suggested_tool}'
+            )
+            return
+        available_tools_str = _get_available_tools_str(available_tool_names)
+        prev_summary = _get_prev_outputs_summary(ctx, index)
+        instruction = get_step_executor_instruction(
+            goal=goal,
+            prev_outputs_summary=prev_summary,
+            available_tools_str=available_tools_str,
+            suggested_tool=suggested_tool or None,
+        )
+        step_executor = create_step_executor_agent(
+            MatMasterLlmConfig.tool_schema_model, instruction=instruction
+        )
+        async for _ in step_executor.run_async(ctx):
+            pass  # consume events; result is written to state['step_executor']
+        result = ctx.session.state.get('step_executor', {})
+        chosen_tool = result.get('tool_name')
+        if chosen_tool and chosen_tool in available_tool_names:
+            update_plan = copy.deepcopy(plan)
+            update_plan['steps'][index]['tool_name'] = chosen_tool
+            logger.info(
+                f'{ctx.session.id} Step Executor chose tool={chosen_tool} for step {index + 1}, reason={result.get("reason", "")}'
+            )
+            yield update_state_event(ctx, state_delta={PLAN: update_plan})
+        else:
+            logger.warning(
+                f'{ctx.session.id} Step Executor returned invalid tool={chosen_tool}, keep plan tool_name={suggested_tool}'
+            )
+
     @override
     async def _run_events(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
         plan = ctx.session.state['plan']
         logger.info(f'{ctx.session.id} plan = {plan}')
 
         for index, initial_step in enumerate(plan['steps']):
-            initial_current_tool_name = initial_step['tool_name']
-            tried_tools = [initial_current_tool_name]
-            alternatives = find_alternative_tool(initial_current_tool_name)
+            initial_current_tool_name = initial_step.get('tool_name')
+            # 无 tool_name 的步必须由 Step Executor 选工具；未开启时报错并中止
+            if not initial_current_tool_name and not USE_STEP_EXECUTOR:
+                async for err_event in all_text_event(
+                    ctx,
+                    self.name,
+                    f'步骤 {index + 1} 无指定工具；请在配置中开启 USE_STEP_EXECUTOR 由执行时选择工具。',
+                    ModelRole,
+                ):
+                    yield err_event
+                break
+            tried_tools = [initial_current_tool_name] if initial_current_tool_name else []
+            alternatives = (
+                find_alternative_tool(initial_current_tool_name)
+                if initial_current_tool_name
+                else []
+            )
 
             tool_attempt_success = False
             while not tool_attempt_success:
@@ -333,6 +427,31 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                             ctx.session.state[PLAN]['steps'][index]['status']
                             != PlanStepStatusEnum.SUBMITTED
                         ):
+                            logger.info(f'{ctx.session.id} Step {index + 1} status = {ctx.session.state[PLAN]['steps'][index]['status']}')
+                            if (
+                                USE_STEP_EXECUTOR
+                                and ctx.session.state[PLAN]['steps'][index][
+                                    'retry_count'
+                                ]
+                                == 0
+                            ):
+                                async for _ in self._run_step_executor_and_update_plan(
+                                    ctx, index
+                                ):
+                                    yield _
+                                # 无 tool_name 的步：Step Executor 未选出有效工具则中止
+                                if not ctx.session.state[PLAN]['steps'][index].get(
+                                    'tool_name'
+                                ):
+                                    async for err_event in all_text_event(
+                                        ctx,
+                                        self.name,
+                                        f'步骤 {index + 1} 执行时未选出有效工具，请检查 Step Executor 或计划描述。',
+                                        ModelRole,
+                                    ):
+                                        yield err_event
+                                    return
+
                             async for (
                                 _construct_function_call_event
                             ) in self._construct_function_call_ctx(ctx, index):

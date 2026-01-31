@@ -37,26 +37,24 @@ class PlanMakeAgent(DisallowTransferAndContentLimitSchemaAgent):
                 f'{ctx.session.id} After Retry, Multi Plans Generate Still Error!!'
             )
 
-        # 计算 feasibility
+        # 计算 feasibility（无 tool_name 的步保留为 None，由 Step Executor 执行时选择）
         update_multi_plans = ctx.session.state['multi_plans']
         for update_plan in update_multi_plans['plans']:
             update_plan['feasibility'] = 'null'
             total_steps = len(update_plan.get('steps', []))
             exist_step = 0
-            update_plan_steps = []
-            for step in update_plan.get('steps', []):
-                if not step['tool_name']:
-                    step['tool_name'] = 'llm_tool'
-                update_plan_steps.append(step)
+            # 不再强制无 tool_name 的步写 llm_tool；保留 None 供执行时 Step Executor 选择
+            update_plan_steps = list(update_plan.get('steps', []))
             update_plan['steps'] = update_plan_steps
 
             for index, step in enumerate(update_plan['steps']):
-                if index == 0 and not step['tool_name']:
+                if index == 0 and not step.get('tool_name'):
                     break
-                if step['tool_name']:
+                if step.get('tool_name'):
                     exist_step += 1
                 else:
-                    break
+                    # 无 tool_name 的步由执行时 Step Executor 选工具，仍计为可执行
+                    exist_step += 1
             if not exist_step:
                 pass
             elif exist_step != total_steps:
