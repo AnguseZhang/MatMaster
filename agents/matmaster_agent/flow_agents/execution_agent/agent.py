@@ -7,7 +7,7 @@ from google.adk.events import Event
 from pydantic import model_validator
 
 from agents.matmaster_agent.base_callbacks.public_callback import check_transfer
-from agents.matmaster_agent.config import MAX_TOOL_RETRIES, USE_STEP_EXECUTOR
+from agents.matmaster_agent.config import MAX_TOOL_RETRIES
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME, ModelRole
 from agents.matmaster_agent.core_agents.comp_agents.dntransfer_climit_agent import (
     DisallowTransferAndContentLimitLlmAgent,
@@ -338,7 +338,7 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
     async def _run_step_executor_and_update_plan(
         self, ctx: InvocationContext, index: int
     ) -> AsyncGenerator[Event, None]:
-        """When USE_STEP_EXECUTOR, run Step Executor and update plan step tool_name."""
+        """Run Step Executor and update plan step tool_name."""
         plan = ctx.session.state[PLAN]
         step = plan['steps'][index]
         goal = _get_step_description(step)
@@ -383,16 +383,6 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
 
         for index, initial_step in enumerate(plan['steps']):
             initial_current_tool_name = initial_step.get('tool_name')
-            # 无 tool_name 的步必须由 Step Executor 选工具；未开启时报错并中止
-            if not initial_current_tool_name and not USE_STEP_EXECUTOR:
-                async for err_event in all_text_event(
-                    ctx,
-                    self.name,
-                    f'步骤 {index + 1} 无指定工具；请在配置中开启 USE_STEP_EXECUTOR 由执行时选择工具。',
-                    ModelRole,
-                ):
-                    yield err_event
-                break
             tried_tools = (
                 [initial_current_tool_name] if initial_current_tool_name else []
             )
@@ -431,10 +421,7 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                                 f'{ctx.session.id} Step {index + 1} status = {ctx.session.state[PLAN]['steps'][index]['status']}'
                             )
                             if (
-                                USE_STEP_EXECUTOR
-                                and ctx.session.state[PLAN]['steps'][index][
-                                    'retry_count'
-                                ]
+                                ctx.session.state[PLAN]['steps'][index]['retry_count']
                                 == 0
                             ):
                                 async for _ in self._run_step_executor_and_update_plan(
