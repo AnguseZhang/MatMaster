@@ -1,6 +1,7 @@
 import copy
 import json
 import logging
+import re
 from asyncio import CancelledError
 from typing import AsyncGenerator
 
@@ -454,6 +455,17 @@ class MatMasterFlowAgent(LlmAgent):
         )
         async for plan_event in self.plan_make_agent.run_async(ctx):
             yield plan_event
+
+        # 从 multi_plans 构建 plan_info（merge 后 plan_info_agent 未接入时由此处保证 state 有 plan_info）
+        multi_plans = ctx.session.state.get(MULTI_PLANS, {})
+        plan_info_from_multi = {
+            'intro': multi_plans.get('intro', ''),
+            'plans': [
+                p.get('plan_description', '') for p in multi_plans.get('plans', [])
+            ],
+            'overall': multi_plans.get('overall', ''),
+        }
+        yield update_state_event(ctx, state_delta={'plan_info': plan_info_from_multi})
 
         # 总结计划
         yield update_state_event(
