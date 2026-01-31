@@ -1,7 +1,6 @@
 import copy
 import json
 import logging
-import re
 from asyncio import CancelledError
 from typing import AsyncGenerator
 
@@ -62,14 +61,6 @@ from agents.matmaster_agent.flow_agents.plan_confirm_agent.prompt import (
 from agents.matmaster_agent.flow_agents.plan_confirm_agent.schema import (
     PlanConfirmSchema,
 )
-from agents.matmaster_agent.flow_agents.plan_info_agent.callback import (
-    filter_plan_info_llm_contents,
-)
-from agents.matmaster_agent.flow_agents.plan_info_agent.constant import PLAN_INFO_AGENT
-from agents.matmaster_agent.flow_agents.plan_info_agent.prompt import (
-    PLAN_INFO_INSTRUCTION,
-)
-from agents.matmaster_agent.flow_agents.plan_info_agent.schema import PlanInfoSchema
 from agents.matmaster_agent.flow_agents.plan_make_agent.agent import PlanMakeAgent
 from agents.matmaster_agent.flow_agents.plan_make_agent.callback import (
     filter_plan_make_llm_contents,
@@ -121,7 +112,12 @@ from agents.matmaster_agent.services.icl import (
     toolchain_from_examples,
 )
 from agents.matmaster_agent.services.questions import get_random_questions
-from agents.matmaster_agent.state import EXPAND, MULTI_PLANS, PLAN, UPLOAD_FILE
+from agents.matmaster_agent.state import (
+    EXPAND,
+    MULTI_PLANS,
+    PLAN,
+    UPLOAD_FILE,
+)
 from agents.matmaster_agent.sub_agents.mapping import (
     AGENT_CLASS_MAPPING,
     ALL_AGENT_TOOLS_LIST,
@@ -192,6 +188,7 @@ class MatMasterFlowAgent(LlmAgent):
             model=MatMasterLlmConfig.tool_schema_model,
             description='根据用户的问题依据现有工具执行计划，如果没有工具可用，告知用户，不要自己制造工具或幻想',
             state_key=MULTI_PLANS,
+            global_instruction=GLOBAL_INSTRUCTION,
             before_model_callback=filter_plan_make_llm_contents,
         )
 
@@ -202,17 +199,6 @@ class MatMasterFlowAgent(LlmAgent):
             instruction=PlanConfirmInstruction,
             output_schema=PlanConfirmSchema,
             state_key='plan_confirm',
-        )
-
-        self._plan_info_agent = DisallowTransferAndContentLimitSchemaAgent(
-            name=PLAN_INFO_AGENT,
-            model=MatMasterLlmConfig.tool_schema_model,
-            global_instruction=GLOBAL_INSTRUCTION,
-            description='根据 materials_plan 返回的计划进行总结',
-            instruction=PLAN_INFO_INSTRUCTION,
-            output_schema=PlanInfoSchema,
-            state_key='plan_info',
-            before_model_callback=filter_plan_info_llm_contents,
         )
 
         self._execution_agent = None
@@ -240,7 +226,6 @@ class MatMasterFlowAgent(LlmAgent):
             self.expand_agent,
             self.scene_agent,
             self.plan_make_agent,
-            self.plan_info_agent,
             self.plan_confirm_agent,
             self.analysis_agent,
             self.report_agent,
@@ -277,11 +262,6 @@ class MatMasterFlowAgent(LlmAgent):
     @property
     def plan_make_agent(self) -> LlmAgent:
         return self._plan_make_agent
-
-    @computed_field
-    @property
-    def plan_info_agent(self) -> LlmAgent:
-        return self._plan_info_agent
 
     @computed_field
     @property
@@ -502,10 +482,7 @@ class MatMasterFlowAgent(LlmAgent):
             },
         ):
             yield matmaster_flow_event
-        async for plan_summary_event in self.plan_info_agent.run_async(ctx):
-            yield plan_summary_event
 
-        # 校验 plan_make 和 plan_info 的个数是否一致，不一致尝试更新一下 plan_info
         plan_make_count = len(ctx.session.state[MULTI_PLANS]['plans'])
         plan_info_count = len(ctx.session.state['plan_info']['plans'])
         if plan_info_count != plan_make_count:

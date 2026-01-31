@@ -59,10 +59,14 @@ Return a JSON structure with the following format:
           "tool_name": <string|null>,  // Name of the tool to use (exact match from available list). Use null if no suitable tool exists
           "step_description": <string>,     // MUST be in {{target_language}} and follow STEP_DESCRIPTION FORMAT
           "feasibility": <string>,     // MUST be in {{target_language}}
+<<<<<<< HEAD
           "status": "plan",            // Always return "plan"
           "expected_inputs": <array|null>,   // OPTIONAL: list of input names/descriptions this step expects (e.g. ["structure_file"])
           "expected_outputs": <array|null>,   // OPTIONAL: list of output names/descriptions this step produces (e.g. ["optimized_structure"])
           "success_criteria": <string|null>   // OPTIONAL: brief criterion for step success (e.g. "energy converged, forces below threshold")
+=======
+          "status": "plan"             // Always return "plan"
+>>>>>>> 2e22cb0d1cda6ee7e2b71751fe1ce361aaf606c4
         }}
       ]
     }}
