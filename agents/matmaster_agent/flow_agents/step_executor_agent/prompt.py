@@ -32,13 +32,13 @@ def get_step_executor_instruction(
     """Build full instruction for the step executor with runtime context."""
     parts = [
         STEP_EXECUTOR_INSTRUCTION,
-        "\n## Current step goal / description\n",
+        '\n## Current step goal / description\n',
         goal,
-        "\n## Previous step outputs (summary)\n",
-        prev_outputs_summary or "(none)",
-        "\n## Available tools\n",
+        '\n## Previous step outputs (summary)\n',
+        prev_outputs_summary or '(none)',
+        '\n## Available tools\n',
         available_tools_str,
     ]
     if suggested_tool is not None:
-        parts.extend(["\n## Suggested tool from plan (optional)\n", suggested_tool])
-    return "".join(parts)
+        parts.extend(['\n## Suggested tool from plan (optional)\n', suggested_tool])
+    return ''.join(parts)

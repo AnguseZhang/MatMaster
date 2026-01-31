@@ -17,6 +17,10 @@ from agents.matmaster_agent.flow_agents.execution_agent.utils import (
     should_exit_retryLoop,
 )
 from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
+from agents.matmaster_agent.flow_agents.step_executor_agent import (
+    create_step_executor_agent,
+    get_step_executor_instruction,
+)
 from agents.matmaster_agent.flow_agents.step_validation_agent.prompt import (
     STEP_VALIDATION_INSTRUCTION,
 )
@@ -25,14 +29,8 @@ from agents.matmaster_agent.flow_agents.utils import (
     check_plan,
     find_alternative_tool,
     get_agent_name,
-    get_tools_list,
     has_self_check,
 )
-from agents.matmaster_agent.flow_agents.step_executor_agent import (
-    create_step_executor_agent,
-    get_step_executor_instruction,
-)
-from agents.matmaster_agent.sub_agents.tools import ALL_TOOLS
 from agents.matmaster_agent.llm_config import MatMasterLlmConfig
 from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.logger import PrefixFilter
@@ -41,6 +39,7 @@ from agents.matmaster_agent.state import PLAN
 from agents.matmaster_agent.sub_agents.mapping import (
     MatMasterSubAgentsEnum,
 )
+from agents.matmaster_agent.sub_agents.tools import ALL_TOOLS
 from agents.matmaster_agent.utils.event_utils import (
     all_text_event,
     context_function_event,
@@ -61,17 +60,14 @@ def _get_available_tools_for_step_executor(sub_agents: list) -> list:
     """Tool names that correspond to execution sub_agents (excluding title + validation)."""
     agent_names = {s.name for s in sub_agents[:-2]}
     return [
-        t
-        for t, info in ALL_TOOLS.items()
-        if info.get('belonging_agent') in agent_names
+        t for t, info in ALL_TOOLS.items() if info.get('belonging_agent') in agent_names
     ]
 
 
 def _get_available_tools_str(tool_names: list) -> str:
     """Format tool list for Step Executor instruction."""
     return '\n'.join(
-        f"- {t}: {ALL_TOOLS.get(t, {}).get('description', '')}"
-        for t in tool_names
+        f"- {t}: {ALL_TOOLS.get(t, {}).get('description', '')}" for t in tool_names
     )
 
 
@@ -333,7 +329,9 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
         update_plan['steps'][index]['status'] = PlanStepStatusEnum.PROCESS
         original_description = _get_step_description(
             ctx.session.state[PLAN]['steps'][index]
-        ).split('\n\n注意：')[0]  # 移除之前的失败原因
+        ).split('\n\n注意：')[
+            0
+        ]  # 移除之前的失败原因
         update_plan['steps'][index]['description'] = original_description
         yield update_state_event(ctx, state_delta={'plan': update_plan})
 
@@ -395,7 +393,9 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                 ):
                     yield err_event
                 break
-            tried_tools = [initial_current_tool_name] if initial_current_tool_name else []
+            tried_tools = (
+                [initial_current_tool_name] if initial_current_tool_name else []
+            )
             alternatives = (
                 find_alternative_tool(initial_current_tool_name)
                 if initial_current_tool_name
@@ -427,7 +427,9 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                             ctx.session.state[PLAN]['steps'][index]['status']
                             != PlanStepStatusEnum.SUBMITTED
                         ):
-                            logger.info(f'{ctx.session.id} Step {index + 1} status = {ctx.session.state[PLAN]['steps'][index]['status']}')
+                            logger.info(
+                                f'{ctx.session.id} Step {index + 1} status = {ctx.session.state[PLAN]['steps'][index]['status']}'
+                            )
                             if (
                                 USE_STEP_EXECUTOR
                                 and ctx.session.state[PLAN]['steps'][index][

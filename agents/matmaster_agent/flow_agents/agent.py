@@ -515,9 +515,7 @@ class MatMasterFlowAgent(LlmAgent):
                 # plan_info 可能返回 list[str] 或 list[dict]；仅当第一项为字符串时做 split
                 if isinstance(first_plan, str):
                     logger.warning(f'{ctx.session.id} prepare split plan_info')
-                    final_plans = re.split(
-                        r'(?=方案\s*\d+\s*：)', first_plan
-                    )
+                    final_plans = re.split(r'(?=方案\s*\d+\s*：)', first_plan)
                     final_plans = [p.strip() for p in final_plans if p.strip()]
                     update_plan_info = copy.deepcopy(ctx.session.state['plan_info'])
                     update_plan_info['plans'] = final_plans
