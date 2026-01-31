@@ -42,6 +42,11 @@ Generate MULTIPLE alternative plans (at least 3, unless impossible) that all sat
 Each plan MUST use a DIFFERENT tool orchestration strategy (i.e., different tool choices and/or different step ordering).
 If there is only one feasible orchestration due to tool constraints, still output multiple plans and clearly explain in each plan's "feasibility" why divergence is not possible.
 
+### GOAL-FIRST, TOOL OPTIONAL (STEP EXECUTOR):
+- For each step, **prioritize writing a clear goal** (what the step should achieve) in "step_description"; the goal is more important than binding a specific tool.
+- **You may set "tool_name" to null** when: (1) multiple tools in the available list could achieve this step's goal and the executor will choose at runtime, or (2) the best tool depends on runtime context (e.g. previous step outputs). The execution phase will then select the tool for this step.
+- When exactly one tool clearly fits the goal, still set "tool_name" to that tool. Use null only when it is reasonable to defer tool choice to execution.
+
 Return a JSON structure with the following format:
 {{
   "intro": <string>,   // MUST be in {{target_language}}
@@ -70,7 +75,7 @@ CRITICAL GUIDELINES:
 2. **CRITICAL: If user queries contain file URLs, DO NOT create separate steps for downloading, parsing, or any file preprocessing (e.g., "download and prepare structure", "prepare input structure"). Treat file URLs as direct inputs to relevant end-processing tools.**
 3. **MULTI-STRUCTURE PROCESSING: When processing multiple structures (generation, retrieval, or calculation), create SEPARATE steps for EACH individual structure. Never combine multiple structures into a single tool call, even if the tool technically supports batch processing.**
 4. Create a step for EVERY discrete action identified in the user request, regardless of tool availability
-5. Use null for tool_name only when no appropriate tool exists in the available tools list
+5. Use null for tool_name when: (a) no appropriate tool exists in the available list, or (b) multiple tools could achieve the step goal and the executor will choose at runtime (goal-first).
 6. Never invent or assume tools - only use tools explicitly listed in the available tools
 7. Match tools precisely to requirements - if functionality doesn't align exactly, use null
 8. Ensure each plan’s steps array represents a complete execution sequence for the request
