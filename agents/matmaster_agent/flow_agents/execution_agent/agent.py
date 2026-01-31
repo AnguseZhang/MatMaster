@@ -35,7 +35,7 @@ from agents.matmaster_agent.llm_config import MatMasterLlmConfig
 from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.prompt import MatMasterCheckTransferPrompt
-from agents.matmaster_agent.state import PLAN, STEP_DESCRIPTION
+from agents.matmaster_agent.state import PLAN
 from agents.matmaster_agent.sub_agents.mapping import (
     MatMasterSubAgentsEnum,
 )
