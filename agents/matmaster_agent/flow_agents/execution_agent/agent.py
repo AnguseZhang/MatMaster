@@ -46,6 +46,11 @@ logger.addFilter(PrefixFilter(MATMASTER_AGENT_NAME))
 logger.setLevel(logging.INFO)
 
 
+def _get_step_description(step: dict) -> str:
+    """Step text: execution uses 'description'; plan schema uses 'step_description'."""
+    return step.get('description') or step.get('step_description', '')
+
+
 class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
     @model_validator(mode='after')
     def after_init(self):
@@ -89,7 +94,7 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
     ) -> AsyncGenerator[Event, None]:
         update_plan = copy.deepcopy(ctx.session.state['plan'])
         current_tool_name = update_plan['steps'][index]['tool_name']
-        current_tool_description = update_plan['steps'][index]['description']
+        current_tool_description = _get_step_description(update_plan['steps'][index])
         update_plan['steps'][index]['status'] = PlanStepStatusEnum.PROCESS
         yield update_state_event(
             ctx,
@@ -190,9 +195,9 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
         self, ctx: InvocationContext, index
     ) -> AsyncGenerator[Event, None]:
         current_tool_name = ctx.session.state[PLAN]['steps'][index]['tool_name']
-        current_tool_description = ctx.session.state[PLAN]['steps'][index][
-            'description'
-        ]
+        current_tool_description = _get_step_description(
+            ctx.session.state[PLAN]['steps'][index]
+        )
         lines = (
             f"用户原始请求: {ctx.user_content.parts[0].text}",
             f"当前步骤描述: {current_tool_description}",
@@ -240,7 +245,9 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
         update_plan = copy.deepcopy(ctx.session.state['plan'])
         update_plan['steps'][index]['status'] = PlanStepStatusEnum.PROCESS
         update_plan['steps'][index]['validation_failure_reason'] = validation_reason
-        original_description = ctx.session.state[PLAN]['steps'][index]['description']
+        original_description = _get_step_description(
+            ctx.session.state[PLAN]['steps'][index]
+        )
         update_plan['steps'][index][
             'description'
         ] = f"{original_description}\n\n注意：上次执行因以下原因校验失败，请改进：{validation_reason}"
@@ -262,9 +269,9 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                 f'{ctx.session.id} Step {index + 1} failed due to validation, retrying {retry_count}/{MAX_TOOL_RETRIES}. Reason: {validation_reason}'
             )
             # 在重试时更新步骤描述，包含校验失败的原因
-            original_description = ctx.session.state[PLAN]['steps'][index][
-                'description'
-            ]
+            original_description = _get_step_description(
+                ctx.session.state[PLAN]['steps'][index]
+            )
             update_plan['steps'][index][
                 'description'
             ] = f"{original_description}\n\n注意：上次执行因以下原因校验失败，请改进：{validation_reason}"
@@ -285,11 +292,9 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
         update_plan = copy.deepcopy(ctx.session.state['plan'])
         update_plan['steps'][index]['tool_name'] = next_tool
         update_plan['steps'][index]['status'] = PlanStepStatusEnum.PROCESS
-        original_description = ctx.session.state[PLAN]['steps'][index][
-            'description'
-        ].split('\n\n注意：')[
-            0
-        ]  # 移除之前的失败原因
+        original_description = _get_step_description(
+            ctx.session.state[PLAN]['steps'][index]
+        ).split('\n\n注意：')[0]  # 移除之前的失败原因
         update_plan['steps'][index]['description'] = original_description
         yield update_state_event(ctx, state_delta={'plan': update_plan})
 

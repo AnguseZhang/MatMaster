@@ -783,7 +783,13 @@ class MatMasterFlowAgent(LlmAgent):
             if not plans:
                 logger.warning(f'{ctx.session.id} empty multi_plans, skip plan select')
                 return
-            selected_plan = plans[selected_plan_id]
+            selected_plan = copy.deepcopy(plans[selected_plan_id])
+            # Normalize step description: execution reads 'description'; plan schema uses 'step_description'
+            for step in selected_plan.get('steps', []):
+                if 'description' not in step and 'step_description' in step:
+                    step['description'] = step['step_description']
+                elif 'description' not in step:
+                    step['description'] = step.get('step_description', '')
             yield update_state_event(ctx, state_delta={PLAN: selected_plan})
             logger.info(
                 f'{ctx.session.id} Reset Plan, plan = {ctx.session.state[PLAN]}'
