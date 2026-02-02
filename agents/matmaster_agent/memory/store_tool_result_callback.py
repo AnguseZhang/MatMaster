@@ -22,9 +22,9 @@ logger = logging.getLogger(__name__)
 logger.addFilter(PrefixFilter(MATMASTER_AGENT_NAME))
 logger.setLevel(logging.INFO)
 
-# Max chars to store per tool result (avoid huge blobs).
-MAX_STORED_RESULT_CHARS = 1500
-MAX_ARGS_CHARS = 300
+# Max chars to store per tool result; kept generous for literature/expert-intuition use.
+MAX_STORED_RESULT_CHARS = 12000
+MAX_ARGS_CHARS = 800
 
 
 def _session_id_from_tool_context(tool_context: ToolContext) -> Optional[str]:

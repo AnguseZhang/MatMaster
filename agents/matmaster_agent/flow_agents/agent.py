@@ -633,8 +633,28 @@ class MatMasterFlowAgent(LlmAgent):
                 self._analysis_agent.instruction = get_analysis_instruction(
                     ctx.session.state['plan']
                 )
+                analysis_text = ''
                 async for analysis_event in self.analysis_agent.run_async(ctx):
+                    if (cur := is_text(analysis_event)) and not analysis_event.partial:
+                        analysis_text += cur
                     yield analysis_event
+                if analysis_text.strip():
+                    try:
+                        kernel = get_memory_kernel()
+                        kernel.write(
+                            text=f"Plan execution summary: {analysis_text.strip()}",
+                            metadata={'source': 'execution_summary'},
+                            session_id=ctx.session.id,
+                        )
+                        logger.info(
+                            '%s wrote execution summary to memory (%d chars)',
+                            ctx.session.id,
+                            len(analysis_text),
+                        )
+                    except Exception as e:
+                        logger.warning(
+                            'write execution summary to memory failed: %s', e
+                        )
                 self._report_agent.instruction = get_report_instruction(
                     ctx.session.state.get('plan', {})
                 )
@@ -644,6 +664,25 @@ class MatMasterFlowAgent(LlmAgent):
                 async for report_event in self.report_agent.run_async(ctx):
                     if (cur_text := is_text(report_event)) and not report_event.partial:
                         report_markdown += cur_text
+
+                if report_markdown.strip():
+                    try:
+                        excerpt = report_markdown.strip()[:5000]
+                        kernel = get_memory_kernel()
+                        kernel.write(
+                            text=f"Plan execution report (excerpt): {excerpt}",
+                            metadata={'source': 'execution_report'},
+                            session_id=ctx.session.id,
+                        )
+                        logger.info(
+                            '%s wrote report excerpt to memory (%d chars)',
+                            ctx.session.id,
+                            len(excerpt),
+                        )
+                    except Exception as e:
+                        logger.warning(
+                            'write report excerpt to memory failed: %s', e
+                        )
 
                 # matmaster_report_md.md
                 upload_result = await upload_report_md_to_oss(
