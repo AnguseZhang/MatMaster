@@ -3,7 +3,6 @@ Memory reader: retrieve session-scoped snippets and format for prompt injection.
 """
 
 import logging
-from typing import Optional
 
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
 from agents.matmaster_agent.logger import PrefixFilter

@@ -125,11 +125,13 @@ class MemoryKernel:
         metadatas = result.get('metadatas', [[]])[0]
         out = []
         for i, doc_id in enumerate(ids):
-            out.append({
-                'id': doc_id,
-                'document': documents[i] if i < len(documents) else '',
-                'metadata': metadatas[i] if i < len(metadatas) else {},
-            })
+            out.append(
+                {
+                    'id': doc_id,
+                    'document': documents[i] if i < len(documents) else '',
+                    'metadata': metadatas[i] if i < len(metadatas) else {},
+                }
+            )
         return out
 
 

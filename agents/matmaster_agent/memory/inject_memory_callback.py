@@ -23,7 +23,9 @@ logger.addFilter(PrefixFilter(MATMASTER_AGENT_NAME))
 logger.setLevel(logging.INFO)
 
 
-def _query_from_request_and_state(callback_context: CallbackContext, llm_request: LlmRequest) -> str:
+def _query_from_request_and_state(
+    callback_context: CallbackContext, llm_request: LlmRequest
+) -> str:
     """Build query string for memory retrieval from request contents and session state."""
     # Prefer current step description (tool step) so retrieval is relevant to the tool being filled
     state = getattr(callback_context, 'state', None)
@@ -32,7 +34,9 @@ def _query_from_request_and_state(callback_context: CallbackContext, llm_request
         steps = plan.get('steps', [])
         plan_index = state.get('plan_index', 0)
         if 0 <= plan_index < len(steps):
-            desc = steps[plan_index].get(STEP_DESCRIPTION) or steps[plan_index].get('step_description', '')
+            desc = steps[plan_index].get(STEP_DESCRIPTION) or steps[plan_index].get(
+                'step_description', ''
+            )
             if desc:
                 return desc.strip()
     # Fallback: last text from contents
@@ -48,11 +52,17 @@ async def inject_memory_before_model_impl(
     callback_context: CallbackContext, llm_request: LlmRequest
 ) -> None:
     """Prepend short-term memory block to llm_request.contents if any."""
-    session_id = getattr(callback_context.session, 'id', None) if getattr(callback_context, 'session', None) else None
+    session_id = (
+        getattr(callback_context.session, 'id', None)
+        if getattr(callback_context, 'session', None)
+        else None
+    )
     if not session_id:
         return
     query = _query_from_request_and_state(callback_context, llm_request)
-    block = format_short_term_memory(query_text=query or 'tool parameters', session_id=session_id)
+    block = format_short_term_memory(
+        query_text=query or 'tool parameters', session_id=session_id
+    )
     if not block or not block.strip():
         return
     # Prepend as a user message so the model sees it when filling tool args
@@ -69,10 +79,12 @@ async def inject_memory_before_model_impl(
 
 def inject_memory_before_model(func: BeforeModelCallback) -> BeforeModelCallback:
     """Chain inject_memory before the given before_model_callback (for MCP/tool agents)."""
+
     @wraps(func)
     async def wrapper(
         callback_context: CallbackContext, llm_request: LlmRequest
     ) -> Optional[LlmResponse]:
         await inject_memory_before_model_impl(callback_context, llm_request)
         return await func(callback_context, llm_request)
+
     return wrapper

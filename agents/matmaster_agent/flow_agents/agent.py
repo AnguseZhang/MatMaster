@@ -65,13 +65,6 @@ from agents.matmaster_agent.flow_agents.plan_make_agent.constant import PLAN_MAK
 from agents.matmaster_agent.flow_agents.plan_make_agent.prompt import (
     get_plan_make_instruction,
 )
-from agents.matmaster_agent.memory.reader import format_short_term_memory
-from agents.matmaster_agent.memory.prompt import (
-    LONG_CONTEXT_THRESHOLD,
-    get_memory_writer_instruction,
-)
-from agents.matmaster_agent.memory.kernel import get_memory_kernel
-from agents.matmaster_agent.memory.agent import MemoryWriterAgent
 from agents.matmaster_agent.flow_agents.plan_make_agent.schema import (
     create_dynamic_multi_plans_schema,
 )
@@ -104,6 +97,13 @@ from agents.matmaster_agent.flow_agents.utils import (
 from agents.matmaster_agent.llm_config import MatMasterLlmConfig
 from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.logger import PrefixFilter
+from agents.matmaster_agent.memory.agent import MemoryWriterAgent
+from agents.matmaster_agent.memory.kernel import get_memory_kernel
+from agents.matmaster_agent.memory.prompt import (
+    LONG_CONTEXT_THRESHOLD,
+    get_memory_writer_instruction,
+)
+from agents.matmaster_agent.memory.reader import format_short_term_memory
 from agents.matmaster_agent.prompt import (
     GLOBAL_INSTRUCTION,
     HUMAN_FRIENDLY_FORMAT_REQUIREMENT,
@@ -123,7 +123,6 @@ from agents.matmaster_agent.state import (
     PLAN,
     UPLOAD_FILE,
 )
-from agents.matmaster_agent.memory.constant import MEMORY_WRITER_AGENT_NAME
 from agents.matmaster_agent.sub_agents.mapping import (
     AGENT_CLASS_MAPPING,
     ALL_AGENT_TOOLS_LIST,
@@ -412,13 +411,12 @@ class MatMasterFlowAgent(LlmAgent):
                 for key, value in available_tools_with_info.items()
             ]
         )
-        query_for_memory = (
-            ctx.session.state.get('expand', {}).get('update_user_content', '')
-            or (
-                ctx.user_content.parts[0].text
-                if ctx.user_content and ctx.user_content.parts
-                else ''
-            )
+        query_for_memory = ctx.session.state.get('expand', {}).get(
+            'update_user_content', ''
+        ) or (
+            ctx.user_content.parts[0].text
+            if ctx.user_content and ctx.user_content.parts
+            else ''
         )
         short_term_memory_block = format_short_term_memory(
             query_text=query_for_memory,
@@ -445,8 +443,7 @@ class MatMasterFlowAgent(LlmAgent):
             first = plans[0]
             desc = first.get('plan_description', '')
             steps_brief = '; '.join(
-                s.get('step_description', '')[:60]
-                for s in first.get('steps', [])[:5]
+                s.get('step_description', '')[:60] for s in first.get('steps', [])[:5]
             )
             plan_intro = f"{intro}\n\n方案摘要: {desc}\n步骤: {steps_brief}"
         is_long_context = len(UPDATE_USER_CONTENT) >= LONG_CONTEXT_THRESHOLD

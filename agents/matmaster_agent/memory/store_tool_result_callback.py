@@ -10,16 +10,13 @@ import logging
 from functools import wraps
 from typing import Any, Optional, Union
 
-from google.adk.tools import BaseTool
-from google.adk.tools import ToolContext
+from google.adk.tools import BaseTool, ToolContext
 from mcp.types import CallToolResult
 
-from agents.matmaster_agent.constant import FRONTEND_STATE_KEY
-from agents.matmaster_agent.memory.constant import MEMORY_TOOLS_STORE_RESULTS
-from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
+from agents.matmaster_agent.constant import FRONTEND_STATE_KEY, MATMASTER_AGENT_NAME
 from agents.matmaster_agent.logger import PrefixFilter
+from agents.matmaster_agent.memory.constant import MEMORY_TOOLS_STORE_RESULTS
 from agents.matmaster_agent.memory.kernel import get_memory_kernel
-from agents.matmaster_agent.utils.helper_func import get_session_state
 
 logger = logging.getLogger(__name__)
 logger.addFilter(PrefixFilter(MATMASTER_AGENT_NAME))
@@ -51,12 +48,16 @@ def _format_tool_result_summary(
     """Build a short summary string for storage."""
     args_str = json.dumps(args, ensure_ascii=False)[:MAX_ARGS_CHARS]
     if isinstance(tool_response, CallToolResult):
-        if not tool_response.content or not getattr(tool_response.content[0], 'text', None):
+        if not tool_response.content or not getattr(
+            tool_response.content[0], 'text', None
+        ):
             result_str = '(empty)'
         else:
             result_str = (tool_response.content[0].text or '')[:MAX_STORED_RESULT_CHARS]
     else:
-        result_str = json.dumps(tool_response, ensure_ascii=False)[:MAX_STORED_RESULT_CHARS]
+        result_str = json.dumps(tool_response, ensure_ascii=False)[
+            :MAX_STORED_RESULT_CHARS
+        ]
     return f"Tool {tool.name} | args: {args_str} | result: {result_str}"
 
 
