@@ -1,8 +1,13 @@
-def get_plan_make_instruction(available_tools_with_info: str):
+def get_plan_make_instruction(
+    available_tools_with_info: str,
+    short_term_memory: str = '',
+):
+    memory_block = ''
+    if short_term_memory and short_term_memory.strip():
+        memory_block = short_term_memory.strip() + '\n\n'
     return f"""
 You are an AI assistant specialized in creating structured execution plans. Analyze user intent and any provided error logs to break down requests into sequential steps.
-
-<Available Tools With Info>
+{memory_block}<Available Tools With Info>
 {available_tools_with_info}
 
 ### OUTPUT LANGUAGE (NEW, CRITICAL):
