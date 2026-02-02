@@ -680,9 +680,7 @@ class MatMasterFlowAgent(LlmAgent):
                             len(excerpt),
                         )
                     except Exception as e:
-                        logger.warning(
-                            'write report excerpt to memory failed: %s', e
-                        )
+                        logger.warning('write report excerpt to memory failed: %s', e)
 
                 # matmaster_report_md.md
                 upload_result = await upload_report_md_to_oss(

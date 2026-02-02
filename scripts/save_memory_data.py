@@ -20,8 +20,8 @@ _PROJECT_ROOT = _SCRIPT_DIR.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-import chromadb
-from chromadb.config import Settings
+import chromadb  # noqa: E402
+from chromadb.config import Settings  # noqa: E402
 
 COLLECTION_NAME = 'matmaster_session_memory'
 SESSION_ID_METADATA_KEY = 'session_id'
