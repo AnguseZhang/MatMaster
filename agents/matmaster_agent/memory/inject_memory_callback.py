@@ -15,7 +15,7 @@ from google.genai.types import Content, Part
 
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
 from agents.matmaster_agent.logger import PrefixFilter
-from agents.matmaster_agent.memory.reader import format_short_term_memory
+from agents.matmaster_agent.services.memory import format_short_term_memory
 from agents.matmaster_agent.state import PLAN, STEP_DESCRIPTION
 
 logger = logging.getLogger(__name__)

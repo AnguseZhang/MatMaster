@@ -1,10 +1,13 @@
 """
-Read and print data stored under data/chroma_memory (MatMaster session memory).
+Read and print MatMaster session memory via the memory HTTP service.
+
+Requires: memory service running (uv run uvicorn memory_service.main:app --host 0.0.0.0 --port 8002)
+Uses MEMORY_SERVICE_URL (default 127.0.0.1:8002).
 
 Usage (from project root):
     uv run python scripts/read_memory_data.py
-    uv run python scripts/read_memory_data.py --path data/chroma_memory
-    uv run python scripts/read_memory_data.py --session <session_id>   # filter by session
+    uv run python scripts/read_memory_data.py --session <session_id>
+    uv run python scripts/read_memory_data.py --limit 100
 """
 
 import argparse
@@ -19,26 +22,20 @@ _PROJECT_ROOT = _SCRIPT_DIR.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-import chromadb  # noqa: E402
-from chromadb.config import Settings  # noqa: E402
+import requests  # noqa: E402
 
-COLLECTION_NAME = 'matmaster_session_memory'
 SESSION_ID_METADATA_KEY = 'session_id'
-
-DEFAULT_PERSIST_DIR = os.environ.get(
-    'MATMASTER_CHROMA_PERSIST_DIR',
-    str(_PROJECT_ROOT / 'data' / 'chroma_memory'),
-)
+DEFAULT_MEMORY_SERVICE_URL = os.environ.get('MEMORY_SERVICE_URL', '127.0.0.1:8002')
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description='Read MatMaster ChromaDB memory data from data/chroma_memory'
+        description='Read MatMaster session memory via the memory HTTP service'
     )
     parser.add_argument(
-        '--path',
-        default=DEFAULT_PERSIST_DIR,
-        help=f'ChromaDB persist directory (default: {DEFAULT_PERSIST_DIR})',
+        '--url',
+        default=DEFAULT_MEMORY_SERVICE_URL,
+        help=f'Memory service base URL host:port (default: {DEFAULT_MEMORY_SERVICE_URL})',
     )
     parser.add_argument(
         '--session',
@@ -53,59 +50,59 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    path = Path(args.path)
-    if not path.exists():
-        print(f'Path does not exist: {path}')
-        sys.exit(1)
+    base_url = args.url if '://' in args.url else f'http://{args.url}'
+    list_endpoint = f'{base_url.rstrip("/")}/api/v1/memory/list'
 
     t0 = time.perf_counter()
-    client = chromadb.PersistentClient(
-        path=str(path),
-        settings=Settings(anonymized_telemetry=False),
-    )
-
     try:
-        collection = client.get_collection(name=COLLECTION_NAME)
-    except Exception as e:
-        print(f'Collection {COLLECTION_NAME!r} not found or error: {e}')
+        resp = requests.post(
+            list_endpoint,
+            json={
+                'session_id': args.session,
+                'limit': args.limit,
+            },
+            timeout=10,
+        )
+        resp.raise_for_status()
+        payload = resp.json()
+    except requests.RequestException as e:
+        print(f'Request failed: {e}')
+        if hasattr(e, 'response') and e.response is not None:
+            try:
+                print(e.response.text)
+            except Exception:
+                pass
         sys.exit(1)
 
-    where = {SESSION_ID_METADATA_KEY: args.session} if args.session else None
-    result = collection.get(
-        include=['documents', 'metadatas'],
-        where=where,
-        limit=args.limit,
-    )
     elapsed = time.perf_counter() - t0
     print(f'[timer] read: {elapsed:.3f} s')
     print()
 
-    ids = result.get('ids', [])
-    documents = result.get('documents', [])
-    metadatas = result.get('metadatas', [])
-
-    if not ids:
+    data = payload.get('data', [])
+    if not data:
         print('No documents in collection.')
         if args.session:
             print(f'(filtered by session_id={args.session!r})')
         return
 
-    print(f'Total documents: {len(ids)}')
+    print(f'Total documents: {len(data)}')
     if args.session:
         print(f'Filtered by session_id: {args.session!r}')
     print()
 
     # Group by session_id for readability
-    by_session: dict[str, list[tuple[str, str, dict]]] = {}
-    for i, doc_id in enumerate(ids):
-        doc = documents[i] if i < len(documents) else ''
-        meta = metadatas[i] if i < len(metadatas) else {}
+    by_session: dict[str, list[dict]] = {}
+    for item in data:
+        meta = item.get('metadata', {})
         sid = meta.get(SESSION_ID_METADATA_KEY, '<no session_id>')
-        by_session.setdefault(sid, []).append((doc_id, doc, meta))
+        by_session.setdefault(sid, []).append(item)
 
     for session_id, items in sorted(by_session.items()):
         print(f'--- session_id: {session_id} ({len(items)} item(s)) ---')
-        for doc_id, doc, meta in items:
+        for it in items:
+            doc_id = it.get('id', '')
+            doc = it.get('document', '')
+            meta = it.get('metadata', {})
             print(f'  id: {doc_id}')
             print(f'  document: {doc[:200]}{"..." if len(doc) > 200 else ""}')
             extra = {k: v for k, v in meta.items() if k != SESSION_ID_METADATA_KEY}

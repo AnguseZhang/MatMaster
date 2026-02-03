@@ -16,7 +16,7 @@ from mcp.types import CallToolResult
 from agents.matmaster_agent.constant import FRONTEND_STATE_KEY, MATMASTER_AGENT_NAME
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.memory.constant import MEMORY_TOOLS_STORE_RESULTS
-from agents.matmaster_agent.memory.kernel import get_memory_kernel
+from agents.matmaster_agent.services.memory import memory_write
 
 logger = logging.getLogger(__name__)
 logger.addFilter(PrefixFilter(MATMASTER_AGENT_NAME))
@@ -62,7 +62,7 @@ def _format_tool_result_summary(
 
 
 def store_tool_result_in_memory(func: Any) -> Any:
-    """Wrap after_tool_callback: after inner runs, store selected tool results to kernel."""
+    """Wrap after_tool_callback: after inner runs, store selected tool results to memory service."""
 
     @wraps(func)
     async def wrapper(
@@ -78,21 +78,17 @@ def store_tool_result_in_memory(func: Any) -> Any:
         if not session_id:
             logger.debug('store_tool_result_in_memory: no session_id, skip')
             return inner_result
-        try:
-            summary = _format_tool_result_summary(tool, args, tool_response)
-            kernel = get_memory_kernel()
-            kernel.write(
-                text=summary,
-                metadata={'tool': tool.name, 'source': 'tool_result'},
-                session_id=session_id,
-            )
-            logger.info(
-                'store_tool_result_in_memory session_id=%s tool=%s stored',
-                session_id,
-                tool.name,
-            )
-        except Exception as e:
-            logger.warning('store_tool_result_in_memory failed: %s', e)
+        summary = _format_tool_result_summary(tool, args, tool_response)
+        memory_write(
+            session_id=session_id,
+            text=summary,
+            metadata={'tool': tool.name, 'source': 'tool_result'},
+        )
+        logger.info(
+            'store_tool_result_in_memory session_id=%s tool=%s stored',
+            session_id,
+            tool.name,
+        )
         return inner_result
 
     return wrapper

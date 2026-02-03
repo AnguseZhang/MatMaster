@@ -100,16 +100,16 @@ from agents.matmaster_agent.llm_config import MatMasterLlmConfig
 from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.memory.agent import MemoryWriterAgent
-from agents.matmaster_agent.memory.kernel import get_memory_kernel
 from agents.matmaster_agent.memory.prompt import (
     LONG_CONTEXT_THRESHOLD,
     get_memory_writer_instruction,
 )
-from agents.matmaster_agent.memory.reader import format_short_term_memory
+from agents.matmaster_agent.services.memory import format_short_term_memory
 from agents.matmaster_agent.prompt import (
     GLOBAL_INSTRUCTION,
     HUMAN_FRIENDLY_FORMAT_REQUIREMENT,
 )
+from agents.matmaster_agent.services.memory import memory_write
 from agents.matmaster_agent.services.icl import (
     expand_input_examples,
     scene_tags_from_examples,
@@ -496,15 +496,14 @@ class MatMasterFlowAgent(LlmAgent):
         output = ctx.session.state.get('memory_writer_output') or {}
         insights = output.get('insights', []) if isinstance(output, dict) else []
         if insights:
-            kernel = get_memory_kernel()
             session_id = ctx.session.id
             written = 0
             for text in insights:
                 if isinstance(text, str) and text.strip():
-                    kernel.write(text=text.strip(), metadata={}, session_id=session_id)
+                    memory_write(session_id=session_id, text=text.strip(), metadata={})
                     written += 1
             logger.info(
-                '%s memory_writer wrote %d insight(s) to kernel',
+                '%s memory_writer wrote %d insight(s) to memory',
                 ctx.session.id,
                 written,
             )
@@ -680,22 +679,16 @@ class MatMasterFlowAgent(LlmAgent):
                         analysis_text += cur
                     yield analysis_event
                 if analysis_text.strip():
-                    try:
-                        kernel = get_memory_kernel()
-                        kernel.write(
-                            text=f"Plan execution summary: {analysis_text.strip()}",
-                            metadata={'source': 'execution_summary'},
-                            session_id=ctx.session.id,
-                        )
-                        logger.info(
-                            '%s wrote execution summary to memory (%d chars)',
-                            ctx.session.id,
-                            len(analysis_text),
-                        )
-                    except Exception as e:
-                        logger.warning(
-                            'write execution summary to memory failed: %s', e
-                        )
+                    memory_write(
+                        session_id=ctx.session.id,
+                        text=f"Plan execution summary: {analysis_text.strip()}",
+                        metadata={'source': 'execution_summary'},
+                    )
+                    logger.info(
+                        '%s wrote execution summary to memory (%d chars)',
+                        ctx.session.id,
+                        len(analysis_text),
+                    )
                 self._report_agent.instruction = get_report_instruction(
                     ctx.session.state.get('plan', {})
                 )
@@ -707,21 +700,17 @@ class MatMasterFlowAgent(LlmAgent):
                         report_markdown += cur_text
 
                 if report_markdown.strip():
-                    try:
-                        excerpt = report_markdown.strip()[:5000]
-                        kernel = get_memory_kernel()
-                        kernel.write(
-                            text=f"Plan execution report (excerpt): {excerpt}",
-                            metadata={'source': 'execution_report'},
-                            session_id=ctx.session.id,
-                        )
-                        logger.info(
-                            '%s wrote report excerpt to memory (%d chars)',
-                            ctx.session.id,
-                            len(excerpt),
-                        )
-                    except Exception as e:
-                        logger.warning('write report excerpt to memory failed: %s', e)
+                    excerpt = report_markdown.strip()[:5000]
+                    memory_write(
+                        session_id=ctx.session.id,
+                        text=f"Plan execution report (excerpt): {excerpt}",
+                        metadata={'source': 'execution_report'},
+                    )
+                    logger.info(
+                        '%s wrote report excerpt to memory (%d chars)',
+                        ctx.session.id,
+                        len(excerpt),
+                    )
 
                 # matmaster_report_md.md
                 upload_result = await upload_report_md_to_oss(

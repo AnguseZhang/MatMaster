@@ -1,17 +1,18 @@
 """
-Mock-write data to data/chroma_memory (MatMaster session memory) for testing.
+Mock-write data to MatMaster session memory via the memory HTTP service.
+
+Requires: memory service running (uv run uvicorn memory_service.main:app --host 0.0.0.0 --port 8002)
+Uses MEMORY_SERVICE_URL (default 127.0.0.1:8002).
 
 Usage (from project root):
     uv run python scripts/save_memory_data.py --session mock-session-1 --content "user prefers DPA for relaxation"
-    uv run python scripts/save_memory_data.py --session s1 --count 5   # write 5 mock docs to session s1
-    uv run python scripts/save_memory_data.py --path data/chroma_memory --session s2 --content "test"
+    uv run python scripts/save_memory_data.py --session s1 --count 5
 """
 
 import argparse
 import os
 import sys
 import time
-import uuid
 from pathlib import Path
 
 # Ensure project root is on path when running script directly
@@ -20,28 +21,20 @@ _PROJECT_ROOT = _SCRIPT_DIR.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-import chromadb  # noqa: E402
-from chromadb.config import Settings  # noqa: E402
+import requests  # noqa: E402
 
-COLLECTION_NAME = 'matmaster_session_memory'
-SESSION_ID_METADATA_KEY = 'session_id'
-
-DEFAULT_PERSIST_DIR = os.environ.get(
-    'MATMASTER_CHROMA_PERSIST_DIR',
-    str(_PROJECT_ROOT / 'data' / 'chroma_memory'),
-)
-
+DEFAULT_MEMORY_SERVICE_URL = os.environ.get('MEMORY_SERVICE_URL', '127.0.0.1:8002')
 MOCK_DOC_TEMPLATE = 'mock insight #{n}: session_id={sid} (for testing read_memory_data)'
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description='Mock-write MatMaster ChromaDB memory data to data/chroma_memory'
+        description='Mock-write MatMaster session memory via the memory HTTP service'
     )
     parser.add_argument(
-        '--path',
-        default=DEFAULT_PERSIST_DIR,
-        help=f'ChromaDB persist directory (default: {DEFAULT_PERSIST_DIR})',
+        '--url',
+        default=DEFAULT_MEMORY_SERVICE_URL,
+        help=f'Memory service base URL host:port (default: {DEFAULT_MEMORY_SERVICE_URL})',
     )
     parser.add_argument(
         '--session',
@@ -61,38 +54,46 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    path = Path(args.path)
-    path.mkdir(parents=True, exist_ok=True)
-
-    t0 = time.perf_counter()
-    client = chromadb.PersistentClient(
-        path=str(path),
-        settings=Settings(anonymized_telemetry=False),
-    )
-    collection = client.get_or_create_collection(
-        name=COLLECTION_NAME,
-        metadata={'description': 'MatMaster single-session working memory'},
-    )
+    base_url = args.url if '://' in args.url else f'http://{args.url}'
+    write_endpoint = f'{base_url.rstrip("/")}/api/v1/memory/write'
 
     if args.content is not None:
-        ids = [str(uuid.uuid4())]
-        documents = [args.content]
-        metadatas = [{SESSION_ID_METADATA_KEY: args.session}]
+        texts = [args.content]
     else:
         n = max(1, args.count)
-        ids = [str(uuid.uuid4()) for _ in range(n)]
-        documents = [
-            MOCK_DOC_TEMPLATE.format(n=i + 1, sid=args.session) for i in range(n)
+        texts = [
+            MOCK_DOC_TEMPLATE.format(n=i + 1, sid=args.session)
+            for i in range(n)
         ]
-        metadatas = [{SESSION_ID_METADATA_KEY: args.session} for _ in range(n)]
 
-    collection.add(ids=ids, documents=documents, metadatas=metadatas)
+    t0 = time.perf_counter()
+    for i, text in enumerate(texts):
+        try:
+            resp = requests.post(
+                write_endpoint,
+                json={
+                    'session_id': args.session,
+                    'text': text,
+                    'metadata': {},
+                },
+                timeout=10,
+            )
+            resp.raise_for_status()
+        except requests.RequestException as e:
+            print(f'Write failed (item {i + 1}): {e}')
+            if hasattr(e, 'response') and e.response is not None:
+                try:
+                    print(e.response.text)
+                except Exception:
+                    pass
+            sys.exit(1)
+
     elapsed = time.perf_counter() - t0
     print(f'[timer] save: {elapsed:.3f} s')
-    print(f'Wrote {len(ids)} document(s) to session_id={args.session!r}')
-    for i, (doc_id, doc) in enumerate(zip(ids, documents)):
+    print(f'Wrote {len(texts)} document(s) to session_id={args.session!r}')
+    for i, doc in enumerate(texts):
         preview = doc[:80] + '...' if len(doc) > 80 else doc
-        print(f'  {i + 1}. id={doc_id}  document={preview!r}')
+        print(f'  {i + 1}. document={preview!r}')
 
 
 if __name__ == '__main__':

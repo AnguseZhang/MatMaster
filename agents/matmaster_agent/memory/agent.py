@@ -1,5 +1,5 @@
 """
-Memory writer agent: runs after plan_make, extracts insights from context + plan, writes to kernel.
+Memory writer agent: runs after plan_make, extracts insights from context + plan; flow writes them to memory service.
 
 No tools; output is a schema (insights list). Flow code runs this agent and writes each insight.
 """
@@ -13,7 +13,7 @@ from agents.matmaster_agent.memory.schema import MemoryWriterSchema
 
 
 class MemoryWriterAgent(DisallowTransferAndContentLimitSchemaAgent):
-    """Agent that outputs a list of insights; the flow writes them to the memory kernel."""
+    """Agent that outputs a list of insights; the flow writes them to the memory service."""
 
     def __init__(self, llm_config: LLMConfig):
         super().__init__(
