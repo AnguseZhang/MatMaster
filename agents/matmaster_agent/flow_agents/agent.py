@@ -1,9 +1,11 @@
 import copy
 import json
 import logging
+import uuid
 from asyncio import CancelledError
 from typing import AsyncGenerator
 
+from app.tools import wait_for_frontend_tool_result
 from google.adk.agents import InvocationContext, LlmAgent
 from google.adk.events import Event
 from opik.integrations.adk import track_adk_agent_recursive
@@ -39,6 +41,8 @@ from agents.matmaster_agent.flow_agents.chat_agent.prompt import (
     ChatAgentInstruction,
 )
 from agents.matmaster_agent.flow_agents.constant import (
+    DEMO_FRONTEND_TOOL,
+    DEMO_FRONTEND_TOOL_RESULT_STATE_KEY,
     MATMASTER_FLOW,
     MATMASTER_FLOW_PLANS,
     MATMASTER_GENERATE_NPS,
@@ -138,6 +142,7 @@ from agents.matmaster_agent.sub_agents.mapping import (
 from agents.matmaster_agent.sub_agents.tools import ALL_TOOLS
 from agents.matmaster_agent.utils.event_utils import (
     all_text_event,
+    context_function_call_event,
     context_function_event,
     is_text,
     send_error_event,
@@ -935,6 +940,30 @@ class MatMasterFlowAgent(LlmAgent):
                 ):
                     yield quota_remaining_event
                 return
+
+            # 在需要验证的节点下发前端工具事件，同一轮 run 内等前端回传（wait_for_frontend_tool_result）
+            function_call_id = f"added_{str(uuid.uuid4()).replace('-', '')[:24]}"
+            yield context_function_call_event(
+                ctx,
+                self.name,
+                function_call_id,
+                DEMO_FRONTEND_TOOL,
+                ModelRole,
+                {
+                    'message': '请确认',
+                    'title': '前端 Demo Tool',
+                    'session_id': ctx.session.id,
+                    'invocation_id': ctx.invocation_id,
+                    'function_call_id': function_call_id,
+                },
+            )
+            demo_result = await wait_for_frontend_tool_result(
+                ctx.session.id, ctx.invocation_id, function_call_id
+            )
+            ctx.session.state[DEMO_FRONTEND_TOOL_RESULT_STATE_KEY] = demo_result
+            yield update_state_event(
+                ctx, state_delta={DEMO_FRONTEND_TOOL_RESULT_STATE_KEY: demo_result}
+            )
 
             # 上传文件特殊处理
             async for handle_upload_event in self.handle_upload_agent.run_async(ctx):
