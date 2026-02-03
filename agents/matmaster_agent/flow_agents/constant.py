@@ -10,6 +10,10 @@ MATMASTER_FLOW = 'matmaster_flow'
 MATMASTER_FLOW_PLANS = 'matmaster_flow_plans'
 MATMASTER_GENERATE_NPS = 'matmaster_generate_nps'
 
+# matmaster_flow 展示文案，直接传给前端（正常执行无标签则传空字符串）
+EXECUTION_TYPE_LABEL_RETRY = '重试工具'
+EXECUTION_TYPE_LABEL_CHANGE_TOOL = '已更换工具'
+
 UNIVERSAL_CONTEXT_FILTER_KEYWORDS = [
     INTENT_AGENT,
     EXPAND_AGENT.replace('_agent', '_schema'),

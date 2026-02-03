@@ -1503,7 +1503,7 @@ ALL_TOOLS = {
         'description': (
             'What it does: Run LAMMPS simulations.\n'
             'When to use: Perform MD or minimization.\n'
-            'Prerequisites / Inputs: LAMMPS data file.\n'
+            'Prerequisites / Inputs: Converted LAMMPS structural data file; Input script.\n'
             'Outputs: Simulation results.\n'
             'Cannot do / Limits: Requires LAMMPS format.\n'
             'Cost / Notes: High (simulation time).'

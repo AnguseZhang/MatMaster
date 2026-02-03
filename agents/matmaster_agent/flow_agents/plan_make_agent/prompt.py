@@ -1,21 +1,19 @@
-def get_plan_make_instruction(
-    available_tools_with_info: str,
-    short_term_memory: str = '',
-):
-    memory_block = ''
-    if short_term_memory and short_term_memory.strip():
-        memory_block = short_term_memory.strip() + '\n\n'
-    return f"""
-You are an AI assistant specialized in creating structured execution plans. Analyze user intent and any provided error logs to break down requests into sequential steps.
-{memory_block}<Available Tools With Info>
+def get_static_plan_system_block(available_tools_with_info: str) -> str:
+    """
+    Immutable content: persona, tool list (heaviest component), output format and constraints.
+    Generate once per session; keep tool list deterministically sorted at call site for cache stability.
+    """
+    return f"""You are an AI assistant specialized in creating structured execution plans. Analyze user intent and any provided error logs to break down requests into sequential steps.
+
+<Available Tools With Info>
 {available_tools_with_info}
 
-### OUTPUT LANGUAGE (NEW, CRITICAL):
+### OUTPUT LANGUAGE:
 All natural-language fields in the output MUST be written in {{target_language}}.
 This includes (but is not limited to): "intro", each plan's "plan_description", each step's "step_description", each step's "feasibility", and "overall".
 Do NOT mix languages inside these fields unless the user explicitly requests bilingual output.
 
-### PLAN_DESCRIPTION FORMAT (NEW, CRITICAL):
+### PLAN_DESCRIPTION FORMAT:
 Each plan's "plan_description" MUST start with "方案 x：" where x is the plan index starting from 1 in the order they appear in the "plans" array.
 Example (in {{target_language}}):
 - "方案 1：……"
@@ -24,7 +22,7 @@ Constraints:
 - The prefix must be exactly "方案 x：" (Arabic numeral + full-width Chinese colon).
 - Do NOT add any content before this prefix.
 
-### STEP_DESCRIPTION FORMAT (NEW, CRITICAL):
+### STEP_DESCRIPTION FORMAT:
 Each step's "step_description" MUST strictly follow this format:
 - Start with an Arabic numeral index beginning at 1, incrementing by 1 within EACH plan (1, 2, 3, ...).
 - Immediately after the number, use an English period "." (e.g., "1.").
@@ -75,7 +73,7 @@ CRITICAL GUIDELINES:
 5. Use null for tool_name only when no appropriate tool exists in the available tools list
 6. Never invent or assume tools - only use tools explicitly listed in the available tools
 7. Match tools precisely to requirements - if functionality doesn't align exactly, use null
-8. Ensure each plan’s steps array represents a complete execution sequence for the request
+8. Ensure each plan's steps array represents a complete execution sequence for the request
 9. Across different plans, avoid producing identical step lists; vary tooling and/or ordering whenever feasible.
 
 EXECUTION PRINCIPLES:
@@ -100,3 +98,54 @@ Before returning the final JSON, verify:
 - The tool name written in "step_description" exactly equals the corresponding "tool_name" (or "llm_tool" when tool_name is null).
 - All natural-language fields are fully in {{target_language}}.
 """
+
+
+def get_dynamic_plan_user_block(
+    thinking_context: str = '',
+    session_file_summary: str = '',
+    short_term_memory: str = '',
+) -> str:
+    """
+    Mutable content: <Short-term memory>, <Prior Thinking>, and <Session File Info>. Changes every turn.
+    """
+    parts = []
+    if short_term_memory:
+        parts.append(short_term_memory)
+    if session_file_summary:
+        parts.append(
+            f"""
+<Session File Info>
+{session_file_summary}
+"""
+        )
+    if thinking_context:
+        parts.append(
+            f"""
+<Prior Thinking> (MUST constrain your plans by stages and rules below)
+{thinking_context}
+
+CRITICAL: Your plans MUST respect the stages and constraints above:
+- Each step in your plan belongs to a stage; only use tools that <Prior Thinking> allows for that stage.
+- Obey every cross-stage rule: e.g. if the thinking says "如果 Stage xx 选了 xxx，则 Stage yy 就必须 xxx", then any plan where stage xx uses xxx must have stage yy use the required tool(s). Do not output plans that violate these rules.
+- You may still output MULTIPLE alternative plans (different tool choices within the allowed sets, or different order of stages), but every plan must satisfy the stage-wise allowed tools and the cross-stage rules.
+"""
+        )
+    return '\n'.join(parts) if parts else ''
+
+
+def get_plan_make_instruction(
+    available_tools_with_info: str,
+    thinking_context: str = '',
+    session_file_summary: str = '',
+    short_term_memory: str = '',
+) -> str:
+    """
+    Returns a single prompt: static content (tools + rules) then dynamic (memory + session + thinking).
+    """
+    static = get_static_plan_system_block(available_tools_with_info)
+    dynamic = get_dynamic_plan_user_block(
+        thinking_context, session_file_summary, short_term_memory
+    )
+    if not dynamic:
+        return static
+    return static + '\n\n' + dynamic

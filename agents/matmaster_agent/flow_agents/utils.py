@@ -8,6 +8,7 @@ from agents.matmaster_agent.constant import FRONTEND_STATE_KEY
 from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
 from agents.matmaster_agent.flow_agents.scene_agent.model import SceneEnum
 from agents.matmaster_agent.flow_agents.schema import FlowStatusEnum
+from agents.matmaster_agent.llm_config import MatMasterLlmConfig
 from agents.matmaster_agent.state import (
     BIZ,
     MULTI_PLANS,
@@ -15,7 +16,10 @@ from agents.matmaster_agent.state import (
     PLAN_CONFIRM,
     UPLOAD_FILE,
 )
-from agents.matmaster_agent.sub_agents.mapping import ALL_AGENT_TOOLS_LIST
+from agents.matmaster_agent.sub_agents.mapping import (
+    AGENT_CLASS_MAPPING,
+    ALL_AGENT_TOOLS_LIST,
+)
 from agents.matmaster_agent.sub_agents.tools import ALL_TOOLS
 
 logger = logging.getLogger(__name__)
@@ -52,6 +56,26 @@ def get_agent_name(tool_name, sub_agents):
     for sub_agent in sub_agents:
         if sub_agent.name == target_agent_name:
             return sub_agent
+
+
+def get_agent_for_tool(tool_name, sub_agents):
+    """
+    根据 tool_name 获取对应 Agent。若当前在 sub_agents 中则直接返回，
+    否则动态构建（用于更换工具时，新工具所属 Agent 可能不在初始 sub_agents 中）。
+    """
+    agent = get_agent_name(tool_name, sub_agents)
+    if agent is not None:
+        return agent
+    try:
+        target_agent_name = ALL_TOOLS[tool_name]['belonging_agent']
+    except BaseException:
+        raise RuntimeError(f"ToolName Error: {tool_name}")
+    if target_agent_name not in AGENT_CLASS_MAPPING:
+        raise RuntimeError(
+            f"Agent for tool {tool_name} (belonging_agent={target_agent_name}) "
+            'not in AGENT_CLASS_MAPPING'
+        )
+    return AGENT_CLASS_MAPPING[target_agent_name](MatMasterLlmConfig)
 
 
 def check_plan(ctx: InvocationContext):

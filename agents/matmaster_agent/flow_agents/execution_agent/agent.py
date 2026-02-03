@@ -12,7 +12,11 @@ from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME, ModelRole
 from agents.matmaster_agent.core_agents.comp_agents.dntransfer_climit_agent import (
     DisallowTransferAndContentLimitLlmAgent,
 )
-from agents.matmaster_agent.flow_agents.constant import MATMASTER_SUPERVISOR_AGENT
+from agents.matmaster_agent.flow_agents.constant import (
+    EXECUTION_TYPE_LABEL_CHANGE_TOOL,
+    EXECUTION_TYPE_LABEL_RETRY,
+    MATMASTER_SUPERVISOR_AGENT,
+)
 from agents.matmaster_agent.flow_agents.execution_agent.utils import (
     should_exit_retryLoop,
 )
@@ -24,7 +28,7 @@ from agents.matmaster_agent.flow_agents.style import separate_card
 from agents.matmaster_agent.flow_agents.utils import (
     check_plan,
     find_alternative_tool,
-    get_agent_name,
+    get_agent_for_tool,
     has_self_check,
 )
 from agents.matmaster_agent.llm_config import MatMasterLlmConfig
@@ -147,6 +151,14 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
         ):
             step_title = '获取任务结果'
 
+        # 展示文案：更换工具 / 重试工具 / 空（正常执行），直接传给前端
+        if ctx.session.state.pop('matmaster_flow_switched_tool', None):
+            execution_type_label = EXECUTION_TYPE_LABEL_CHANGE_TOOL
+        elif ctx.session.state[PLAN]['steps'][index]['retry_count']:
+            execution_type_label = EXECUTION_TYPE_LABEL_RETRY
+        else:
+            execution_type_label = ''
+
         yield update_state_event(
             ctx,
             state_delta={
@@ -170,13 +182,14 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                 'font_color': '#0E6DE8',
                 'bg_color': '#EBF2FB',
                 'border_color': '#B7D3F7',
+                'execution_type_label': execution_type_label,
             },
         ):
             yield matmaster_flow_event
 
-        # 核心执行工具
+        # 核心执行工具（更换工具时新工具所属 Agent 可能不在 sub_agents，需动态获取）
         current_tool_name = ctx.session.state[PLAN]['steps'][index]['tool_name']
-        target_agent = get_agent_name(current_tool_name, self.sub_agents)
+        target_agent = get_agent_for_tool(current_tool_name, self.sub_agents)
         logger.info(
             f'{ctx.session.id} tool_name = {current_tool_name}, target_agent = {target_agent.name}'
         )
@@ -281,17 +294,23 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
             f'{ctx.session.id} Switching to alternative tool: {next_tool} for step {index + 1}'
         )
 
-        # 更新plan中的tool_name和status
+        # 更新plan中的tool_name和status，并标记为「更换工具」供 matmaster_flow 告知前端
         update_plan = copy.deepcopy(ctx.session.state['plan'])
         update_plan['steps'][index]['tool_name'] = next_tool
         update_plan['steps'][index]['status'] = PlanStepStatusEnum.PROCESS
         original_description = ctx.session.state[PLAN]['steps'][index][
-            'description'
+            STEP_DESCRIPTION
         ].split('\n\n注意：')[
             0
         ]  # 移除之前的失败原因
-        update_plan['steps'][index]['description'] = original_description
-        yield update_state_event(ctx, state_delta={'plan': update_plan})
+        update_plan['steps'][index][STEP_DESCRIPTION] = original_description
+        yield update_state_event(
+            ctx,
+            state_delta={
+                'plan': update_plan,
+                'matmaster_flow_switched_tool': True,
+            },
+        )
 
     @override
     async def _run_events(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:

@@ -88,6 +88,8 @@ from agents.matmaster_agent.flow_agents.step_validation_agent.prompt import (
 from agents.matmaster_agent.flow_agents.step_validation_agent.schema import (
     StepValidationSchema,
 )
+from agents.matmaster_agent.flow_agents.thinking_agent.agent import ThinkingAgent
+from agents.matmaster_agent.flow_agents.thinking_agent.constant import THINKING_AGENT
 from agents.matmaster_agent.flow_agents.utils import (
     check_plan,
     get_tools_list,
@@ -116,6 +118,7 @@ from agents.matmaster_agent.services.icl import (
     toolchain_from_examples,
 )
 from agents.matmaster_agent.services.questions import get_random_questions
+from agents.matmaster_agent.services.session_files import get_session_files
 from agents.matmaster_agent.state import (
     BIZ,
     EXPAND,
@@ -198,6 +201,13 @@ class MatMasterFlowAgent(LlmAgent):
         )
 
         self._memory_writer_agent = MemoryWriterAgent(MatMasterLlmConfig)
+
+        self._thinking_agent = ThinkingAgent(
+            name=THINKING_AGENT,
+            model=MatMasterLlmConfig.default_litellm_model,
+            description='在制定计划前对工具选择与顺序进行推理',
+            instruction='',
+        )
 
         self._execution_agent = None
 
@@ -411,22 +421,40 @@ class MatMasterFlowAgent(LlmAgent):
                 for key, value in available_tools_with_info.items()
             ]
         )
-        query_for_memory = ctx.session.state.get('expand', {}).get(
-            'update_user_content', ''
-        ) or (
-            ctx.user_content.parts[0].text
-            if ctx.user_content and ctx.user_content.parts
-            else ''
-        )
+        expand_content = ctx.session.state['expand']['update_user_content']
         short_term_memory_block = format_short_term_memory(
-            query_text=query_for_memory,
-            session_id=ctx.session.id,
+            expand_content, ctx.session.id
         )
-        self.plan_make_agent.instruction = get_plan_make_instruction(
-            available_tools_with_info_str
+        session_files = await get_session_files(ctx.session.id)
+        session_file_summary = (
+            '\n'.join(session_files) if session_files else ''
+        )
+        original_query = ''
+        if ctx.user_content.parts:
+            part = ctx.user_content.parts[0]
+            original_query = getattr(part, 'text', None) or ''
+        self._thinking_agent.set_thinking_params(
+            available_tools_with_info_str,
+            session_file_summary,
+            original_query,
+            expand_content,
+        )
+        thinking_text = ''
+        async for thinking_event in self._thinking_agent.run_async(ctx):
+            yield thinking_event
+        thinking_text = (
+            getattr(self._thinking_agent, '_last_thinking_text', None) or ''
+        )
+        self.plan_make_agent.instruction = (
+            get_plan_make_instruction(
+                available_tools_with_info_str,
+                thinking_context=thinking_text,
+                session_file_summary=session_file_summary,
+                short_term_memory=short_term_memory_block,
+            )
+            + '\n\n'
             + UPDATE_USER_CONTENT
-            + TOOLCHAIN_EXAMPLES_PROMPT,
-            short_term_memory=short_term_memory_block,
+            + TOOLCHAIN_EXAMPLES_PROMPT
         )
         self.plan_make_agent.output_schema = create_dynamic_multi_plans_schema(
             available_tools
