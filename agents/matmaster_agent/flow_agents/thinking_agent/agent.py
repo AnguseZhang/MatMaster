@@ -83,6 +83,7 @@ class ThinkingAgent(DisallowTransferAndContentLimitLlmAgent):
         session_file_summary: str,
         original_query: str,
         expanded_query: str,
+        short_term_memory: str = '',
     ) -> None:
         """Set params for self-contained loop mode. Cleared after run_async."""
         self._thinking_params = {
@@ -90,6 +91,7 @@ class ThinkingAgent(DisallowTransferAndContentLimitLlmAgent):
             'session_file_summary': session_file_summary,
             'original_query': original_query,
             'expanded_query': expanded_query,
+            'short_term_memory': short_term_memory or '',
         }
 
     @override
@@ -110,6 +112,7 @@ class ThinkingAgent(DisallowTransferAndContentLimitLlmAgent):
                 params['session_file_summary'],
                 params['original_query'],
                 params['expanded_query'],
+                params.get('short_term_memory', ''),
             )
             last_full_text = ''
             round1_events: list[Event] = []
@@ -157,6 +160,7 @@ class ThinkingAgent(DisallowTransferAndContentLimitLlmAgent):
                     params['original_query'],
                     params['expanded_query'],
                     previous_reasoning=previous_reasoning,
+                    short_term_memory=params.get('short_term_memory', ''),
                 )
                 last_full_text = ''
                 revision_events: list[Event] = []

@@ -340,21 +340,37 @@ class MatMasterFlowAgent(LlmAgent):
         return execution_agent
 
     async def _run_expand_agent(
-        self, ctx: InvocationContext
+        self,
+        ctx: InvocationContext,
+        short_term_memory_block: str = '',
+        session_file_summary: str = '',
     ) -> AsyncGenerator[Event, None]:
         # 1. 检索 ICL 示例
+        raw_user_text = ctx.user_content.parts[0].text if ctx.user_content.parts else ''
         icl_examples = select_examples(
-            ctx.user_content.parts[0].text,
+            raw_user_text,
             ctx.session.id,
             CURRENT_ENV,
             logger,
         )
         EXPAND_INPUT_EXAMPLES_PROMPT = expand_input_examples(icl_examples)
         logger.info(f'{ctx.session.id} {EXPAND_INPUT_EXAMPLES_PROMPT}')
-        # 2. 动态构造 instruction
-        self.expand_agent.instruction = (
-            EXPAND_INSTRUCTION + EXPAND_INPUT_EXAMPLES_PROMPT
-        )
+        # 2. 动态构造 instruction（记忆 + 会话已有文件，避免“第二步”仍从头 expand）
+        instruction_parts = []
+        if short_term_memory_block:
+            instruction_parts.append(
+                '# SHORT-TERM WORKING MEMORY (use when expanding):\n'
+                + short_term_memory_block
+                + '\n\n'
+            )
+        if session_file_summary:
+            instruction_parts.append(
+                '# SESSION FILES (already produced in this session — if user refers to "第一步/上一步/刚才" and these exist, expand ONLY the new step, do NOT re-add structure building):\n'
+                + session_file_summary
+                + '\n\n'
+            )
+        instruction_parts.append(EXPAND_INSTRUCTION + EXPAND_INPUT_EXAMPLES_PROMPT)
+        self.expand_agent.instruction = ''.join(instruction_parts)
         # 3. 运行 Agent
         async for expand_event in self.expand_agent.run_async(ctx):
             yield expand_event
@@ -426,9 +442,7 @@ class MatMasterFlowAgent(LlmAgent):
             expand_content, ctx.session.id
         )
         session_files = await get_session_files(ctx.session.id)
-        session_file_summary = (
-            '\n'.join(session_files) if session_files else ''
-        )
+        session_file_summary = '\n'.join(session_files) if session_files else ''
         original_query = ''
         if ctx.user_content.parts:
             part = ctx.user_content.parts[0]
@@ -438,13 +452,12 @@ class MatMasterFlowAgent(LlmAgent):
             session_file_summary,
             original_query,
             expand_content,
+            short_term_memory=short_term_memory_block,
         )
         thinking_text = ''
         async for thinking_event in self._thinking_agent.run_async(ctx):
             yield thinking_event
-        thinking_text = (
-            getattr(self._thinking_agent, '_last_thinking_text', None) or ''
-        )
+        thinking_text = getattr(self._thinking_agent, '_last_thinking_text', None) or ''
         self.plan_make_agent.instruction = (
             get_plan_make_instruction(
                 available_tools_with_info_str,
@@ -772,8 +785,19 @@ class MatMasterFlowAgent(LlmAgent):
     async def _run_research_flow(
         self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
-        # 扩写用户问题
-        async for _expand_event in self._run_expand_agent(ctx):
+        # 先取短期记忆和会话已有文件，再扩写，避免第二步仍从头 expand（如“第一步的Fe，扩胞到20A”只做扩胞）
+        raw_user_text = ctx.user_content.parts[0].text if ctx.user_content.parts else ''
+        short_term_memory_block = format_short_term_memory(
+            raw_user_text, ctx.session.id
+        )
+        session_files = await get_session_files(ctx.session.id)
+        session_file_summary = '\n'.join(session_files) if session_files else ''
+        # 扩写用户问题（带记忆 + 会话文件，延续上一步时只 expand 新步骤）
+        async for _expand_event in self._run_expand_agent(
+            ctx,
+            short_term_memory_block=short_term_memory_block,
+            session_file_summary=session_file_summary,
+        ):
             yield _expand_event
 
         # 构造 UPDATE_USER_CONTENT, SCENE_EXAMPLES_PROMPT, TOOLCHAIN_EXAMPLES_PROMPT
