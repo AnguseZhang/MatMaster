@@ -10,6 +10,7 @@ ERROR_DETAIL = 'error_detail'
 UPLOAD_FILE = 'upload_file'
 MULTI_PLANS = 'multi_plans'
 PLAN_CONFIRM = 'plan_confirm'
+CURRENT_STEP = 'current_step'
 
 # Other Key
 STEP_DESCRIPTION = 'step_description'

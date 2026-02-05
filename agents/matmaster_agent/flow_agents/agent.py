@@ -71,7 +71,7 @@ from agents.matmaster_agent.flow_agents.plan_make_agent.prompt import (
     get_plan_make_instruction,
 )
 from agents.matmaster_agent.flow_agents.plan_make_agent.schema import (
-    create_dynamic_multi_plans_schema,
+    create_dynamic_step_schema,
 )
 from agents.matmaster_agent.flow_agents.report_agent.prompt import (
     get_report_instruction,
@@ -132,6 +132,7 @@ from agents.matmaster_agent.services.questions import get_random_questions
 from agents.matmaster_agent.services.session_files import get_session_files
 from agents.matmaster_agent.state import (
     BIZ,
+    CURRENT_STEP,
     EXPAND,
     MULTI_PLANS,
     PLAN,
@@ -207,7 +208,7 @@ class MatMasterFlowAgent(LlmAgent):
             name=PLAN_MAKE_AGENT,
             model=MatMasterLlmConfig.tool_schema_model,
             description='根据用户的问题依据现有工具执行计划，如果没有工具可用，告知用户，不要自己制造工具或幻想',
-            state_key=MULTI_PLANS,
+            state_key=CURRENT_STEP,
             global_instruction=GLOBAL_INSTRUCTION,
             before_model_callback=filter_plan_make_llm_contents,
         )
@@ -641,9 +642,7 @@ class MatMasterFlowAgent(LlmAgent):
             thinking_context=thinking_text,
             session_file_summary=session_file_summary,
         )
-        self.plan_make_agent.output_schema = create_dynamic_multi_plans_schema(
-            available_tools
-        )
+        self.plan_make_agent.output_schema = create_dynamic_step_schema(available_tools)
         async for plan_event in self.plan_make_agent.run_async(ctx):
             yield plan_event
 
