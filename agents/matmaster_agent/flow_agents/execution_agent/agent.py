@@ -29,7 +29,12 @@ from agents.matmaster_agent.flow_agents.utils import (
 from agents.matmaster_agent.llm_config import MatMasterLlmConfig
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.prompt import MatMasterCheckTransferPrompt
-from agents.matmaster_agent.state import CURRENT_STEP, PLAN, STEP_DESCRIPTION
+from agents.matmaster_agent.state import (
+    CURRENT_STEP,
+    HISTORY_STEPS,
+    PLAN,
+    STEP_DESCRIPTION,
+)
 from agents.matmaster_agent.sub_agents.mapping import (
     MatMasterSubAgentsEnum,
 )
@@ -329,3 +334,7 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
         # 异步任务，直接退出当前函数
         elif post_execution_step['status'] == PlanStepStatusEnum.SUBMITTED:
             return
+
+        update_history_steps = copy.deepcopy(ctx.session.state[HISTORY_STEPS])
+        update_history_steps.append(post_execution_step)
+        yield update_state_event(ctx, state_delta={HISTORY_STEPS: update_history_steps})

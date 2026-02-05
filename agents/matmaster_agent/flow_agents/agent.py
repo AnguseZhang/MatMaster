@@ -26,8 +26,14 @@ from agents.matmaster_agent.core_agents.base_agents.schema_agent import (
 from agents.matmaster_agent.core_agents.comp_agents.dntransfer_climit_agent import (
     DisallowTransferAndContentLimitLlmAgent,
 )
-from agents.matmaster_agent.core_agents.public_agents.job_agents.agent import (
-    BaseAsyncJobAgent,
+from agents.matmaster_agent.flow_agents.all_finished_agent.constant import (
+    ALL_FINISHED_AGENT,
+)
+from agents.matmaster_agent.flow_agents.all_finished_agent.prompt import (
+    create_all_finished_instruction,
+)
+from agents.matmaster_agent.flow_agents.all_finished_agent.schema import (
+    AllFinishedSchema,
 )
 from agents.matmaster_agent.flow_agents.analysis_agent.prompt import (
     get_analysis_instruction,
@@ -131,8 +137,9 @@ from agents.matmaster_agent.services.session_files import get_session_files
 from agents.matmaster_agent.state import (
     CURRENT_STEP,
     EXPAND,
+    FINISHED_STATE,
+    HISTORY_STEPS,
     MULTI_PLANS,
-    PLAN,
     UPLOAD_FILE,
 )
 from agents.matmaster_agent.sub_agents.mapping import (
@@ -222,6 +229,14 @@ class MatMasterFlowAgent(LlmAgent):
 
         self._execution_agent = None
 
+        self._all_finished_agent = DisallowTransferAndContentLimitSchemaAgent(
+            name=ALL_FINISHED_AGENT,
+            model=MatMasterLlmConfig.tool_schema_model,
+            description='检查用户的目标是否完成',
+            output_schema=AllFinishedSchema,
+            state_key=FINISHED_STATE,
+        )
+
         self._analysis_agent = DisallowTransferAndContentLimitLlmAgent(
             name='execution_summary_agent',
             model=MatMasterLlmConfig.default_litellm_model,
@@ -246,6 +261,7 @@ class MatMasterFlowAgent(LlmAgent):
             self.scene_agent,
             self.thinking_agent,
             self.plan_make_agent,
+            self.all_finished_agent,
             self.analysis_agent,
             self.report_agent,
         ]
@@ -306,6 +322,11 @@ class MatMasterFlowAgent(LlmAgent):
     @property
     def report_agent(self) -> LlmAgent:
         return self._report_agent
+
+    @computed_field
+    @property
+    def all_finished_agent(self) -> DisallowTransferAndContentLimitSchemaAgent:
+        return self._all_finished_agent
 
     def _build_execution_agent_for_plan(
         self, ctx: InvocationContext
@@ -694,7 +715,7 @@ class MatMasterFlowAgent(LlmAgent):
                 },
             )
 
-    async def _run_plan_execute_and_summary_agent(
+    async def _run_plan_execute_agent(
         self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
         # 重置 scenes
@@ -710,154 +731,142 @@ class MatMasterFlowAgent(LlmAgent):
             async for execution_event in self._execution_agent.run_async(ctx):
                 yield execution_event
 
-        # 全部执行完毕，总结执行情况
-        if check_plan(ctx) in [FlowStatusEnum.COMPLETE, FlowStatusEnum.FAILED]:
-            # Skip summary for single-tool plans
-            current_step = ctx.session.state[CURRENT_STEP]
-            is_async_agent = issubclass(
-                AGENT_CLASS_MAPPING[
-                    ALL_TOOLS[current_step['tool_name']]['belonging_agent']
-                ],
-                BaseAsyncJobAgent,
+    async def _run_summary_agent(
+        self, ctx: InvocationContext
+    ) -> AsyncGenerator[Event, None]:
+        # 渲染总结
+        yield update_state_event(
+            ctx,
+            state_delta={
+                'matmaster_flow_active': {
+                    'title': i18n.t('PlanSummary'),
+                    'font_color': '#9479F7',
+                    'bg_color': '#F5F3FF',
+                    'border_color': '#CFC3FC',
+                }
+            },
+        )
+        for matmaster_flow_event in context_function_event(
+            ctx,
+            self.name,
+            'matmaster_flow',
+            None,
+            ModelRole,
+            {
+                'matmaster_flow_args': json.dumps(
+                    {
+                        'title': i18n.t('PlanSummary'),
+                        'status': 'start',
+                        'font_color': '#9479F7',
+                        'bg_color': '#F5F3FF',
+                        'border_color': '#CFC3FC',
+                    }
+                )
+            },
+        ):
+            yield matmaster_flow_event
+        self._analysis_agent.instruction = get_analysis_instruction(
+            ctx.session.state['plan']
+        )
+        analysis_text = ''
+        async for analysis_event in self.analysis_agent.run_async(ctx):
+            if (cur := is_text(analysis_event)) and not analysis_event.partial:
+                analysis_text += cur
+            yield analysis_event
+        if analysis_text.strip():
+            await memory_write(
+                session_id=ctx.session.id,
+                text=f"Plan execution summary: {analysis_text.strip()}",
+                metadata={'source': 'execution_summary'},
             )
-            logger.info(f'is_async_agent = {is_async_agent}')
+            logger.info(
+                '%s wrote execution summary to memory (%d chars)',
+                ctx.session.id,
+                len(analysis_text),
+            )
+        self._report_agent.instruction = get_report_instruction(
+            ctx.session.state.get('plan', {})
+        )
 
-            # 渲染总结
-            if is_async_agent:
-                yield update_state_event(
-                    ctx,
-                    state_delta={
-                        'matmaster_flow_active': {
-                            'title': i18n.t('PlanSummary'),
-                            'font_color': '#9479F7',
-                            'bg_color': '#F5F3FF',
-                            'border_color': '#CFC3FC',
-                        }
-                    },
-                )
-                for matmaster_flow_event in context_function_event(
-                    ctx,
-                    self.name,
-                    'matmaster_flow',
-                    None,
-                    ModelRole,
-                    {
-                        'matmaster_flow_args': json.dumps(
-                            {
-                                'title': i18n.t('PlanSummary'),
-                                'status': 'start',
-                                'font_color': '#9479F7',
-                                'bg_color': '#F5F3FF',
-                                'border_color': '#CFC3FC',
-                            }
-                        )
-                    },
-                ):
-                    yield matmaster_flow_event
-                self._analysis_agent.instruction = get_analysis_instruction(
-                    ctx.session.state['plan']
-                )
-                analysis_text = ''
-                async for analysis_event in self.analysis_agent.run_async(ctx):
-                    if (cur := is_text(analysis_event)) and not analysis_event.partial:
-                        analysis_text += cur
-                    yield analysis_event
-                if analysis_text.strip():
-                    await memory_write(
-                        session_id=ctx.session.id,
-                        text=f"Plan execution summary: {analysis_text.strip()}",
-                        metadata={'source': 'execution_summary'},
-                    )
-                    logger.info(
-                        '%s wrote execution summary to memory (%d chars)',
-                        ctx.session.id,
-                        len(analysis_text),
-                    )
-                self._report_agent.instruction = get_report_instruction(
-                    ctx.session.state.get('plan', {})
-                )
+        # Collect report Markdown
+        report_markdown = ''
+        async for report_event in self.report_agent.run_async(ctx):
+            if (cur_text := is_text(report_event)) and not report_event.partial:
+                report_markdown += cur_text
 
-                # Collect report Markdown
-                report_markdown = ''
-                async for report_event in self.report_agent.run_async(ctx):
-                    if (cur_text := is_text(report_event)) and not report_event.partial:
-                        report_markdown += cur_text
+        if report_markdown.strip():
+            excerpt = report_markdown.strip()[:5000]
+            await memory_write(
+                session_id=ctx.session.id,
+                text=f"Plan execution report (excerpt): {excerpt}",
+                metadata={'source': 'execution_report'},
+            )
+            logger.info(
+                '%s wrote report excerpt to memory (%d chars)',
+                ctx.session.id,
+                len(excerpt),
+            )
 
-                if report_markdown.strip():
-                    excerpt = report_markdown.strip()[:5000]
-                    await memory_write(
-                        session_id=ctx.session.id,
-                        text=f"Plan execution report (excerpt): {excerpt}",
-                        metadata={'source': 'execution_report'},
-                    )
-                    logger.info(
-                        '%s wrote report excerpt to memory (%d chars)',
-                        ctx.session.id,
-                        len(excerpt),
-                    )
-
-                # matmaster_report_md.md
-                upload_result = await upload_report_md_to_oss(
-                    ReportUploadParams(
-                        report_markdown=report_markdown,
-                        session_id=ctx.session.id,
-                        invocation_id=ctx.invocation_id,
-                    )
-                )
-                if upload_result:
-                    for report_file_event in context_function_event(
-                        ctx,
-                        self.name,
-                        'matmaster_report_md',
-                        None,
-                        ModelRole,
-                        {
-                            'url': upload_result.oss_url,
-                        },
-                    ):
-                        yield report_file_event
-                for matmaster_flow_event in context_function_event(
-                    ctx,
-                    self.name,
-                    'matmaster_flow',
-                    None,
-                    ModelRole,
-                    {
-                        'matmaster_flow_args': json.dumps(
-                            {
-                                'title': i18n.t('PlanSummary'),
-                                'status': 'end',
-                                'font_color': '#9479F7',
-                                'bg_color': '#F5F3FF',
-                                'border_color': '#CFC3FC',
-                            }
-                        )
-                    },
-                ):
-                    yield matmaster_flow_event
-                yield update_state_event(
-                    ctx, state_delta={'matmaster_flow_active': None}
-                )
-
-            # 渲染追问组件
-            follow_up_list = await get_random_questions(i18n=i18n)
-            for generate_follow_up_event in context_function_event(
+        # matmaster_report_md.md
+        upload_result = await upload_report_md_to_oss(
+            ReportUploadParams(
+                report_markdown=report_markdown,
+                session_id=ctx.session.id,
+                invocation_id=ctx.invocation_id,
+            )
+        )
+        if upload_result:
+            for report_file_event in context_function_event(
                 ctx,
                 self.name,
-                'matmaster_generate_follow_up',
-                {},
+                'matmaster_report_md',
+                None,
                 ModelRole,
                 {
-                    'follow_up_result': json.dumps(
-                        {
-                            'invocation_id': ctx.invocation_id,
-                            'title': i18n.t('MoreQuestions'),
-                            'list': follow_up_list,
-                        }
-                    )
+                    'url': upload_result.oss_url,
                 },
             ):
-                yield generate_follow_up_event
+                yield report_file_event
+        for matmaster_flow_event in context_function_event(
+            ctx,
+            self.name,
+            'matmaster_flow',
+            None,
+            ModelRole,
+            {
+                'matmaster_flow_args': json.dumps(
+                    {
+                        'title': i18n.t('PlanSummary'),
+                        'status': 'end',
+                        'font_color': '#9479F7',
+                        'bg_color': '#F5F3FF',
+                        'border_color': '#CFC3FC',
+                    }
+                )
+            },
+        ):
+            yield matmaster_flow_event
+        yield update_state_event(ctx, state_delta={'matmaster_flow_active': None})
+
+        # 渲染追问组件
+        follow_up_list = await get_random_questions(i18n=i18n)
+        for generate_follow_up_event in context_function_event(
+            ctx,
+            self.name,
+            'matmaster_generate_follow_up',
+            {},
+            ModelRole,
+            {
+                'follow_up_result': json.dumps(
+                    {
+                        'invocation_id': ctx.invocation_id,
+                        'title': i18n.t('MoreQuestions'),
+                        'list': follow_up_list,
+                    }
+                )
+            },
+        ):
+            yield generate_follow_up_event
 
     async def _run_research_flow(
         self, ctx: InvocationContext
@@ -888,32 +897,41 @@ class MatMasterFlowAgent(LlmAgent):
         ):
             yield _scene_event
 
-        # 清空 Plan 和 MULTI_PLANS
-        if check_plan(ctx) == FlowStatusEnum.COMPLETE:
-            yield update_state_event(ctx, state_delta={PLAN: {}, MULTI_PLANS: {}})
+        while True:
+            # 制定计划（1. 无计划；2. 计划已完成；3. 计划失败；4. 用户未确认计划）
+            # 仅查询任务状态时跳过 thinking（查任务状态不 thinking）
+            skip_thinking = scenes_contain_query_job_status(ctx)
+            if check_plan(ctx) in [
+                FlowStatusEnum.NO_PLAN,
+                FlowStatusEnum.COMPLETE,
+                FlowStatusEnum.FAILED,
+            ] or not is_plan_confirmed(ctx):
+                async for _step_make_event in self._run_step_make_agent(
+                    ctx,
+                    UPDATE_USER_CONTENT,
+                    TOOLCHAIN_EXAMPLES_PROMPT,
+                    skip_thinking=skip_thinking,
+                ):
+                    yield _step_make_event
 
-        # 制定计划（1. 无计划；2. 计划已完成；3. 计划失败；4. 用户未确认计划）
-        # 仅查询任务状态时跳过 thinking（查任务状态不 thinking）
-        skip_thinking = scenes_contain_query_job_status(ctx)
-        if check_plan(ctx) in [
-            FlowStatusEnum.NO_PLAN,
-            FlowStatusEnum.COMPLETE,
-            FlowStatusEnum.FAILED,
-        ] or not is_plan_confirmed(ctx):
-            async for _step_make_event in self._run_step_make_agent(
-                ctx,
-                UPDATE_USER_CONTENT,
-                TOOLCHAIN_EXAMPLES_PROMPT,
-                skip_thinking=skip_thinking,
-            ):
-                yield _step_make_event
+            # 计划未确认，暂停往下执行
+            # if is_plan_confirmed(ctx):
+            async for _plan_execute_event in self._run_plan_execute_agent(ctx):
+                yield _plan_execute_event
 
-        # 计划未确认，暂停往下执行
-        # if is_plan_confirmed(ctx):
-        async for (
-            _plan_execute_and_summary_event
-        ) in self._run_plan_execute_and_summary_agent(ctx):
-            yield _plan_execute_and_summary_event
+            # 回顾历史执行
+            self.all_finished_agent.instruction = create_all_finished_instruction(
+                ctx.session.state[HISTORY_STEPS]
+            )
+            async for _all_finished_event in self.all_finished_agent.run_async(ctx):
+                yield _all_finished_event
+
+            if ctx.session.state[FINISHED_STATE]['finished']:
+                break
+
+        # 总结计划
+        async for _plan_summary_event in self._run_summary_agent(ctx):
+            yield _plan_summary_event
 
     async def _run_async_impl(
         self, ctx: InvocationContext
