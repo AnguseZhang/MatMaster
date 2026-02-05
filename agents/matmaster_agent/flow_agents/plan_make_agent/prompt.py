@@ -18,13 +18,11 @@ Do NOT mix languages inside these fields unless the user explicitly requests bil
 
 ### STEP_DESCRIPTION FORMAT:
 Each step's "step_description" MUST strictly follow this format:
-- Start with an Arabic numeral index beginning at 1.
-- Immediately after the number, use an English period "." (e.g., "1.").
-- Then use the phrasing: "使用<工具名>工具进行<工作内容>".
-- If "tool_name" is null, the phrasing MUST be: "使用llm_tool工具进行<工作内容>" (still must follow numbering).
+- Use the phrasing: "使用<工具名>工具进行<工作内容>".
+- If "tool_name" is null, the phrasing MUST be: "使用llm_tool工具进行<工作内容>".
 Examples (in {{target_language}}):
-- "1. 使用ToolA工具进行读取用户提供的结构并执行能量计算"
-- "2. 使用llm_tool工具进行总结结果并生成报告"
+- "使用ToolA工具进行读取用户提供的结构并执行能量计算"
+- "使用llm_tool工具进行总结结果并生成报告"
 
 Constraints:
 - Do NOT add extra prefixes/suffixes outside this template.
@@ -72,7 +70,7 @@ Before returning the final JSON, verify:
 - Output is a SINGLE JSON object (no surrounding text/markdown).
 - No keys other than: tool_name, step_description, feasibility, status.
 - "status" is exactly "plan".
-- "step_description" starts with "1.".
+- "step_description" does NOT need to start with a number.
 - "step_description" contains "使用" + (exact tool name or "llm_tool") + "工具进行".
 - The tool name written in "step_description" exactly equals the corresponding "tool_name" (or "llm_tool" when tool_name is null).
 - All natural-language fields are fully in {{target_language}}.
