@@ -920,8 +920,10 @@ class MatMasterFlowAgent(LlmAgent):
                 yield _plan_execute_event
 
             # 回顾历史执行
+            history_steps = ctx.session.state[HISTORY_STEPS]
+            session_files = await get_session_files(ctx.session.id)
             self.all_finished_agent.instruction = create_all_finished_instruction(
-                ctx.session.state[HISTORY_STEPS]
+                history_steps, session_files
             )
             async for _all_finished_event in self.all_finished_agent.run_async(ctx):
                 yield _all_finished_event
