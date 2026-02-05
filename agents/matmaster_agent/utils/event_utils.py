@@ -33,7 +33,7 @@ from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.model import RenderTypeEnum
 from agents.matmaster_agent.prompt import GLOBAL_INSTRUCTION
 from agents.matmaster_agent.services.session_files import insert_session_files
-from agents.matmaster_agent.state import ERROR_DETAIL, PLAN, UPLOAD_FILE
+from agents.matmaster_agent.state import CURRENT_STEP, ERROR_DETAIL, PLAN, UPLOAD_FILE
 from agents.matmaster_agent.style import (
     no_found_structure_card,
     photon_consume_free_card,
@@ -507,13 +507,13 @@ async def display_failed_result_or_consume(
             yield event
     else:
         # 更新 plan 为成功
-        update_plan = copy.deepcopy(ctx.session.state['plan'])
+        post_execution_step = copy.deepcopy(ctx.session.state[CURRENT_STEP])
         if not dict_result.get('job_id'):
             status = PlanStepStatusEnum.SUCCESS  # real-time
         else:
             status = PlanStepStatusEnum.SUBMITTED  # job-type
-        update_plan['steps'][ctx.session.state['plan_index']]['status'] = status
-        yield update_state_event(ctx, state_delta={'plan': update_plan})
+        post_execution_step['status'] = status
+        yield update_state_event(ctx, state_delta={CURRENT_STEP: post_execution_step})
 
         if USE_PHOTON:
             async for consume_event in photon_consume_event(ctx, event, author):

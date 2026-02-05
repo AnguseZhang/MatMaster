@@ -50,7 +50,7 @@ from agents.matmaster_agent.memory.store_tool_result_callback import (
     store_tool_result_in_memory,
 )
 from agents.matmaster_agent.model import CostFuncType
-from agents.matmaster_agent.state import PLAN
+from agents.matmaster_agent.state import CURRENT_STEP
 from agents.matmaster_agent.style import tool_response_failed_card
 from agents.matmaster_agent.utils.event_utils import (
     all_text_event,
@@ -263,9 +263,7 @@ class MCPRunEventsMixin(BaseMixin):
                         not event.partial
                         and event.content.parts[0].text
                         == 'All Function Calls Are Occurred Before, Continue'
-                        and ctx.session.state[PLAN]['steps'][
-                            ctx.session.state['plan_index']
-                        ]['status']
+                        and ctx.session.state[CURRENT_STEP]['status']
                         == PlanStepStatusEnum.PROCESS
                     ):
                         for _info_event in all_text_event(
