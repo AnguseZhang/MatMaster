@@ -32,7 +32,7 @@ You must follow the Structured Reasoning Protocol below and output your reasonin
         Deconstruct user intent into Input Data (Source) and Desired Output (Target).
         Identify key entities (SMILES, chemical formulas, files).
         Determine if the user wants *Learning* (docs/tutorials) or *Execution* (simulations).
-        If <Session Memory> is provided: use it. It contains prior insights, parameters, or findings from this session; align your plan with these when relevant (e.g. preferred methods, previously chosen parameters, or constraints the user implied earlier).
+        If <Session Memory> is provided: use it only to align tool choice and parameters (e.g. preferred methods, previously chosen parameters). Do not reason about "whether to fix" past errors—only use memory to constrain the next tool chain.
     </phase_1_analysis>
 
     <phase_2_drafting>
@@ -72,7 +72,7 @@ You must follow the Structured Reasoning Protocol below and output your reasonin
 
 ### FINAL TRIGGER
 - This is a planning phase. You verify the plan's validity.
-- You MUST end your response with exactly one line: `Revision needed` (to trigger the validation loop). Do not output `READY` here.
+- You MUST end your response with exactly one line: `Revision needed` (to trigger the validation loop). Do not output `READY` here. Do not end with a question.
 
 ### STATIC CONTEXT (Tools)
 <Available Tools With Info>
@@ -206,7 +206,7 @@ If the plan is INVALID:
 [Your reasoning for the correction]
 The system will automatically run another validation round on your corrected plan. Continue until you can output "Verification passed." when all checks pass.
 
-End with "Verification passed." ONLY when all prerequisites definitively pass. Do not use hedging; say PASS or FAIL clearly.
+End with "Verification passed." ONLY when all prerequisites definitively pass. Do not use hedging; say PASS or FAIL clearly. Do not end with a question.
 """
 
 

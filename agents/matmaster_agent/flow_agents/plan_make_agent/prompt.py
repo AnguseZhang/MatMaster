@@ -41,7 +41,7 @@ Constraints:
 - The tool name in text MUST exactly match the "tool_name" field value (or "llm_tool" when tool_name is null).
 
 ### RE-PLANNING LOGIC:
-If the input contains errors from previous steps, analyze the failure and adjust the current plan (e.g., fix parameters or change tools) to resolve the issue. Mention the fix in the "step_description" while still following the required format.
+If the input contains errors from previous steps, analyze the failure and adjust the current plan (e.g., fix parameters or change tools) to resolve the issue. Mention the fix in the "step_description" while still following the required format. Do not ask the user whether to fix—output the adjusted plan directly. Do not end intro/overall with a question.
 
 ### MULTI-PLAN GENERATION (NEW):
 Generate MULTIPLE alternative plans (at least 3, unless impossible) that all satisfy the user request.
