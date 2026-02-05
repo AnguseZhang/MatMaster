@@ -17,6 +17,10 @@ from agents.matmaster_agent.flow_agents.constant import (
     MATMASTER_SUPERVISOR_AGENT,
 )
 from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
+from agents.matmaster_agent.flow_agents.step_utils import (
+    get_current_step,
+    is_job_submitted_step,
+)
 from agents.matmaster_agent.flow_agents.step_validation_agent.prompt import (
     STEP_VALIDATION_INSTRUCTION,
 )
@@ -303,14 +307,8 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
 
     @override
     async def _run_events(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
-        plan = ctx.session.state['plan']
-        logger.info(f'{ctx.session.id} plan = {plan}')
-
-        current_step = ctx.session.state[CURRENT_STEP]
-        current_step_status = current_step['status']
-
         # 制造工具调用上下文，已提交的任务跳过该步骤
-        if current_step_status != PlanStepStatusEnum.SUBMITTED:
+        if not is_job_submitted_step(ctx):
             async for (
                 _construct_function_call_event
             ) in self._construct_function_call_ctx(ctx):
@@ -320,7 +318,7 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
         async for _core_execution_event in self._core_execution_agent(ctx):
             yield _core_execution_event
 
-        post_execution_step = ctx.session.state[CURRENT_STEP]
+        post_execution_step = get_current_step(ctx)
         # 工具调用结果返回【成功】
         if post_execution_step['status'] == PlanStepStatusEnum.SUCCESS:
             # 对成功的工具调用结果进行校验
@@ -330,7 +328,6 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
                     ctx
                 ):
                     yield _tool_result_validation_event
-
         # 异步任务，直接退出当前函数
         elif post_execution_step['status'] == PlanStepStatusEnum.SUBMITTED:
             return

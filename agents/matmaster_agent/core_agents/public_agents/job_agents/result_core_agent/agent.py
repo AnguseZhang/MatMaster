@@ -25,12 +25,14 @@ from agents.matmaster_agent.core_agents.base_agents.mcp_agent import MCPAgent
 from agents.matmaster_agent.core_agents.public_agents.job_agents.result_core_agent.prompt import (
     ResultCoreAgentDescription,
 )
+from agents.matmaster_agent.flow_agents.step_utils import get_current_step
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.services.job import (
     get_job_detail,
     parse_and_prepare_err,
     parse_and_prepare_results,
 )
+from agents.matmaster_agent.state import CURRENT_STEP, CURRENT_STEP_STATUS
 from agents.matmaster_agent.utils.event_utils import (
     all_text_event,
     context_function_event,
@@ -115,14 +117,8 @@ class ResultMCPAgent(MCPAgent):
             if status != 'Running':
                 # 更新状态
                 plan_status = 'success' if status == 'Finished' else 'failed'
-                update_plan = copy.deepcopy(ctx.session.state['plan'])
-                logger.info(
-                    f'{ctx.session.id} plan_index = {ctx.session.state['plan_index']}'
-                )
-                update_plan['steps'][ctx.session.state['plan_index']][
-                    'status'
-                ] = plan_status
-
+                post_execution_step = copy.deepcopy(get_current_step(ctx))
+                post_execution_step[CURRENT_STEP_STATUS] = plan_status
                 update_long_running_jobs = copy.deepcopy(
                     ctx.session.state['long_running_jobs']
                 )
@@ -131,7 +127,7 @@ class ResultMCPAgent(MCPAgent):
                     ctx,
                     state_delta={
                         'long_running_jobs': update_long_running_jobs,
-                        'plan': update_plan,
+                        CURRENT_STEP: post_execution_step,
                     },
                 )
 

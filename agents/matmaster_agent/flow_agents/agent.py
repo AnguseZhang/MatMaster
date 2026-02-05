@@ -86,7 +86,6 @@ from agents.matmaster_agent.flow_agents.report_agent.prompt import (
 from agents.matmaster_agent.flow_agents.scene_agent.constant import SCENE_AGENT
 from agents.matmaster_agent.flow_agents.scene_agent.prompt import SCENE_INSTRUCTION
 from agents.matmaster_agent.flow_agents.scene_agent.schema import SceneSchema
-from agents.matmaster_agent.flow_agents.schema import FlowStatusEnum
 from agents.matmaster_agent.flow_agents.step_title_agent.callback import (
     filter_llm_contents,
 )
@@ -94,6 +93,10 @@ from agents.matmaster_agent.flow_agents.step_title_agent.prompt import (
     STEP_TITLE_INSTRUCTION,
 )
 from agents.matmaster_agent.flow_agents.step_title_agent.schema import StepTitleSchema
+from agents.matmaster_agent.flow_agents.step_utils import (
+    get_current_step,
+    is_job_submitted_step,
+)
 from agents.matmaster_agent.flow_agents.step_validation_agent.prompt import (
     STEP_VALIDATION_INSTRUCTION,
 )
@@ -106,9 +109,7 @@ from agents.matmaster_agent.flow_agents.thinking_agent.callback import (
 )
 from agents.matmaster_agent.flow_agents.thinking_agent.constant import THINKING_AGENT
 from agents.matmaster_agent.flow_agents.utils import (
-    check_plan,
     get_tools_list,
-    is_plan_confirmed,
     scenes_contain_query_job_status,
     should_bypass_confirmation,
 )
@@ -355,28 +356,20 @@ class MatMasterFlowAgent(LlmAgent):
             before_model_callback=filter_llm_contents,
             after_model_callback=MatMasterLlmConfig.opik_tracer.after_model_callback,
         )
-        plan_steps = ctx.session.state.get('plan', {}).get('steps', [])
-        agent_names = []
-        for step in plan_steps:
-            tool_name = step.get('tool_name')
-            if not tool_name:
-                continue
-            belonging_agent = ALL_TOOLS.get(tool_name, {}).get('belonging_agent')
-            if belonging_agent and belonging_agent not in agent_names:
-                agent_names.append(belonging_agent)
-
-        sub_agents = [
-            AGENT_CLASS_MAPPING[agent_name](MatMasterLlmConfig)
-            for agent_name in agent_names
-            if agent_name in AGENT_CLASS_MAPPING
-        ]
+        current_step = get_current_step(ctx)
+        tool_name = current_step.get('tool_name')
+        belonging_agent = ALL_TOOLS.get(tool_name, {}).get('belonging_agent')
 
         execution_agent = MatMasterSupervisorAgent(
             name='execution_agent',
             model=MatMasterLlmConfig.default_litellm_model,
             description='根据 materials_plan 返回的计划进行总结',
             instruction='',
-            sub_agents=sub_agents + [step_title_agent] + [step_validation_agent],
+            sub_agents=[
+                AGENT_CLASS_MAPPING[belonging_agent](MatMasterLlmConfig),
+                step_title_agent,
+                step_validation_agent,
+            ],
         )
         track_adk_agent_recursive(execution_agent, MatMasterLlmConfig.opik_tracer)
         return execution_agent
@@ -722,8 +715,6 @@ class MatMasterFlowAgent(LlmAgent):
     async def _run_plan_execute_agent(
         self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
-        # 重置 scenes
-        yield update_state_event(ctx, state_delta={'scenes': []})
         # 执行计划
         self._execution_agent = self._build_execution_agent_for_plan(ctx)
         if self._execution_agent:
@@ -852,26 +843,6 @@ class MatMasterFlowAgent(LlmAgent):
             yield matmaster_flow_event
         yield update_state_event(ctx, state_delta={'matmaster_flow_active': None})
 
-        # 渲染追问组件
-        follow_up_list = await get_random_questions(i18n=i18n)
-        for generate_follow_up_event in context_function_event(
-            ctx,
-            self.name,
-            'matmaster_generate_follow_up',
-            {},
-            ModelRole,
-            {
-                'follow_up_result': json.dumps(
-                    {
-                        'invocation_id': ctx.invocation_id,
-                        'title': i18n.t('MoreQuestions'),
-                        'list': follow_up_list,
-                    }
-                )
-            },
-        ):
-            yield generate_follow_up_event
-
     async def _run_research_flow(
         self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
@@ -902,14 +873,8 @@ class MatMasterFlowAgent(LlmAgent):
             yield _scene_event
 
         while True:
-            # 制定计划（1. 无计划；2. 计划已完成；3. 计划失败；4. 用户未确认计划）
-            # 仅查询任务状态时跳过 thinking（查任务状态不 thinking）
-            skip_thinking = scenes_contain_query_job_status(ctx)
-            if check_plan(ctx) in [
-                FlowStatusEnum.NO_PLAN,
-                FlowStatusEnum.COMPLETE,
-                FlowStatusEnum.FAILED,
-            ] or not is_plan_confirmed(ctx):
+            if not is_job_submitted_step(ctx):
+                skip_thinking = scenes_contain_query_job_status(ctx)
                 async for _step_make_event in self._run_step_make_agent(
                     ctx,
                     UPDATE_USER_CONTENT,
@@ -918,27 +883,50 @@ class MatMasterFlowAgent(LlmAgent):
                 ):
                     yield _step_make_event
 
-            # 计划未确认，暂停往下执行
-            # if is_plan_confirmed(ctx):
             async for _plan_execute_event in self._run_plan_execute_agent(ctx):
                 yield _plan_execute_event
 
-            # 回顾历史执行
-            user_request = ctx.user_content.parts[0].text
-            history_steps = ctx.session.state[HISTORY_STEPS]
-            session_files = await get_session_files(ctx.session.id)
-            self.all_finished_agent.instruction = create_all_finished_instruction(
-                user_request, history_steps, session_files
-            )
-            async for _all_finished_event in self.all_finished_agent.run_async(ctx):
-                yield _all_finished_event
+            # 检查是否为等待异步任务执行完成的阶段
+            if not is_job_submitted_step(ctx):
+                # 回顾历史执行
+                user_request = ctx.user_content.parts[0].text
+                history_steps = ctx.session.state[HISTORY_STEPS]
+                session_files = await get_session_files(ctx.session.id)
+                self.all_finished_agent.instruction = create_all_finished_instruction(
+                    user_request, history_steps, session_files
+                )
+                async for _all_finished_event in self.all_finished_agent.run_async(ctx):
+                    yield _all_finished_event
 
-            if ctx.session.state[FINISHED_STATE]['finished']:
+                if ctx.session.state[FINISHED_STATE]['finished']:
+                    break
+            else:
                 break
 
-        # 总结计划
-        async for _plan_summary_event in self._run_summary_agent(ctx):
-            yield _plan_summary_event
+        if not is_job_submitted_step(ctx):
+            # 总结计划
+            async for _plan_summary_event in self._run_summary_agent(ctx):
+                yield _plan_summary_event
+
+        # 渲染追问组件
+        follow_up_list = await get_random_questions(i18n=i18n)
+        for generate_follow_up_event in context_function_event(
+            ctx,
+            self.name,
+            'matmaster_generate_follow_up',
+            {},
+            ModelRole,
+            {
+                'follow_up_result': json.dumps(
+                    {
+                        'invocation_id': ctx.invocation_id,
+                        'title': i18n.t('MoreQuestions'),
+                        'list': follow_up_list,
+                    }
+                )
+            },
+        ):
+            yield generate_follow_up_event
 
     async def _run_async_impl(
         self, ctx: InvocationContext
