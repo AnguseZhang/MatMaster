@@ -26,6 +26,9 @@ from agents.matmaster_agent.core_agents.base_agents.schema_agent import (
 from agents.matmaster_agent.core_agents.comp_agents.dntransfer_climit_agent import (
     DisallowTransferAndContentLimitLlmAgent,
 )
+from agents.matmaster_agent.flow_agents.all_finished_agent.callback import (
+    only_select_user_request,
+)
 from agents.matmaster_agent.flow_agents.all_finished_agent.constant import (
     ALL_FINISHED_AGENT,
 )
@@ -235,6 +238,7 @@ class MatMasterFlowAgent(LlmAgent):
             description='检查用户的目标是否完成',
             output_schema=AllFinishedSchema,
             state_key=FINISHED_STATE,
+            before_model_callback=only_select_user_request,
         )
 
         self._analysis_agent = DisallowTransferAndContentLimitLlmAgent(
@@ -920,10 +924,11 @@ class MatMasterFlowAgent(LlmAgent):
                 yield _plan_execute_event
 
             # 回顾历史执行
+            user_request = ctx.user_content.parts[0].text
             history_steps = ctx.session.state[HISTORY_STEPS]
             session_files = await get_session_files(ctx.session.id)
             self.all_finished_agent.instruction = create_all_finished_instruction(
-                history_steps, session_files
+                user_request, history_steps, session_files
             )
             async for _all_finished_event in self.all_finished_agent.run_async(ctx):
                 yield _all_finished_event

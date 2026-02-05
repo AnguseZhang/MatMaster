@@ -270,10 +270,10 @@ class SubmitCoreMCPAgent(DisallowTransferAndContentLimitMCPAgent):
                         ctx, self.name, '工具参数无变化，本次跳过执行', ModelRole
                     ):
                         yield _info_event
-                    update_plan = copy.deepcopy(ctx.session.state['plan'])
-                    update_plan['steps'][ctx.session.state['plan_index']][
-                        'status'
-                    ] = PlanStepStatusEnum.FAILED
-                    yield update_state_event(ctx, state_delta={'plan': update_plan})
+                    post_execution_step = copy.deepcopy(ctx.session.state[CURRENT_STEP])
+                    post_execution_step['status'] = PlanStepStatusEnum.FAILED
+                    yield update_state_event(
+                        ctx, state_delta={CURRENT_STEP: post_execution_step}
+                    )
             else:
                 yield event

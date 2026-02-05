@@ -1,7 +1,7 @@
 import json
 
 
-def create_all_finished_instruction(history_steps, session_files):
+def create_all_finished_instruction(user_request, history_steps, session_files):
     """
     Build an instruction prompt for an agent that decides whether the user's overall goal
     has been completed up to the current point in the tool-call history.
@@ -26,6 +26,9 @@ history_steps is a list. Each element is a past tool invocation record, typicall
 session_files is a list of file links (OSS URLs). Only files that were actually generated
 and persisted for this session will appear here. Use session_files as verifiable evidence
 that a file deliverable truly exists.
+
+Below in the raw user_request:
+{user_request}
 
 Below is the raw history_steps data (JSON):
 {history_text}
