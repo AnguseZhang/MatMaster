@@ -1763,4 +1763,8 @@ ALL_TOOLS = {
         'bypass_confirmation': True,
         'self_check': False,
     },
+    'finish': {
+        'scene': [SceneEnum.UNIVERSAL],
+        'description': 'Indicate the agentic loop need stop',
+    },
 }
