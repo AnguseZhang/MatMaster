@@ -15,10 +15,11 @@ from agents.matmaster_agent.core_agents.comp_agents.dntransfer_climit_mcp_agent 
     DisallowTransferAndContentLimitMCPAgent,
 )
 from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
+from agents.matmaster_agent.flow_agents.step_utils import get_current_step
 from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.model import BohrJobInfo, DFlowJobInfo
-from agents.matmaster_agent.state import CURRENT_STEP
+from agents.matmaster_agent.state import CURRENT_STEP, CURRENT_STEP_STATUS
 from agents.matmaster_agent.style import tool_response_failed_card
 from agents.matmaster_agent.utils.event_utils import (
     all_text_event,
@@ -189,12 +190,14 @@ class SubmitCoreMCPAgent(DisallowTransferAndContentLimitMCPAgent):
                                     yield tool_response_failed_event
 
                                 # 更新 plan 为失败
-                                update_plan = copy.deepcopy(ctx.session.state['plan'])
-                                update_plan['steps'][ctx.session.state['plan_index']][
-                                    'status'
-                                ] = 'failed'
+                                post_execution_step = copy.deepcopy(
+                                    get_current_step(ctx)
+                                )
+                                post_execution_step[CURRENT_STEP_STATUS] = (
+                                    PlanStepStatusEnum.FAILED
+                                )
                                 yield update_state_event(
-                                    ctx, state_delta={'plan': update_plan}
+                                    ctx, state_delta={CURRENT_STEP: post_execution_step}
                                 )
 
                                 raise RuntimeError('Tool Execution Failed')
