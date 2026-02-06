@@ -23,11 +23,12 @@ from agents.matmaster_agent.flow_agents.step_utils import (
     is_job_submitted_step,
 )
 from agents.matmaster_agent.flow_agents.step_validation_agent.prompt import (
-    STEP_VALIDATION_INSTRUCTION,
+    create_step_validation_instruction,
 )
 from agents.matmaster_agent.flow_agents.style import separate_card
 from agents.matmaster_agent.flow_agents.utils import (
     check_plan,
+    find_alternative_tool,
     get_agent_for_tool,
 )
 from agents.matmaster_agent.llm_config import MatMasterLlmConfig
@@ -36,6 +37,7 @@ from agents.matmaster_agent.prompt import MatMasterCheckTransferPrompt
 from agents.matmaster_agent.state import (
     CURRENT_STEP,
     CURRENT_STEP_DESCRIPTION,
+    CURRENT_STEP_STATUS,
     CURRENT_STEP_TOOL_NAME,
     HISTORY_STEPS,
     PLAN,
@@ -208,7 +210,10 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
         )
         validation_instruction = '\n'.join(lines)
         self.validation_agent.instruction = (
-            STEP_VALIDATION_INSTRUCTION + validation_instruction
+            create_step_validation_instruction(
+                find_alternative_tool(current_step_tool_name)
+            )
+            + validation_instruction
         )
 
         async for validation_event in self.validation_agent.run_async(ctx):
@@ -320,15 +325,14 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
             yield _core_execution_event
 
         post_execution_step = get_current_step(ctx)
-        # 工具调用结果返回【成功】
-        if post_execution_step['status'] == PlanStepStatusEnum.SUCCESS:
+        if post_execution_step[CURRENT_STEP_STATUS] != PlanStepStatusEnum.SUBMITTED:
             # 校验工具结果
             async for _tool_result_validation_event in self._tool_result_validation(
                 ctx
             ):
                 yield _tool_result_validation_event
         # 异步任务，直接退出当前函数
-        elif post_execution_step['status'] == PlanStepStatusEnum.SUBMITTED:
+        else:
             return
 
         update_history_steps = copy.deepcopy(ctx.session.state[HISTORY_STEPS])

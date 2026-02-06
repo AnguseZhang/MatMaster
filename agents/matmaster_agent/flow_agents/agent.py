@@ -98,7 +98,7 @@ from agents.matmaster_agent.flow_agents.step_utils import (
     is_job_submitted_step,
 )
 from agents.matmaster_agent.flow_agents.step_validation_agent.prompt import (
-    STEP_VALIDATION_INSTRUCTION,
+    create_step_validation_instruction,
 )
 from agents.matmaster_agent.flow_agents.step_validation_agent.schema import (
     StepValidationSchema,
@@ -109,6 +109,7 @@ from agents.matmaster_agent.flow_agents.thinking_agent.callback import (
 )
 from agents.matmaster_agent.flow_agents.thinking_agent.constant import THINKING_AGENT
 from agents.matmaster_agent.flow_agents.utils import (
+    find_alternative_tool,
     get_tools_list,
     scenes_contain_query_job_status,
     should_bypass_confirmation,
@@ -140,6 +141,7 @@ from agents.matmaster_agent.services.questions import get_random_questions
 from agents.matmaster_agent.services.session_files import get_session_files
 from agents.matmaster_agent.state import (
     CURRENT_STEP,
+    CURRENT_STEP_TOOL_NAME,
     EXPAND,
     FINISHED_STATE,
     HISTORY_STEPS,
@@ -336,11 +338,19 @@ class MatMasterFlowAgent(LlmAgent):
     def _build_execution_agent_for_plan(
         self, ctx: InvocationContext
     ) -> MatMasterSupervisorAgent:
+        current_step = get_current_step(ctx)
+        current_step_tool_name = current_step.get(CURRENT_STEP_TOOL_NAME)
+        belonging_agent = ALL_TOOLS.get(current_step_tool_name, {}).get(
+            'belonging_agent'
+        )
+
         step_validation_agent = DisallowTransferAndContentLimitSchemaAgent(
             name='step_validation_agent',
             model=MatMasterLlmConfig.tool_schema_model,
             description='校验步骤执行结果是否合理',
-            instruction=STEP_VALIDATION_INSTRUCTION,
+            instruction=create_step_validation_instruction(
+                find_alternative_tool(current_step_tool_name)
+            ),
             output_schema=StepValidationSchema,
             state_key='step_validation',
             after_model_callback=MatMasterLlmConfig.opik_tracer.after_model_callback,
@@ -356,10 +366,6 @@ class MatMasterFlowAgent(LlmAgent):
             before_model_callback=filter_llm_contents,
             after_model_callback=MatMasterLlmConfig.opik_tracer.after_model_callback,
         )
-        current_step = get_current_step(ctx)
-        tool_name = current_step.get('tool_name')
-        belonging_agent = ALL_TOOLS.get(tool_name, {}).get('belonging_agent')
-
         execution_agent = MatMasterSupervisorAgent(
             name='execution_agent',
             model=MatMasterLlmConfig.default_litellm_model,
