@@ -16,7 +16,7 @@ from google.genai.types import Content, Part
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.services.memory import format_short_term_memory
-from agents.matmaster_agent.state import CURRENT_STEP, STEP_DESCRIPTION
+from agents.matmaster_agent.state import CURRENT_STEP, CURRENT_STEP_DESCRIPTION
 
 logger = logging.getLogger(__name__)
 logger.addFilter(PrefixFilter(MATMASTER_AGENT_NAME))
@@ -31,7 +31,7 @@ def _query_from_request_and_state(
     state = getattr(callback_context, 'state', None)
     if state:
         current_step = state.get(CURRENT_STEP, {})
-        desc = current_step.get(STEP_DESCRIPTION, '')
+        desc = current_step.get(CURRENT_STEP_DESCRIPTION, '')
         if desc:
             return desc.strip()
     # Fallback: last text from contents

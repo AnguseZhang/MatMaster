@@ -19,6 +19,7 @@ from agents.matmaster_agent.flow_agents.constant import (
 from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
 from agents.matmaster_agent.flow_agents.step_utils import (
     get_current_step,
+    get_current_step_validation,
     is_job_submitted_step,
 )
 from agents.matmaster_agent.flow_agents.step_validation_agent.prompt import (
@@ -28,16 +29,16 @@ from agents.matmaster_agent.flow_agents.style import separate_card
 from agents.matmaster_agent.flow_agents.utils import (
     check_plan,
     get_agent_for_tool,
-    has_self_check,
 )
 from agents.matmaster_agent.llm_config import MatMasterLlmConfig
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.prompt import MatMasterCheckTransferPrompt
 from agents.matmaster_agent.state import (
     CURRENT_STEP,
+    CURRENT_STEP_DESCRIPTION,
+    CURRENT_STEP_TOOL_NAME,
     HISTORY_STEPS,
     PLAN,
-    STEP_DESCRIPTION,
 )
 from agents.matmaster_agent.sub_agents.mapping import (
     MatMasterSubAgentsEnum,
@@ -97,7 +98,7 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
     ) -> AsyncGenerator[Event, None]:
         current_step = copy.deepcopy(ctx.session.state[CURRENT_STEP])
         current_step_tool_name = current_step['tool_name']
-        current_step_tool_description = current_step[STEP_DESCRIPTION]
+        current_step_tool_description = current_step[CURRENT_STEP_DESCRIPTION]
         current_step['status'] = PlanStepStatusEnum.PROCESS
         yield update_state_event(
             ctx,
@@ -186,9 +187,9 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
     async def _tool_result_validation(
         self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
-        current_step_tool_name = ctx.session.state[CURRENT_STEP]['tool_name']
+        current_step_tool_name = ctx.session.state[CURRENT_STEP][CURRENT_STEP_TOOL_NAME]
         current_step_tool_description = ctx.session.state[CURRENT_STEP][
-            STEP_DESCRIPTION
+            CURRENT_STEP_DESCRIPTION
         ]
         user_text = (
             ctx.user_content.parts[0].text
@@ -292,11 +293,11 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
         update_plan['steps'][index]['tool_name'] = next_tool
         update_plan['steps'][index]['status'] = PlanStepStatusEnum.PROCESS
         original_description = ctx.session.state[PLAN]['steps'][index][
-            STEP_DESCRIPTION
+            CURRENT_STEP_DESCRIPTION
         ].split('\n\n注意：')[
             0
         ]  # 移除之前的失败原因
-        update_plan['steps'][index][STEP_DESCRIPTION] = original_description
+        update_plan['steps'][index][CURRENT_STEP_DESCRIPTION] = original_description
         yield update_state_event(
             ctx,
             state_delta={
@@ -321,17 +322,17 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
         post_execution_step = get_current_step(ctx)
         # 工具调用结果返回【成功】
         if post_execution_step['status'] == PlanStepStatusEnum.SUCCESS:
-            # 对成功的工具调用结果进行校验
-            if has_self_check(post_execution_step['tool_name']):
-                # 校验工具结果
-                async for _tool_result_validation_event in self._tool_result_validation(
-                    ctx
-                ):
-                    yield _tool_result_validation_event
+            # 校验工具结果
+            async for _tool_result_validation_event in self._tool_result_validation(
+                ctx
+            ):
+                yield _tool_result_validation_event
         # 异步任务，直接退出当前函数
         elif post_execution_step['status'] == PlanStepStatusEnum.SUBMITTED:
             return
 
         update_history_steps = copy.deepcopy(ctx.session.state[HISTORY_STEPS])
-        update_history_steps.append(post_execution_step)
+        update_history_steps.append(
+            {**post_execution_step, **get_current_step_validation(ctx)}
+        )
         yield update_state_event(ctx, state_delta={HISTORY_STEPS: update_history_steps})
