@@ -20,6 +20,10 @@ explicitly asked for a file or a file is clearly the expected final deliverable.
 IMPORTANT: If the user_request asks for multiple distinct items/entities/examples (e.g., "caffeine and adenosine",
 "A and B", "compare X vs Y", "generate N variants"), the goal is finished ONLY when *all* requested items are completed.
 Do NOT mark finished=true when only one of the requested items has been produced.
+IMPORTANT: Treat parameterized build requirements (e.g., number of layers, vacuum thickness, slab orientation/cut,
+and supercell/expansion such as "expand 5×5×1") as mandatory sub-requirements. finished=true ONLY if history_steps
+explicitly shows these parameters were applied, not just that a structure was built.
+
 # Input
 history_steps is a list. Each element is a past tool invocation record, typically including
 (but not limited to):
@@ -50,6 +54,9 @@ Below is the raw session_files data (JSON):
 5) If there are contradictions in history_steps, prefer the later entries. If you still cannot decide, return finished=false
    and explain the contradiction in reason.
 6) Do NOT assume results that are not explicitly supported by history_steps or session_files. Judge only from verifiable evidence.
+6.1) When user_request includes explicit numeric/parameter constraints (e.g., "cut 5 layers", "vacuum = 1 layer",
+"supercell/expand = 5×5×1"), you MUST verify history_steps explicitly confirms each constraint was applied
+(e.g., args/output mentions 5 layers + vacuum + 5×5×1). If any one is not explicitly evidenced, set finished=false.
 7) Termination/Unachievable rule: If the goal is clearly unachievable given the current context (e.g., repeated critical failures with no viable next action, missing required inputs that cannot be obtained from history_steps/session_files, or hard constraints prevent completion), you MUST return finished=true to terminate, and set reason to explicitly state that the task is not completed but cannot be completed (include the key blocking evidence).
 # Output Format (very important)
 You must output ONLY ONE JSON object that strictly matches this schema:
