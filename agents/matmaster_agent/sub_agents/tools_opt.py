@@ -2985,11 +2985,17 @@ ALL_TOOLS = {
     },
     'orchestrate_input': {
         'belonging_agent': LAMMPS_AGENT_NAME,
-        'scene': [SceneEnum.MOLECULAR_DYNAMICS, SceneEnum.LAMMPS],
+        'scene': [
+            SceneEnum.MOLECULAR_DYNAMICS,
+            SceneEnum.LAMMPS,
+            SceneEnum.ABACUS,
+            SceneEnum.UNIVERSAL,
+        ],
         'description': (
-            'What it does: Generate input scripts for simulation engines (Currently supports: LAMMPS).\n'
+            'What it does: Generate input scripts for simulation/calculation engines. '
+            'Supports: LAMMPS, ABACUS, VASP, QE (Quantum ESPRESSO), Psi4, Gaussian, ORCA.\n'
             'When to use: Create input from description.\n'
-            'Prerequisites / Inputs: engine_type="lammps", natural language task.\n'
+            'Prerequisites / Inputs: structural information; engine_type (one of: lammps, abacus, vasp, qe, psi4, gaussian, orca), natural language task.\n'
             'Outputs: Input script content.\n'
             'Cannot do / Limits: Script generation only.\n'
             'Cost / Notes: Low.'
@@ -3001,11 +3007,11 @@ ALL_TOOLS = {
         'belonging_agent': LAMMPS_AGENT_NAME,
         'scene': [SceneEnum.MOLECULAR_DYNAMICS, SceneEnum.LAMMPS],
         'description': (
-            '功能：为模拟引擎生成输入脚本（当前支持：LAMMPS）。\n'
+            '功能：为模拟引擎生成输入脚本（当前支持：LAMMPS, ABACUS, VASP, QE, Psi4, Gaussian, ORCA）。\n'
             '使用场景：根据描述创建输入文件。\n'
             '分子动力学,LAMMPS\n'
             '使用方法：\n'
-            '1. 输入：engine_type="lammps"，自然语言任务描述。\n'
+            '1. 输入：engine_type="lammps"（或者以下其中一种：abacus, vasp, qe, psi4, gaussian, orca），自然语言任务描述。\n'
             '2. 输出：输入脚本内容。\n'
             '3. 注意事项：仅生成脚本，不执行模拟。\n'
             '4. 成本/备注：低。'

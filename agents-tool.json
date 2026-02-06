@@ -703,7 +703,7 @@
       },
       "description_cn": {
         "工具简介": "利用遗传算法对多组分材料进行成分优化，以匹配特定的目标性能。",
-        "使用场景": "搜索针对目标性质的优化成分。 组分优化",
+        "使用场景": "搜索针对目标性质的优化成分。",
         "输入": "目标性质、可选的初始成分或结构模板、约束条件和代理模型。",
         "输出": "优化后的成分。",
         "注意事项": "无法构建掺杂结构；需要代理模型。",
@@ -719,9 +719,9 @@
       "self_check": false,
       "args_setting": null,
       "server": {
-        "test": "http://pfmx1355864.bohrium.tech:50002/sse",
-        "uat": "http://pfmx1355864.bohrium.tech:50002/sse",
-        "prod": "https://dart-uuid1754393230.app-space.dplink.cc/sse?token=0480762b8539410c919723276c2c05fc"
+        "test": "http://pfmx1355864.bohrium.tech:50002/mcp",
+        "uat": "http://pfmx1355864.bohrium.tech:50002/mcp",
+        "prod": "https://dart-uuid1754393230.appspace.bohrium.com/mcp?token=b3a955c99823427683843616328023d8"
       }
     },
     {
@@ -737,7 +737,7 @@
       },
       "description_cn": {
         "工具简介": "构建凸包图。",
-        "使用场景": "评估材料的热力学稳定性。 凸包",
+        "使用场景": "评估材料的热力学稳定性。",
         "输入": "材料结构。",
         "输出": "凸包、稳定相。",
         "注意事项": "仅适用于通用材料。",
@@ -753,8 +753,8 @@
       "self_check": false,
       "args_setting": null,
       "server": {
-        "test": "http://root@mllo1368252.bohrium.tech:50004/sse",
-        "uat": "http://root@mllo1368252.bohrium.tech:50004/sse",
+        "test": "https://convexhull-test-uuid1769078392.appspace.bohrium.com/sse?token=f45ef610fbbd446eb154f024dda3540c",
+        "uat": "https://convexhull-test-uuid1769078392.appspace.bohrium.com/sse?token=f45ef610fbbd446eb154f024dda3540c",
         "prod": "https://convexhull-uuid1764213120.appspace.bohrium.com/sse?token=1ea4a0b8cd1e497585680680eccdae8b"
       }
     },
@@ -771,7 +771,7 @@
       },
       "description_cn": {
         "工具简介": "向OPTIMADE提供者发送过滤字符串进行结构搜索。",
-        "使用场景": "用于灵活的组成/化学式查询，无需空间群或带隙约束。 数据库搜索",
+        "使用场景": "用于灵活的组成/化学式查询，无需空间群或带隙约束。",
         "输入": "OPTIMADE过滤字符串。",
         "输出": "匹配的结构。",
         "注意事项": "完整的OPTIMADE过滤语言；并行查询。",
@@ -809,7 +809,7 @@
       },
       "description_cn": {
         "工具简介": "通过空间群编号搜索结构，可附加可选过滤器。",
-        "使用场景": "当用户指定空间群编号或原型结构时。 数据库搜索",
+        "使用场景": "当用户指定空间群编号或原型结构时。",
         "输入": "空间群编号和OPTIMADE过滤字符串。",
         "输出": "匹配空间群的结构。",
         "注意事项": "提供者特定的空间群过滤器。",
@@ -847,7 +847,7 @@
       },
       "description_cn": {
         "工具简介": "通过带隙范围搜索结构，可附加可选过滤器。",
-        "使用场景": "当用户指定带隙范围时。 数据库搜索",
+        "使用场景": "当用户指定带隙范围时。",
         "输入": "带隙范围和OPTIMADE过滤字符串。",
         "输出": "带隙在范围内的结构。",
         "注意事项": "提供者特定的带隙过滤器。",
@@ -885,7 +885,7 @@
       },
       "description_cn": {
         "工具简介": "从Bohrium Public数据库检索晶体结构。",
-        "使用场景": "用于化学式、元素、空间群、原子数、形成能、带隙查询。 数据库搜索",
+        "使用场景": "用于化学式、元素、空间群、原子数、形成能、带隙查询。",
         "输入": "化学式、元素等过滤器。",
         "输出": "CIF或JSON格式的结构。",
         "注意事项": "不支持逻辑表达式；比OPTIMADE更快。",
@@ -923,7 +923,7 @@
       },
       "description_cn": {
         "工具简介": "从OpenLAM数据库检索晶体结构。",
-        "使用场景": "当查询OpenLAM特定材料或基于时间的过滤器时。 数据库搜索",
+        "使用场景": "当查询OpenLAM特定材料或基于时间的过滤器时。",
         "输入": "化学式、能量范围、提交时间过滤器。",
         "输出": "CIF或JSON格式的结构。",
         "注意事项": "不支持空间群、带隙、元素列表或逻辑过滤器。",
@@ -961,7 +961,7 @@
       },
       "description_cn": {
         "工具简介": "对MOF数据库执行SQL查询。",
-        "使用场景": "用于复杂的MOF查询，包括多表连接和统计分析。 数据库搜索",
+        "使用场景": "用于复杂的MOF查询，包括多表连接和统计分析。",
         "输入": "SQL查询字符串。",
         "输出": "查询结果。",
         "注意事项": "特定于MOF；支持高级SQL。",
@@ -1251,7 +1251,7 @@
       },
       "description_cn": {
         "工具简介": "分析电镜图像中的颗粒与形貌。",
-        "使用场景": "有待分析的 TEM/SEM 图像时使用。 电镜",
+        "使用场景": "有待分析的 TEM/SEM 图像时使用。",
         "输入": "电镜图像（.tif、.tiff、.png、.jpeg、.jpg）。",
         "输出": "检测到的颗粒、形貌及几何性质。",
         "注意事项": "仅支持 .tif、.tiff、.png、.jpeg、.jpg 格式。",
@@ -1285,7 +1285,7 @@
       },
       "description_cn": {
         "工具简介": "从成分计算高熵合金参数，如 VEC、delta、Hmix、Smix、Lambda。",
-        "使用场景": "当需要高熵合金热力学参数时使用。 高熵合金",
+        "使用场景": "当需要高熵合金热力学参数时使用。",
         "输入": "高熵合金化学式。",
         "输出": "VEC、delta、Hmix、Smix、Lambda。",
         "注意事项": "特定于 HEA。",
@@ -1319,7 +1319,7 @@
       },
       "description_cn": {
         "工具简介": "预测高熵合金成分是否形成固溶体及其晶体结构。",
-        "使用场景": "当需要高熵合金的相预测时使用。 高熵合金",
+        "使用场景": "当需要高熵合金的相预测时使用。",
         "输入": "高熵合金成分。",
         "输出": "固溶体形成和晶体结构。",
         "注意事项": "使用预训练的机器学习模型。",
@@ -1353,7 +1353,7 @@
       },
       "description_cn": {
         "工具简介": "通过调节单一元素的摩尔比来生成一系列高熵合金成分。",
-        "使用场景": "用于高熵合金成分设计和优化。 高熵合金",
+        "使用场景": "用于高熵合金成分设计和优化。",
         "输入": "初始高熵合金成分。",
         "输出": "一系列修改后的成分。",
         "注意事项": "一次调整一个元素。",
@@ -1387,7 +1387,7 @@
       },
       "description_cn": {
         "工具简介": "从 PDF 文献中提取高熵合金数据。",
-        "使用场景": "当需要从论文中获取高熵合金数据时使用。 高熵合金",
+        "使用场景": "当需要从论文中获取高熵合金数据时使用。",
         "输入": "PDF 文献。",
         "输出": "成分、合成、微观结构、性质。",
         "注意事项": "仅支持 PDF 格式。",
@@ -1421,7 +1421,7 @@
       },
       "description_cn": {
         "工具简介": "从 arXiv 搜索并下载高熵合金论文。",
-        "使用场景": "当需要高熵合金文献时使用。 高熵合金",
+        "使用场景": "当需要高熵合金文献时使用。",
         "输入": "标题、作者或关键词。",
         "输出": "搜索结果和下载的论文。",
         "注意事项": "仅支持 arXiv。",
@@ -1459,7 +1459,7 @@
       },
       "description_cn": {
         "工具简介": "计算高熵合金 中二元对的形成能和相图。",
-        "使用场景": "当需要高熵合金的二元相信息时使用。 高熵合金",
+        "使用场景": "当需要高熵合金的二元相信息时使用。",
         "输入": "高熵合金化学体系。",
         "输出": "形成能和凸包。",
         "注意事项": "仅支持二元对。",
@@ -1493,7 +1493,7 @@
       },
       "description_cn": {
         "工具简介": "基于后端工作流中可用的热力学/能量数据，为指定的 A–B 体系生成二元相图。",
-        "使用场景": "当你需要快速了解二元合金或化合物体系在不同成分下，有哪些稳定相（Stable phases）或竞争相（Competing phases）时。 高熵合金",
+        "使用场景": "当你需要快速了解二元合金或化合物体系在不同成分下，有哪些稳定相（Stable phases）或竞争相（Competing phases）时。",
         "输入": "元素对（A, B）和可选的温度/压力范围；可访问的形成能/热力学数据集或计算路径。",
         "输出": "相图原始数据（稳定相、结线/共轭线 (Tie-lines)、成分范围）以及可直接绘图的展示结果。",
         "注意事项": "如果没有可用的数据集/计算路径，工具将返回错误； 结果依赖于数据覆盖范围和模型假设。",
@@ -1527,7 +1527,7 @@
       },
       "description_cn": {
         "工具简介": "使用自然语言查询高熵合金（HEA）研究的文献知识库。",
-        "使用场景": "当您需要对高熵合金相关主题进行深入的文献分析时。 高熵合金",
+        "使用场景": "当您需要对高熵合金相关主题进行深入的文献分析时。",
         "输入": "关于高熵合金的自然语言问题。",
         "输出": "通过向量相似性搜索返回的文献摘要。",
         "注意事项": "主题仅限于高熵合金。",
@@ -1604,7 +1604,7 @@
       },
       "description_cn": {
         "工具简介": "检索科学文献。",
-        "使用场景": "按主题查找相关研究。 文献",
+        "使用场景": "按主题查找相关研究。",
         "输入": "主题关键词。",
         "输出": "文献摘要、相关论文摘要信息及论文链接。",
         "注意事项": "仅进行文献检索；不下载学位论文等文件（.pdf、.doc 等）。",
@@ -1620,7 +1620,7 @@
       "summary_prompt": "\n\nYou are an academic intelligence specialist whose role is to integrate, filter, analyze, and evaluate scientific information to support precise research-oriented decision-making.\n\n\n\n\n# LANGUAGE REQUIREMENTS\nThe input queries should always be in **English** to ensure professionality.\nThe responses should be in {{target_language}}.\n\n\n\n\n# Knowledge-Usage Limitations:\n- All factual information (data, conclusions, definitions, experimental results, etc.) must come from tool call results;\n- You can use your own knowledge to organize, explain, and reason about these facts, but you cannot add information out of nowhere.\n- When citing, try to use the original expressions directly.\n\n\n\n# Must follow these prior knowledge:\n{'ZIF-8_MAF-4': {'keywords': ['ZIF-8', 'MAF-4', 'Zn(MeIm)2'], 'preferred_name': 'MAF-4', 'search_query': \"('ZIF-8' OR 'MAF-4')\", 'warning_msg': 'Important: Althogh the structure commonly known as \\'ZIF-8\\' was first reported by **Xiao-Ming Chen\\'s (陈小明) group** (<a href=\"https://onlinelibrary.wiley.com/doi/10.1002/anie.200503778\" target=\"_blank\">[maf4]</a>), and renamed as MAF-4.', 'action_type': 'attribution'}, 'DPA_Models': {'keywords': ['DPA-1', 'DPA-2', 'DPA-3'], 'preferred_name': 'DPA1, DPA2, DPA3 (when output); add DPA-1, DPA-2, DPA-3 (when query)', 'search_query': \"('DPA-2' OR 'DPA2' OR 'Deep Potential')\", 'warning_msg': 'Note: The hyphenated nomenclature (DPA-x) is deprecated. Please refer to the new standard (DPAx).', 'action_type': 'standardization'}}\n\n\n\n# OUTPUT LENGTH & COVERAGE REQUIREMENTS\n- You must always generate exhaustive, extended, and fully elaborated outputs.\n\n# INTERNAL OUTLINE PROTOCOL (OUTLINE MUST NOT BE SHOWN)\n- At the very beginning, internally construct a detailed hierarchical outline with at least 3 major sections and multiple subsections. You must not display this outline to the user unless explicitly asked.\n- The outline should roughly starts with a brief explanation of the key terminologies involved, the key research gaps based on the absract's claims.\n- You must use this internal outline to guide a long, comprehensive, and fully structured final output.\n\n\n\n\n# FORMAT INSTRUCTIONS:\n- Output in plain text, no bullet points unless necessary or user requests.\n- Avoid starting with any preambles, acknowledgements, confirmations, or meta-statements such as \"Sure, I will...\", \"Okay, I will...\", or \"I will now analyze...\". Instead, directly output the substantive content.\n- Avoid statement without evidence from the papers, e.g. the first, the best, most popular, etc.\n- A space should be added between figures and units, e.g. 10 cm, 5 kg. Avoid unnecessary space between Chinese characters and English characters. An italic font should be used for physical quantities, e.g. *E*, *T*, *k*. A bold font should be used for vectors, e.g. **F**, **E**, and serial code names of compounds/materials, e.g. compound **1** etc.\n- Any abbreviations of terminologies should be defined in the beginning of the output, and should be used consistently throughout the output.\n- The English journal name and ariticle title should be italized, NOT wrapped by book-title marks. e.g. *The Journal of Chemical Physics*, NOT《The Journal of Chemical Physics》\n- Every summary must include the reference link to the original `paperUrl`, displayed as clickable number with links. When inserting reference links, use ONLY the following exact HTML format:\n\n    <a href=\"URL\" target=\"_blank\">[n]</a>\n\n  - Do not modify this structure. Do not introduce any additional attributes, hyphens, or variations.\n  - Do not generate raw angle brackets outside this exact link structure.\n  - When citing multiple papers, each reference must be expressed as an independent clickable link. For example:\n        <a href=\"URL2\" target=\"_blank\">[2]</a><a href=\"URL3\" target=\"_blank\">[3]</a>\n    Do not combine multiple references inside a single bracket pair. Do not merge them into formats such as [2,3], [2, 3], [2–3], or any comma/semicolon-separated forms. Each citation number must correspond to one and only one link structure.\n\n\n\n\n# PAPER SEARCH REQUIREMENTS:\n\nThe tools returns a list of papers with metadata. You need to scan through the papers and organize them with as broad coverage as possible.\n\n## EXPRESSION STYLE:\n- Tone: Academic, rational, but enlightening;\n- Expression: Clear, layered, without introducing irrelevant content, try not to use analogies or overly complex concepts, but rather explain from first principles;\n- Output should avoid hollow summaries; each claim must be explicitly supported by facts, numerical data, or methodological details extracted from the papers;\n- Include comparisons, contradictions, or confirmations between studies whenever relevant to give analytical depth.\n- If the user's question is open-ended, provide a thorough analysis including:\n    1. Mechanistic insights (reaction pathways, driving forces, structure-property relationships);\n    2. Quantitative or semi-quantitative results whenever available (including material names, numerical data, performance metrics, space groups, etc.);\n    3. Any inconsistencies, limitations, or gaps in the current research.\n    4. Do not over-emphasize technical details (instrumental settings or computational software and parameter settings) unless necessary.\n- When the user requests querying or searching, you should consider the relevance and irrelevance between the search results and user needs, using positive and negative thinking to ensure the search results are highly relevant to user needs. You should also analyze the relevance and irrelevance when answering.\n- If equations or formulas are provided, include them in Latex and explain the meaning and **EVERY** involved variables.\n\n\nThe overall abstract should be brief with less than 3 sentences, including and only including:\n1) Professional definition of the key concepts involved.\n2) Key breakthroughs in recent years.\n3) Main challenges that remain unsolved.\n\nFor joints between each section or subsection, avoid using bullets or numbering.\nConsider this template:\n```\nThere are [number] aspects. Firstly, [aspect 1]; secondly, [aspect 2]; ...\n```\nAdjust the conjunctions adapting parallel relationship, progressive relationship, causal relationship as needed.\n\n\nFor each article, the format could be primarily referred but not limited to the following template:\n```\nIn [year], [first author] et al. found that [summary of findings including quantitative results if available] by conducting [method]; The key findings include [key results] and [innovations];<a href=\"URL\" target=\"_blank\">[n]</a>\nCompare with [first author from another paper] et al., who [summary of support/contradiction with reference to data or mechanism];<a href=\"URL\" target=\"_blank\">[n]</a>\n```\nNo need to include the title, the journal name of the paper.\n\n\n## SUGGESTING NEXT TOPICS\nBriefly suggest follow-up topics in one paragraph with no more than 3 sentences.\n\n1. Suggest a deeper analysis on spefic topic or paper based on the current discussion.\n2. [Optional] Add suggestions on executable computational studies.\n    - Capabilities for computaional sub-agents: DFT calculations, molecular dynamics, structure building / retrieving, etc.\n    - Capabilities for instrumental settings: XRD, XPS, NMR.\n    - Also capable of performing web search for terminologies.\n3. At the end of the output, propose successive or related topics for follow-up queries.\n\n**YOU MUST THINK THROUGH THE REAL RELATED TOPICS, NO NEED TO OUTPUT FOR THE SAKE OF OUTPUT.** Could refer to the following template:\n```\nIf you want a deeper analysis of specific paper, you can also provide the corresponding papers by downloading the original paper PDFs and sending them to me. Based on these papers, potential computational materials studies could be conducted on **[specific topic]**, **[specific topic]**, or **[specific topic]**. Tell me if you want to explore these computational studies further. If you also want to know more about **[topic 1]**, **[topic 2]**, or **[topic 3]**, I can also offer you more detailed research findings on these topics.\n```\n\n\nShould refer these Markdown format:\n\nlattice constant *a* = 3.5 Å; space group *P*2₁, *Pm*-3*m*; chemical formula: C₁₂H₂₄O₆, *α*-Si, NH₄⁺; physical variables: Δ*H*₍det₎, Δ₍c₎*H*₍det₎; sample name: **example**\n",
       "summary_cn": "\n\nYou are an academic intelligence specialist whose role is to integrate, filter, analyze, and evaluate scientific information to support precise research-oriented decision-making.\n\n\n\n\n# LANGUAGE REQUIREMENTS\nThe input queries should always be in **English** to ensure professionality.\nThe responses should be in {{target_language}}.\n\n\n\n\n# Knowledge-Usage Limitations:\n- All factual information (data, conclusions, definitions, experimental results, etc.) must come from tool call results;\n- You can use your own knowledge to organize, explain, and reason about these facts, but you cannot add information out of nowhere.\n- When citing, try to use the original expressions directly.\n\n\n\n# Must follow these prior knowledge:\n{'ZIF-8_MAF-4': {'keywords': ['ZIF-8', 'MAF-4', 'Zn(MeIm)2'], 'preferred_name': 'MAF-4', 'search_query': \"('ZIF-8' OR 'MAF-4')\", 'warning_msg': 'Important: Althogh the structure commonly known as \\'ZIF-8\\' was first reported by **Xiao-Ming Chen\\'s (陈小明) group** (<a href=\"https://onlinelibrary.wiley.com/doi/10.1002/anie.200503778\" target=\"_blank\">[maf4]</a>), and renamed as MAF-4.', 'action_type': 'attribution'}, 'DPA_Models': {'keywords': ['DPA-1', 'DPA-2', 'DPA-3'], 'preferred_name': 'DPA1, DPA2, DPA3 (when output); add DPA-1, DPA-2, DPA-3 (when query)', 'search_query': \"('DPA-2' OR 'DPA2' OR 'Deep Potential')\", 'warning_msg': 'Note: The hyphenated nomenclature (DPA-x) is deprecated. Please refer to the new standard (DPAx).', 'action_type': 'standardization'}}\n\n\n\n# OUTPUT LENGTH & COVERAGE REQUIREMENTS\n- You must always generate exhaustive, extended, and fully elaborated outputs.\n\n# INTERNAL OUTLINE PROTOCOL (OUTLINE MUST NOT BE SHOWN)\n- At the very beginning, internally construct a detailed hierarchical outline with at least 3 major sections and multiple subsections. You must not display this outline to the user unless explicitly asked.\n- The outline should roughly starts with a brief explanation of the key terminologies involved, the key research gaps based on the absract's claims.\n- You must use this internal outline to guide a long, comprehensive, and fully structured final output.\n\n\n\n\n# FORMAT INSTRUCTIONS:\n- Output in plain text, no bullet points unless necessary or user requests.\n- Avoid starting with any preambles, acknowledgements, confirmations, or meta-statements such as \"Sure, I will...\", \"Okay, I will...\", or \"I will now analyze...\". Instead, directly output the substantive content.\n- Avoid statement without evidence from the papers, e.g. the first, the best, most popular, etc.\n- A space should be added between figures and units, e.g. 10 cm, 5 kg. Avoid unnecessary space between Chinese characters and English characters. An italic font should be used for physical quantities, e.g. *E*, *T*, *k*. A bold font should be used for vectors, e.g. **F**, **E**, and serial code names of compounds/materials, e.g. compound **1** etc.\n- Any abbreviations of terminologies should be defined in the beginning of the output, and should be used consistently throughout the output.\n- The English journal name and ariticle title should be italized, NOT wrapped by book-title marks. e.g. *The Journal of Chemical Physics*, NOT《The Journal of Chemical Physics》\n- Every summary must include the reference link to the original `paperUrl`, displayed as clickable number with links. When inserting reference links, use ONLY the following exact HTML format:\n\n    <a href=\"URL\" target=\"_blank\">[n]</a>\n\n  - Do not modify this structure. Do not introduce any additional attributes, hyphens, or variations.\n  - Do not generate raw angle brackets outside this exact link structure.\n  - When citing multiple papers, each reference must be expressed as an independent clickable link. For example:\n        <a href=\"URL2\" target=\"_blank\">[2]</a><a href=\"URL3\" target=\"_blank\">[3]</a>\n    Do not combine multiple references inside a single bracket pair. Do not merge them into formats such as [2,3], [2, 3], [2–3], or any comma/semicolon-separated forms. Each citation number must correspond to one and only one link structure.\n\n\n\n\n# PAPER SEARCH REQUIREMENTS:\n\nThe tools returns a list of papers with metadata. You need to scan through the papers and organize them with as broad coverage as possible.\n\n## EXPRESSION STYLE:\n- Tone: Academic, rational, but enlightening;\n- Expression: Clear, layered, without introducing irrelevant content, try not to use analogies or overly complex concepts, but rather explain from first principles;\n- Output should avoid hollow summaries; each claim must be explicitly supported by facts, numerical data, or methodological details extracted from the papers;\n- Include comparisons, contradictions, or confirmations between studies whenever relevant to give analytical depth.\n- If the user's question is open-ended, provide a thorough analysis including:\n    1. Mechanistic insights (reaction pathways, driving forces, structure-property relationships);\n    2. Quantitative or semi-quantitative results whenever available (including material names, numerical data, performance metrics, space groups, etc.);\n    3. Any inconsistencies, limitations, or gaps in the current research.\n    4. Do not over-emphasize technical details (instrumental settings or computational software and parameter settings) unless necessary.\n- When the user requests querying or searching, you should consider the relevance and irrelevance between the search results and user needs, using positive and negative thinking to ensure the search results are highly relevant to user needs. You should also analyze the relevance and irrelevance when answering.\n- If equations or formulas are provided, include them in Latex and explain the meaning and **EVERY** involved variables.\n\n\nThe overall abstract should be brief with less than 3 sentences, including and only including:\n1) Professional definition of the key concepts involved.\n2) Key breakthroughs in recent years.\n3) Main challenges that remain unsolved.\n\nFor joints between each section or subsection, avoid using bullets or numbering.\nConsider this template:\n```\nThere are [number] aspects. Firstly, [aspect 1]; secondly, [aspect 2]; ...\n```\nAdjust the conjunctions adapting parallel relationship, progressive relationship, causal relationship as needed.\n\n\nFor each article, the format could be primarily referred but not limited to the following template:\n```\nIn [year], [first author] et al. found that [summary of findings including quantitative results if available] by conducting [method]; The key findings include [key results] and [innovations];<a href=\"URL\" target=\"_blank\">[n]</a>\nCompare with [first author from another paper] et al., who [summary of support/contradiction with reference to data or mechanism];<a href=\"URL\" target=\"_blank\">[n]</a>\n```\nNo need to include the title, the journal name of the paper.\n\n\n## SUGGESTING NEXT TOPICS\nBriefly suggest follow-up topics in one paragraph with no more than 3 sentences.\n\n1. Suggest a deeper analysis on spefic topic or paper based on the current discussion.\n2. [Optional] Add suggestions on executable computational studies.\n    - Capabilities for computaional sub-agents: DFT calculations, molecular dynamics, structure building / retrieving, etc.\n    - Capabilities for instrumental settings: XRD, XPS, NMR.\n    - Also capable of performing web search for terminologies.\n3. At the end of the output, propose successive or related topics for follow-up queries.\n\n**YOU MUST THINK THROUGH THE REAL RELATED TOPICS, NO NEED TO OUTPUT FOR THE SAKE OF OUTPUT.** Could refer to the following template:\n```\nIf you want a deeper analysis of specific paper, you can also provide the corresponding papers by downloading the original paper PDFs and sending them to me. Based on these papers, potential computational materials studies could be conducted on **[specific topic]**, **[specific topic]**, or **[specific topic]**. Tell me if you want to explore these computational studies further. If you also want to know more about **[topic 1]**, **[topic 2]**, or **[topic 3]**, I can also offer you more detailed research findings on these topics.\n```\n\n\nShould refer these Markdown format:\n\nlattice constant *a* = 3.5 Å; space group *P*2₁, *Pm*-3*m*; chemical formula: C₁₂H₂₄O₆, *α*-Si, NH₄⁺; physical variables: Δ*H*₍det₎, Δ₍c₎*H*₍det₎; sample name: **example**\n",
       "self_check": false,
-      "args_setting": "\n            If not specified, apply start_time=2020-01-01, end_time=2026-01-27, page_size not less than 150. When constructing query word list and question: (i) use English to ensure professionalism; (ii) avoid broad keywords like 'materials science', 'chemistry', 'progress'; (iii) extract specific, technically relevant keywords such as material names, molecular identifiers, mechanism names, property names, or application contexts; (iv) if the user's query is broad, decompose the concept into technical terms and generate concrete, research-usable keywords; (v) when translating, no segmenting composite technical noun phrases unless it is an established scientific usage. If ambiguous in Chinese, preserve the maximal-span term and translate it as a whole before considering refinement, including identifying: representative subfields, canonical mechanisms, prototypical material classes, commonly studied performance metrics, key methodologies or application contexts. These keywords must be specific enough to retrieve meaningful literature and avoid domain-level noise.\n\n            Must be aware of these prior knowledge:\n            - \n### KNOWLEDGE RETRIEVAL STRATEGY: SYNONYM EXPANSION\nYou are equipped with a \"Material Synonym Registry\". When a user asks about a specific material, check if it falls under any known naming conflicts or aliases.\n\n**Registry Rules:**\n- If user mentions ZIF-8or MAF-4or Zn(MeIm)2, use preferred name 'MAF-4'. **Explicitly output this warning** at appropriate place: \"Important: Althogh the structure commonly known as 'ZIF-8' was first reported by **Xiao-Ming Chen's (陈小明) group** (<a href=\"https://onlinelibrary.wiley.com/doi/10.1002/anie.200503778\" target=\"_blank\">[maf4]</a>), and renamed as MAF-4.\"\n- If user mentions DPA-1or DPA-2or DPA-3, use preferred name 'DPA1, DPA2, DPA3 (when output); add DPA-1, DPA-2, DPA-3 (when query)'. **Explicitly output this warning** at appropriate place: \"Note: The hyphenated nomenclature (DPA-x) is deprecated. Please refer to the new standard (DPAx).\"\n\n\n**Instructions:**\n1. **Identify**: Check if the user's query contains any keywords from the registry.\n2. **Expand**: If a match is found, you MUST use the explicitly defined `search_query` logic (e.g., OR logic) to ensure no literature is missed.\n   - *Example:* If the user asks for \"ZIF-8\", do NOT just search \"ZIF-8\". Search \"('ZIF-8' OR 'MAF-4')\" to capture all priority papers.\n3. **Merge**: Treat results from different aliases as the same entity.\n\n        ",
+      "args_setting": "\n            If not specified, apply start_time=2020-01-01, end_time=2026-01-29, page_size not less than 150. When constructing query word list and question: (i) use English to ensure professionalism; (ii) avoid broad keywords like 'materials science', 'chemistry', 'progress'; (iii) extract specific, technically relevant keywords such as material names, molecular identifiers, mechanism names, property names, or application contexts; (iv) if the user's query is broad, decompose the concept into technical terms and generate concrete, research-usable keywords; (v) when translating, no segmenting composite technical noun phrases unless it is an established scientific usage. If ambiguous in Chinese, preserve the maximal-span term and translate it as a whole before considering refinement, including identifying: representative subfields, canonical mechanisms, prototypical material classes, commonly studied performance metrics, key methodologies or application contexts. These keywords must be specific enough to retrieve meaningful literature and avoid domain-level noise.\n\n            Must be aware of these prior knowledge:\n            - \n### KNOWLEDGE RETRIEVAL STRATEGY: SYNONYM EXPANSION\nYou are equipped with a \"Material Synonym Registry\". When a user asks about a specific material, check if it falls under any known naming conflicts or aliases.\n\n**Registry Rules:**\n- If user mentions ZIF-8or MAF-4or Zn(MeIm)2, use preferred name 'MAF-4'. **Explicitly output this warning** at appropriate place: \"Important: Althogh the structure commonly known as 'ZIF-8' was first reported by **Xiao-Ming Chen's (陈小明) group** (<a href=\"https://onlinelibrary.wiley.com/doi/10.1002/anie.200503778\" target=\"_blank\">[maf4]</a>), and renamed as MAF-4.\"\n- If user mentions DPA-1or DPA-2or DPA-3, use preferred name 'DPA1, DPA2, DPA3 (when output); add DPA-1, DPA-2, DPA-3 (when query)'. **Explicitly output this warning** at appropriate place: \"Note: The hyphenated nomenclature (DPA-x) is deprecated. Please refer to the new standard (DPAx).\"\n\n\n**Instructions:**\n1. **Identify**: Check if the user's query contains any keywords from the registry.\n2. **Expand**: If a match is found, you MUST use the explicitly defined `search_query` logic (e.g., OR logic) to ensure no literature is missed.\n   - *Example:* If the user asks for \"ZIF-8\", do NOT just search \"ZIF-8\". Search \"('ZIF-8' OR 'MAF-4')\" to capture all priority papers.\n3. **Merge**: Treat results from different aliases as the same entity.\n\n        ",
       "server": {
         "test": "http://bohrium-mcp-internal.dp.tech:11003/sse",
         "uat": "http://bohrium-mcp-internal.dp.tech:11003/sse",
@@ -1632,17 +1632,17 @@
       "tool_id": "020-ORCHESTR-001",
       "name": "orchestrate_input",
       "description": {
-        "What it does": "Generate input scripts for simulation engines (Currently supports: LAMMPS).",
+        "What it does": "Generate input scripts for simulation/calculation engines. Supports: LAMMPS, ABACUS, VASP, QE (Quantum ESPRESSO), Psi4, Gaussian, ORCA.",
         "When to use": "Create input from description.",
-        "Input": "engine_type=\"lammps\", natural language task.",
+        "Input": "structural information; engine_type (one of: lammps, abacus, vasp, qe, psi4, gaussian, orca), natural language task.",
         "Output": "Input script content.",
         "Notes": "Script generation only.",
         "Costs": "Low."
       },
       "description_cn": {
-        "工具简介": "为模拟引擎生成输入脚本（当前支持：LAMMPS）。",
+        "工具简介": "为模拟引擎生成输入脚本（当前支持：LAMMPS, ABACUS, VASP, QE, Psi4, Gaussian, ORCA）。",
         "使用场景": "根据描述创建输入文件。",
-        "输入": "engine_type=\"lammps\"，自然语言任务描述。",
+        "输入": "engine_type=\"lammps\"（或者以下其中一种：abacus, vasp, qe, psi4, gaussian, orca），自然语言任务描述。",
         "输出": "输入脚本内容。",
         "注意事项": "仅生成脚本，不执行模拟。",
         "成本": "低。"
@@ -1650,7 +1650,9 @@
       "belonging_agent": "LAMMPS_agent",
       "scenes": [
         "MOLECULAR_DYNAMICS",
-        "LAMMPS"
+        "LAMMPS",
+        "ABACUS",
+        "UNIVERSAL"
       ],
       "alternative_tools": [],
       "summary_prompt": "",
@@ -1886,7 +1888,7 @@
       },
       "description_cn": {
         "工具简介": "获取钙钛矿太阳能电池数据库的完整模式和描述信息。",
-        "使用场景": "在查询钙钛矿数据库之前使用。 钙钛矿",
+        "使用场景": "在查询钙钛矿数据库之前使用。",
         "输入": "无。",
         "输出": "数据库模式和描述。",
         "注意事项": "特定于钙钛矿数据库。",
@@ -1920,7 +1922,7 @@
       },
       "description_cn": {
         "工具简介": "对钙钛矿太阳能电池数据库执行 SQL 查询并返回前 k 行。",
-        "使用场景": "获取数据库架构（Schema）信息后，需要查询钙钛矿数据库时使用。 钙钛矿",
+        "使用场景": "获取数据库架构（Schema）信息后，需要查询钙钛矿数据库时使用。",
         "输入": "SQL 查询语句。",
         "输出": "查询结果的前 k 行。",
         "注意事项": "仅限于前 k 行。",
@@ -1954,7 +1956,7 @@
       },
       "description_cn": {
         "工具简介": "使用添加剂分子列表预测添加剂对钙钛矿 PCE 的影响。",
-        "使用场景": "当需要添加剂的 PCE 变化预测时使用。 钙钛矿",
+        "使用场景": "当需要添加剂的 PCE 变化预测时使用。",
         "输入": "添加剂分子列表。",
         "输出": "预测的 PCE 变化。",
         "注意事项": "特定于钙钛矿添加剂。",
@@ -1988,7 +1990,7 @@
       },
       "description_cn": {
         "工具简介": "分析物理吸附仪器报告。",
-        "使用场景": "有气体吸附数据需要分析时使用。 物理吸附",
+        "使用场景": "有气体吸附数据需要分析时使用。",
         "输入": "仪器报告。",
         "输出": "分析后的数据。",
         "注意事项": "仅针对物理吸附。",
@@ -2056,7 +2058,7 @@
       },
       "description_cn": {
         "工具简介": "从 Uni-ELF 推理系统的配置设置中获取目标信息。",
-        "使用场景": "当需要 Uni-ELF 的配置信息时使用。 聚合物",
+        "使用场景": "当需要 Uni-ELF 的配置信息时使用。",
         "输入": "无。",
         "输出": "全面的配置信息和可用的目标模型映射。",
         "注意事项": "特定于 Uni-ELF 系统。",
@@ -2072,9 +2074,9 @@
       "self_check": false,
       "args_setting": null,
       "server": {
-        "test": "",
-        "uat": "",
-        "prod": "http://efpl1193834.bohrium.tech:50002/sse"
+        "test": "http://efpl1193834.bohrium.tech:50001/sse",
+        "uat": "http://efpl1193834.bohrium.tech:50002/sse",
+        "prod": null
       }
     },
     {
@@ -2090,7 +2092,7 @@
       },
       "description_cn": {
         "工具简介": "对配方输入运行 Uni-ELF 推理以预测性质。",
-        "使用场景": "当需要配方的性质预测时使用。 聚合物",
+        "使用场景": "当需要配方的性质预测时使用。",
         "输入": "配方的组分和比例。",
         "输出": "预测的性质。",
         "注意事项": "支持混合物和伪配方。",
@@ -2106,9 +2108,9 @@
       "self_check": false,
       "args_setting": null,
       "server": {
-        "test": "",
-        "uat": "",
-        "prod": "http://efpl1193834.bohrium.tech:50002/mcp"
+        "test": "http://efpl1193834.bohrium.tech:50001/sse",
+        "uat": "http://efpl1193834.bohrium.tech:50002/sse",
+        "prod": null
       }
     },
     {
@@ -2124,7 +2126,7 @@
       },
       "description_cn": {
         "工具简介": "使用自然语言查询聚合物研究的文献知识库。",
-        "使用场景": "当您需要对聚合物相关主题进行深入的文献分析时。 聚合物",
+        "使用场景": "当您需要对聚合物相关主题进行深入的文献分析时。",
         "输入": "关于聚合物的自然语言问题。",
         "输出": "通过向量相似性搜索返回的文献摘要。",
         "注意事项": "主题仅限于聚合物。",
@@ -2331,7 +2333,7 @@
       },
       "description_cn": {
         "工具简介": "计算反应势能剖面。",
-        "使用场景": "用于有机反应分析。 反应",
+        "使用场景": "用于有机反应分析。",
         "输入": "反应输入。",
         "输出": "反应势能剖面（展示反应坐标与能量关系的剖面图）。",
         "注意事项": "仅针对化学反应体系；不适用于通用的结构搜索或非反应性计算。",
@@ -2365,7 +2367,7 @@
       },
       "description_cn": {
         "工具简介": "查询不锈钢研究的文献知识库。",
-        "使用场景": "当您需要对不锈钢相关主题进行深入的文献分析时。 不锈钢",
+        "使用场景": "当您需要对不锈钢相关主题进行深入的文献分析时。",
         "输入": "关于不锈钢的自然语言问题。",
         "输出": "通过向量搜索返回的文献摘要。",
         "注意事项": "主题仅限于不锈钢。",
@@ -2402,7 +2404,7 @@
       },
       "description_cn": {
         "工具简介": "使用神经网络预测不锈钢的极限抗拉强度。",
-        "使用场景": "当您需要基于化学成分预测抗拉强度时。 不锈钢",
+        "使用场景": "当您需要基于化学成分预测抗拉强度时。",
         "输入": "化学配方列表。",
         "输出": "预测的极限抗拉强度值列表（单位：MPa）。",
         "注意事项": "仅适用于不锈钢；不返回文件。",
@@ -2439,7 +2441,7 @@
       },
       "description_cn": {
         "工具简介": "利用 CALYPSO 进行全局结构搜索，从而生成一系列候选晶体结构。",
-        "使用场景": "当需要探索成分的同质异形体时使用。 结构生成",
+        "使用场景": "当需要探索成分的同质异形体时使用。",
         "输入": "有效的元素输入。",
         "输出": "POSCAR 文件。",
         "注意事项": "需要下游弛豫。",
@@ -2473,7 +2475,7 @@
       },
       "description_cn": {
         "工具简介": "基于条件属性和空间群生成晶体结构。",
-        "使用场景": "当需要具有特定性质的结构时使用。 结构生成，条件生成",
+        "使用场景": "当需要具有特定性质的结构时使用。",
         "输入": "目标性质（带隙、模量、Tc、声速）；空间群。",
         "输出": "生成的结构。",
         "注意事项": "仅支持模型预训练过的特定性质;必须指定空间群作为生成的约束条件。",
@@ -2508,7 +2510,7 @@
       },
       "description_cn": {
         "工具简介": "从结构文件创建超胞扩充。",
-        "使用场景": "当你需要构建更大尺寸的单元以进行模拟时。 结构生成",
+        "使用场景": "当你需要构建更大尺寸的单元以进行模拟时。",
         "输入": "结构文件。",
         "输出": "超胞结构。",
         "注意事项": "仅支持扩展，不支持缩减。",
@@ -2543,7 +2545,7 @@
       },
       "description_cn": {
         "工具简介": "为简单堆积类型和化合物构建体相结构。",
-        "使用场景": "用于标准晶体结构，如 sc、fcc、bcc、hcp、岩盐等。 结构生成",
+        "使用场景": "用于标准晶体结构，如 sc、fcc、bcc、hcp、岩盐等。",
         "输入": "元素符号或化学式；晶格常数。",
         "输出": "晶体结构文件。",
         "注意事项": "仅限于简单结构；不支持复杂晶体。",
@@ -2582,7 +2584,7 @@
       },
       "description_cn": {
         "工具简介": "从体相结构构建表面结构。",
-        "使用场景": "当需要表面模型进行计算时使用。 结构生成",
+        "使用场景": "当需要表面模型进行计算时使用。",
         "输入": "体相结构文件；Miller 指数。",
         "输出": "表面结构文件。",
         "注意事项": "需要体相输入；添加真空层。",
@@ -2617,7 +2619,7 @@
       },
       "description_cn": {
         "工具简介": "通过在表面上放置分子来构建表面-吸附物结构。",
-        "使用场景": "用于吸附研究。 结构生成",
+        "使用场景": "用于吸附研究。",
         "输入": "表面结构文件和吸附质结构文件。",
         "输出": "组合结构文件。",
         "注意事项": "仅支持单吸附质放置。",
@@ -2652,7 +2654,7 @@
       },
       "description_cn": {
         "工具简介": "通过堆叠两个表面结构来构建异质界面。",
-        "使用场景": "用于界面研究。 结构生成",
+        "使用场景": "用于界面研究。",
         "输入": "两个表面结构文件。",
         "输出": "界面结构文件。",
         "注意事项": "基础的应变 (Strain) 检查。",
@@ -2722,7 +2724,7 @@
       },
       "description_cn": {
         "工具简介": "通过指定空间群和 Wyckoff 位置来构建晶体结构。",
-        "使用场景": "用于自定义晶体结构。 结构生成",
+        "使用场景": "用于自定义晶体结构。",
         "输入": "空间群；带坐标的 Wyckoff 位置。",
         "输出": "晶体结构文件。",
         "注意事项": "需要对称性知识。",
@@ -2761,7 +2763,7 @@
       },
       "description_cn": {
         "工具简介": "从 SMILES 字符串构建 3D 分子结构。",
-        "使用场景": "当您有 SMILES 并需要 3D 坐标时使用。 结构生成",
+        "使用场景": "当您有 SMILES 并需要 3D 坐标时使用。",
         "输入": "SMILES 字符串。",
         "输出": "分子结构文件。",
         "注意事项": "单个构象生成。",
@@ -2796,7 +2798,7 @@
       },
       "description_cn": {
         "工具简介": "通过替换原子生成掺杂晶体结构。",
-        "使用场景": "用于掺杂研究。 结构生成",
+        "使用场景": "用于掺杂研究。",
         "输入": "主体结构；掺杂物种和浓度。",
         "输出": "掺杂结构文件。",
         "注意事项": "随机替换；建议使用超胞。",
@@ -2831,7 +2833,7 @@
       },
       "description_cn": {
         "工具简介": "通过基于空间关系移除特定分子簇来创建缺陷结构。",
-        "使用场景": "用于通过基于空间聚类移除特定分子单元在分子晶体中创建空位缺陷。 结构生成",
+        "使用场景": "用于通过基于空间聚类移除特定分子单元在分子晶体中创建空位缺陷。",
         "输入": "分子晶体结构文件；（可选）目标移除物种、起始分子索引。",
         "输出": "缺陷结构文件。",
         "注意事项": "专为分子晶体设计。该功能确保移除的是整个分子单元，而非晶格中的孤立原子。",
@@ -2866,7 +2868,7 @@
       },
       "description_cn": {
         "工具简介": "在周期性盒子 (Periodic Box) 中生成非晶态/无定形分子结构。",
-        "使用场景": "用于非晶材料模拟。 结构生成",
+        "使用场景": "用于非晶材料模拟。",
         "输入": "分子结构；盒子尺寸/密度/数量。",
         "输出": "非晶结构文件。",
         "注意事项": "具备基础的防重叠功能，但生成的结构仍需进行后续的结构弛豫或分子动力学平衡。",
@@ -3009,7 +3011,7 @@
       },
       "description_cn": {
         "工具简介": "优化超导结构。",
-        "使用场景": "弛豫超导体几何结构。 超导体",
+        "使用场景": "弛豫超导体几何结构。",
         "输入": "结构文件（CIF/POSCAR）。",
         "输出": "优化后的结构。",
         "注意事项": "仅进行几何优化。",
@@ -3043,7 +3045,7 @@
       },
       "description_cn": {
         "工具简介": "计算焓和稳定性。",
-        "使用场景": "筛选超导体稳定性。 超导体",
+        "使用场景": "筛选超导体稳定性。",
         "输入": "结构候选物。",
         "输出": "焓、凸包、稳定相。",
         "注意事项": "仅限超导体。",
@@ -3079,7 +3081,7 @@
       },
       "description_cn": {
         "工具简介": "预测超导 Tc。",
-        "使用场景": "估算临界温度。 超导体",
+        "使用场景": "估算临界温度。",
         "输入": "材料结构。",
         "输出": "Tc 预测。",
         "注意事项": "仅限 DPA 模型。",
@@ -3115,7 +3117,7 @@
       },
       "description_cn": {
         "工具简介": "筛选多个超导体。",
-        "使用场景": "比较 Tc 和稳定性。 超导体",
+        "使用场景": "比较 Tc 和稳定性。",
         "输入": "候选物列表。",
         "输出": "排序的 Tc 和稳定性。",
         "注意事项": "仅限多个候选物。",
@@ -3149,7 +3151,7 @@
       },
       "description_cn": {
         "工具简介": "使用自然语言查询固态电解质（SSE）研究的文献知识库。",
-        "使用场景": "当您需要对固态电解质相关主题进行深入的文献分析时。 固态电解质",
+        "使用场景": "当您需要对固态电解质相关主题进行深入的文献分析时。",
         "输入": "关于固态电解质的自然语言问题。",
         "输出": "通过向量相似性搜索返回的文献摘要。",
         "注意事项": "主题仅限于固态电解质。",
@@ -3186,7 +3188,7 @@
       },
       "description_cn": {
         "工具简介": "预测热电性质。",
-        "使用场景": "估算带隙、塞贝克系数等。 热电",
+        "使用场景": "估算带隙、塞贝克系数等。",
         "输入": "材料结构文件。",
         "输出": "带隙、塞贝克系数、功率因子、模量。",
         "注意事项": "暂不支持热导率的预测。",
@@ -3220,7 +3222,7 @@
       },
       "description_cn": {
         "工具简介": "在压力下优化。",
-        "使用场景": "弛豫热电结构。 热电",
+        "使用场景": "弛豫热电结构。",
         "输入": "结构、压力。",
         "输出": "优化后的结构。",
         "注意事项": "仅限热电材料。",
@@ -3254,7 +3256,7 @@
       },
       "description_cn": {
         "工具简介": "计算压力下的焓。",
-        "使用场景": "筛选热电稳定性。 热电",
+        "使用场景": "筛选热电稳定性。",
         "输入": "候选物、压力。",
         "输出": "焓、凸包。",
         "注意事项": "仅限热电材料。",
@@ -3288,7 +3290,7 @@
       },
       "description_cn": {
         "工具简介": "筛选热电候选物。",
-        "使用场景": "识别有前景的材料。 热电",
+        "使用场景": "识别有前景的材料。",
         "输入": "多个结构。",
         "输出": "排序的热电性质。",
         "注意事项": "需要多个输入。",
@@ -3458,7 +3460,7 @@
       },
       "description_cn": {
         "工具简介": "从文件中提取结构信息。",
-        "使用场景": "分析晶体/分子结构文件。 通用场景",
+        "使用场景": "分析晶体/分子结构文件。",
         "输入": "结构文件路径。",
         "输出": "化学式、空间群、晶格、原子。",
         "注意事项": "不进行修改；只读。",
@@ -3495,7 +3497,7 @@
       },
       "description_cn": {
         "工具简介": "从文件中提取分子结构信息。",
-        "使用场景": "分析分子结构文件。 通用场景",
+        "使用场景": "分析分子结构文件。",
         "输入": "分子文件路径。",
         "输出": "化学式、原子、键、性质。",
         "注意事项": "不进行修改；只读。",
@@ -3532,7 +3534,7 @@
       },
       "description_cn": {
         "工具简介": "执行网页搜索，回答 what、why、how 类问题。",
-        "使用场景": "进行简明的事实查询或解释性检索。 通用场景",
+        "使用场景": "进行简明的事实查询或解释性检索。",
         "输入": "搜索查询词。",
         "输出": "URL、标题、摘要片段。",
         "注意事项": "不支持指令型查询；如需提取页面内容可后续调用 extract_info_from_webpage。",
@@ -3567,7 +3569,7 @@
       },
       "description_cn": {
         "工具简介": "从网页 URL 提取关键信息。",
-        "使用场景": "需要从网页获取科学事实、数据或结论时使用。 通用场景",
+        "使用场景": "需要从网页获取科学事实、数据或结论时使用。",
         "输入": "网页 URL。",
         "输出": "以文本形式呈现的提取结果。",
         "注意事项": "仅返回文本，不支持生成任何格式的文件。",
@@ -3602,7 +3604,7 @@
       },
       "description_cn": {
         "工具简介": "解析各类文件内容并提取关键信息。",
-        "使用场景": "需要从文件中提取信息、且无专用提取工具时使用。 通用工具",
+        "使用场景": "需要从文件中提取信息、且无专用提取工具时使用。",
         "输入": "文件（TXT、PDF、Word、Excel、PNG、JPG 等）。",
         "输出": "以文本形式呈现的提取信息。",
         "注意事项": "仅返回文本，不支持生成任何格式的文件。",
@@ -3719,8 +3721,8 @@
       "self_check": false,
       "args_setting": null,
       "server": {
-        "test": "http://root@pkfz1410356.bohrium.tech:50001/sse",
-        "uat": "http://root@pkfz1410356.bohrium.tech:50001/sse",
+        "test": "https://f0f037ca00652ac8d5509652c91f1332.appspace.bohrium.com/sse?token=cfb9892682874677953eed08e92b45fe",
+        "uat": "https://1128e9e0f1fc927bb885835e0e7a6e48.appspace.bohrium.com/sse?token=cfb9892682874677953eed08e92b45fe",
         "prod": "http://root@pkfz1410356.bohrium.tech:50001/sse"
       }
     },
@@ -3753,8 +3755,8 @@
       "self_check": false,
       "args_setting": null,
       "server": {
-        "test": "http://root@pkfz1410356.bohrium.tech:50001/sse",
-        "uat": "http://root@pkfz1410356.bohrium.tech:50001/sse",
+        "test": "https://f0f037ca00652ac8d5509652c91f1332.appspace.bohrium.com/sse?token=cfb9892682874677953eed08e92b45fe",
+        "uat": "https://1128e9e0f1fc927bb885835e0e7a6e48.appspace.bohrium.com/sse?token=cfb9892682874677953eed08e92b45fe",
         "prod": "http://root@pkfz1410356.bohrium.tech:50001/sse"
       }
     },

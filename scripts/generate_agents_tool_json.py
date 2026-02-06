@@ -240,6 +240,10 @@ def parse_description_cn(description_cn: str) -> dict:
         elif current_key == "使用场景" and (',' in line or line.isupper() or line.isdigit()):
             # Skip tag lines like "ABACUS,空位形成能" that appear after "使用场景："
             continue
+        elif current_key == "使用场景" and not line.startswith(('功能：', '使用场景：', '使用方法：', '1. 输入：', '1.输入：', '2. 输出：', '2.输出：', '3. 注意事项：', '3.注意事项：', '4. 成本/备注：', '4.成本/备注：', '前置条件/输入：', '输入：', '输出：', '不能做/限制：', '限制：', '注意事项：', '成本/备注：', '成本：')):
+            # Skip tag lines between "使用场景：" and "使用方法：" (e.g., "结构生成")
+            # These are typically scene names or tags that should not be part of the usage scenario
+            continue
         elif line.startswith('使用方法：'):
             if current_key:
                 result[current_key] = ' '.join(current_value).strip()
