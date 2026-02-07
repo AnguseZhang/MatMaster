@@ -94,6 +94,9 @@ from agents.matmaster_agent.flow_agents.step_validation_agent.schema import (
     StepValidationSchema,
 )
 from agents.matmaster_agent.flow_agents.thinking_agent.agent import ThinkingAgent
+from agents.matmaster_agent.flow_agents.thinking_agent.callback import (
+    filter_thinking_llm_contents,
+)
 from agents.matmaster_agent.flow_agents.thinking_agent.constant import THINKING_AGENT
 from agents.matmaster_agent.flow_agents.utils import (
     check_plan,
@@ -216,6 +219,7 @@ class MatMasterFlowAgent(LlmAgent):
             model=MatMasterLlmConfig.default_litellm_model,
             description='在制定计划前对工具选择与顺序进行推理',
             instruction='',
+            before_model_callback=filter_thinking_llm_contents,
         )
 
         self._execution_agent = None
@@ -242,6 +246,7 @@ class MatMasterFlowAgent(LlmAgent):
             self.intent_agent,
             self.expand_agent,
             self.scene_agent,
+            self.thinking_agent,
             self.plan_make_agent,
             self.analysis_agent,
             self.report_agent,
@@ -273,6 +278,11 @@ class MatMasterFlowAgent(LlmAgent):
     @property
     def scene_agent(self) -> LlmAgent:
         return self._scene_agent
+
+    @computed_field
+    @property
+    def thinking_agent(self) -> LlmAgent:
+        return self._thinking_agent
 
     @computed_field
     @property
@@ -607,6 +617,7 @@ class MatMasterFlowAgent(LlmAgent):
                     {
                         'matmaster_thinking_ui_args': json.dumps(
                             {
+                                'title': '已思考',
                                 'status': 'end',
                             }
                         )

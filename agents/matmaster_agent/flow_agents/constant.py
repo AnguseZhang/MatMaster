@@ -1,9 +1,12 @@
 from agents.matmaster_agent.flow_agents.expand_agent.constant import EXPAND_AGENT
 from agents.matmaster_agent.flow_agents.intent_agent.constant import INTENT_AGENT
+from agents.matmaster_agent.flow_agents.plan_make_agent.constant import PLAN_MAKE_AGENT
 from agents.matmaster_agent.flow_agents.scene_agent.constant import SCENE_AGENT
 
 # Agent Constants
 MATMASTER_SUPERVISOR_AGENT = 'matmaster_supervisor_agent'
+EXECUTION_SUMMARY_AGENT = 'execution_summary_agent'
+REPORT_AGENT = 'report_agent'
 
 # Function-Call Constants
 MATMASTER_FLOW = 'matmaster_flow'
@@ -20,4 +23,13 @@ UNIVERSAL_CONTEXT_FILTER_KEYWORDS = [
     INTENT_AGENT,
     EXPAND_AGENT.replace('_agent', '_schema'),
     SCENE_AGENT,
+]
+
+THINKING_CONTEXT_FILTER_KEYWORDS = UNIVERSAL_CONTEXT_FILTER_KEYWORDS + [
+    PLAN_MAKE_AGENT,
+    MATMASTER_FLOW,
+    MATMASTER_FLOW_PLANS,
+    MATMASTER_GENERATE_NPS,
+    EXECUTION_SUMMARY_AGENT,
+    REPORT_AGENT,
 ]
