@@ -53,17 +53,14 @@ from agents.matmaster_agent.sub_agents.HEAkb_agent.prompt import (
     HEAKbAgentToolDescription,
 )
 from agents.matmaster_agent.sub_agents.LAMMPS_agent.constant import LAMMPS_AGENT_NAME
-
 from agents.matmaster_agent.sub_agents.MrDice_agent.structure_search_agent.constant import (
     STRUCTURE_SEARCH_AGENT_NAME,
-    STRUCTURE_SEARCH_URL
 )
 from agents.matmaster_agent.sub_agents.MrDice_agent.structure_search_agent.prompt import (
     StructureSearchAgentArgsSetting,
     StructureSearchAgentSummaryPrompt,
     StructureSearchAgentToolDescription,
 )
-
 from agents.matmaster_agent.sub_agents.NMR_agent.constant import (
     NMR_AGENT_NAME,
 )

@@ -110,42 +110,36 @@ from agents.matmaster_agent.sub_agents.LAMMPS_agent.agent import (
     lammps_toolset,
 )
 from agents.matmaster_agent.sub_agents.LAMMPS_agent.constant import LAMMPS_AGENT_NAME
-
-from agents.matmaster_agent.sub_agents.MrDice_agent.structure_search_agent.agent import (
-    StructureSearchAgentBase,
-    structure_search_toolset,
-)
-from agents.matmaster_agent.sub_agents.MrDice_agent.structure_search_agent.constant import (
-    STRUCTURE_SEARCH_AGENT_NAME,
-)
-
 from agents.matmaster_agent.sub_agents.MrDice_agent.bohriumpublic_agent.agent import (
     Bohriumpublic_AgentBase,
-    bohriumpublic_toolset,
 )
 from agents.matmaster_agent.sub_agents.MrDice_agent.bohriumpublic_agent.constant import (
     BOHRIUMPUBLIC_DATABASE_AGENT_NAME,
 )
 from agents.matmaster_agent.sub_agents.MrDice_agent.mofdb_agent.agent import (
     Mofdb_AgentBase,
-    mofdb_toolset,
 )
 from agents.matmaster_agent.sub_agents.MrDice_agent.mofdb_agent.constant import (
     MOFDB_DATABASE_AGENT_NAME,
 )
 from agents.matmaster_agent.sub_agents.MrDice_agent.openlam_agent.agent import (
     Openlam_AgentBase,
-    openlam_toolset,
 )
 from agents.matmaster_agent.sub_agents.MrDice_agent.openlam_agent.constant import (
     OPENLAM_DATABASE_AGENT_NAME,
 )
 from agents.matmaster_agent.sub_agents.MrDice_agent.optimade_agent.agent import (
     Optimade_AgentBase,
-    optimade_toolset,
 )
 from agents.matmaster_agent.sub_agents.MrDice_agent.optimade_agent.constant import (
     OPTIMADE_DATABASE_AGENT_NAME,
+)
+from agents.matmaster_agent.sub_agents.MrDice_agent.structure_search_agent.agent import (
+    StructureSearchAgentBase,
+    structure_search_toolset,
+)
+from agents.matmaster_agent.sub_agents.MrDice_agent.structure_search_agent.constant import (
+    STRUCTURE_SEARCH_AGENT_NAME,
 )
 from agents.matmaster_agent.sub_agents.NMR_agent.agent import (
     NMRAgent,
