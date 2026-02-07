@@ -9,7 +9,7 @@ from agents.matmaster_agent.core_agents.base_agents.schema_agent import (
     DisallowTransferAndContentLimitSchemaAgent,
 )
 from agents.matmaster_agent.logger import PrefixFilter
-from agents.matmaster_agent.state import MULTI_PLANS
+from agents.matmaster_agent.state import CURRENT_STEP
 from agents.matmaster_agent.utils.event_utils import update_state_event
 
 logger = logging.getLogger(__name__)
@@ -24,44 +24,22 @@ class PlanMakeAgent(DisallowTransferAndContentLimitSchemaAgent):
             async for event in super()._run_events(ctx):
                 yield event
 
-            if ctx.session.state.get(MULTI_PLANS):
+            if ctx.session.state.get(CURRENT_STEP):
                 logger.info(
-                    f'{ctx.session.id} multi_plans = {ctx.session.state[MULTI_PLANS]}'
+                    f'{ctx.session.id} NEXT_STEP = {ctx.session.state[CURRENT_STEP]}'
                 )
                 break
             else:
                 logger.error(f'{ctx.session.id} Multi Plans Generate Error, Retry')
 
-        if not ctx.session.state.get(MULTI_PLANS):
+        if not ctx.session.state.get(CURRENT_STEP):
             raise RuntimeError(
                 f'{ctx.session.id} After Retry, Multi Plans Generate Still Error!!'
             )
 
-        # 计算 feasibility
-        update_multi_plans = ctx.session.state['multi_plans']
-        for update_plan in update_multi_plans['plans']:
-            update_plan['feasibility'] = 'null'
-            total_steps = len(update_plan.get('steps', []))
-            exist_step = 0
-            update_plan_steps = []
-            for step in update_plan.get('steps', []):
-                if not step['tool_name']:
-                    step['tool_name'] = 'llm_tool'
-                update_plan_steps.append(step)
-            update_plan['steps'] = update_plan_steps
+        # 处理无工具的情况
+        update_current_step = ctx.session.state[CURRENT_STEP]
+        if not update_current_step['tool_name']:
+            update_current_step['tool_name'] = 'llm_tool'
 
-            for index, step in enumerate(update_plan['steps']):
-                if index == 0 and not step['tool_name']:
-                    break
-                if step['tool_name']:
-                    exist_step += 1
-                else:
-                    break
-            if not exist_step:
-                pass
-            elif exist_step != total_steps:
-                update_plan['feasibility'] = 'part'
-            else:
-                update_plan['feasibility'] = 'full'
-
-        yield update_state_event(ctx, state_delta={'multi_plans': update_multi_plans})
+        yield update_state_event(ctx, state_delta={CURRENT_STEP: update_current_step})

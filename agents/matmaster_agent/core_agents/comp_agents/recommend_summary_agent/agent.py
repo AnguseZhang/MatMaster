@@ -55,7 +55,6 @@ from agents.matmaster_agent.core_agents.comp_agents.tool_connect_agent import (
 )
 from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
 from agents.matmaster_agent.llm_config import MatMasterLlmConfig
-from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.model import ToolCallInfoSchema
 from agents.matmaster_agent.prompt import (
@@ -63,7 +62,11 @@ from agents.matmaster_agent.prompt import (
     GLOBAL_SCHEMA_INSTRUCTION,
     get_vocabulary_enforce_prompt,
 )
-from agents.matmaster_agent.state import RECOMMEND_PARAMS, STEP_DESCRIPTION
+from agents.matmaster_agent.state import (
+    CURRENT_STEP,
+    CURRENT_STEP_DESCRIPTION,
+    RECOMMEND_PARAMS,
+)
 from agents.matmaster_agent.sub_agents.tools import ALL_TOOLS
 from agents.matmaster_agent.utils.event_utils import (
     context_function_event,
@@ -178,9 +181,7 @@ class BaseAgentWithRecAndSum(
     @override
     async def _run_events(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
         # 根据计划来
-        current_step = ctx.session.state['plan']['steps'][
-            ctx.session.state['plan_index']
-        ]
+        current_step = ctx.session.state[CURRENT_STEP]
         current_step_tool_name = current_step['tool_name']
 
         # 连接 tool-server，获取doc和函数声明
@@ -214,7 +215,7 @@ class BaseAgentWithRecAndSum(
         )
 
         self.tool_call_info_agent.instruction = gen_tool_call_info_instruction(
-            user_prompt=current_step[STEP_DESCRIPTION],
+            user_prompt=current_step[CURRENT_STEP_DESCRIPTION],
             agent_prompt=self.instruction,
             tool_doc=tool_doc,
             tool_schema=tool_schema,
@@ -318,7 +319,7 @@ class BaseAgentWithRecAndSum(
 
         step_title = ctx.session.state.get('step_title', {}).get(
             'title',
-            f"{i18n.t(ctx.session.state['separate_card_info'])} {ctx.session.state['plan_index'] + 1}: {current_step_tool_name}",
+            current_step_tool_name,
         )
         for matmaster_flow_event in context_function_event(
             ctx,

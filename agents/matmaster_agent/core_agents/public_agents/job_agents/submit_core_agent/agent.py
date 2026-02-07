@@ -15,10 +15,11 @@ from agents.matmaster_agent.core_agents.comp_agents.dntransfer_climit_mcp_agent 
     DisallowTransferAndContentLimitMCPAgent,
 )
 from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
+from agents.matmaster_agent.flow_agents.step_utils import get_current_step
 from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.model import BohrJobInfo, DFlowJobInfo
-from agents.matmaster_agent.state import PLAN
+from agents.matmaster_agent.state import CURRENT_STEP, CURRENT_STEP_STATUS
 from agents.matmaster_agent.style import tool_response_failed_card
 from agents.matmaster_agent.utils.event_utils import (
     all_text_event,
@@ -99,11 +100,13 @@ class SubmitCoreMCPAgent(DisallowTransferAndContentLimitMCPAgent):
                             yield tool_response_failed_event
 
                         # 更新 plan 为失败
-                        update_plan = copy.deepcopy(ctx.session.state['plan'])
-                        update_plan['steps'][ctx.session.state['plan_index']][
-                            'status'
-                        ] = 'failed'
-                        yield update_state_event(ctx, state_delta={'plan': update_plan})
+                        post_execution_step = copy.deepcopy(get_current_step(ctx))
+                        post_execution_step[CURRENT_STEP_STATUS] = (
+                            PlanStepStatusEnum.FAILED
+                        )
+                        yield update_state_event(
+                            ctx, state_delta={CURRENT_STEP: post_execution_step}
+                        )
 
                         raise RuntimeError('Tool Execution Failed')
                     dict_result = load_tool_response(first_part)
@@ -189,12 +192,14 @@ class SubmitCoreMCPAgent(DisallowTransferAndContentLimitMCPAgent):
                                     yield tool_response_failed_event
 
                                 # 更新 plan 为失败
-                                update_plan = copy.deepcopy(ctx.session.state['plan'])
-                                update_plan['steps'][ctx.session.state['plan_index']][
-                                    'status'
-                                ] = 'failed'
+                                post_execution_step = copy.deepcopy(
+                                    get_current_step(ctx)
+                                )
+                                post_execution_step[CURRENT_STEP_STATUS] = (
+                                    PlanStepStatusEnum.FAILED
+                                )
                                 yield update_state_event(
-                                    ctx, state_delta={'plan': update_plan}
+                                    ctx, state_delta={CURRENT_STEP: post_execution_step}
                                 )
 
                                 raise RuntimeError('Tool Execution Failed')
@@ -263,19 +268,17 @@ class SubmitCoreMCPAgent(DisallowTransferAndContentLimitMCPAgent):
                     not event.partial
                     and event.content.parts[0].text
                     == 'All Function Calls Are Occurred Before, Continue'
-                    and ctx.session.state[PLAN]['steps'][
-                        ctx.session.state['plan_index']
-                    ]['status']
+                    and ctx.session.state[CURRENT_STEP]['status']
                     == PlanStepStatusEnum.PROCESS
                 ):
                     for _info_event in all_text_event(
                         ctx, self.name, '工具参数无变化，本次跳过执行', ModelRole
                     ):
                         yield _info_event
-                    update_plan = copy.deepcopy(ctx.session.state['plan'])
-                    update_plan['steps'][ctx.session.state['plan_index']][
-                        'status'
-                    ] = PlanStepStatusEnum.FAILED
-                    yield update_state_event(ctx, state_delta={'plan': update_plan})
+                    post_execution_step = copy.deepcopy(ctx.session.state[CURRENT_STEP])
+                    post_execution_step['status'] = PlanStepStatusEnum.FAILED
+                    yield update_state_event(
+                        ctx, state_delta={CURRENT_STEP: post_execution_step}
+                    )
             else:
                 yield event

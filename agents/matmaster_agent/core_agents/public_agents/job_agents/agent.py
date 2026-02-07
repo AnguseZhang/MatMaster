@@ -25,8 +25,8 @@ from agents.matmaster_agent.core_agents.public_agents.job_agents.submit_render_a
     SubmitRenderAgent,
 )
 from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
-from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.logger import PrefixFilter
+from agents.matmaster_agent.state import CURRENT_STEP
 from agents.matmaster_agent.utils.event_utils import (
     all_text_event,
     context_function_event,
@@ -132,9 +132,7 @@ class BaseAsyncJobAgent(BaseAgentWithRecAndSum):
         async for result_event in self.result_agent.run_async(ctx):
             yield result_event
 
-        current_step = ctx.session.state['plan']['steps'][
-            ctx.session.state['plan_index']
-        ]
+        current_step = ctx.session.state[CURRENT_STEP]
         current_step_tool_name = current_step['tool_name']
         current_step_status = current_step['status']
         if current_step_status in [
@@ -144,7 +142,7 @@ class BaseAsyncJobAgent(BaseAgentWithRecAndSum):
             # Only Query Job Result
             step_title = ctx.session.state.get('step_title', {}).get(
                 'title',
-                f"{i18n.t(ctx.session.state['separate_card_info'])} {ctx.session.state['plan_index'] + 1}: {current_step_tool_name}",
+                current_step_tool_name,
             )
             for matmaster_flow_event in context_function_event(
                 ctx,

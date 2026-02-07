@@ -16,6 +16,7 @@ load_dotenv(find_dotenv(f'.env.{CURRENT_ENV}'))
 MATMASTER_AGENT_NAME = 'matmaster_agent'
 
 ModelRole = 'model'
+UserRole = 'user'
 
 Transfer2Agent = 'transfer_to_agent'
 

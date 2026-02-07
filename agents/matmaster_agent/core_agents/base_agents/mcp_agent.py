@@ -50,7 +50,7 @@ from agents.matmaster_agent.memory.store_tool_result_callback import (
     store_tool_result_in_memory,
 )
 from agents.matmaster_agent.model import CostFuncType
-from agents.matmaster_agent.state import PLAN
+from agents.matmaster_agent.state import CURRENT_STEP, CURRENT_STEP_RESULT
 from agents.matmaster_agent.style import tool_response_failed_card
 from agents.matmaster_agent.utils.event_utils import (
     all_text_event,
@@ -240,8 +240,10 @@ class MCPRunEventsMixin(BaseMixin):
                         raise
 
                     parsed_tool_result = await parse_result(ctx, dict_result)
-                    logger.info(
-                        f'{ctx.session.id} parsed_tool_result = {parsed_tool_result}'
+                    post_execution_step = copy.deepcopy(ctx.session.state[CURRENT_STEP])
+                    post_execution_step[CURRENT_STEP_RESULT] = parsed_tool_result
+                    yield update_state_event(
+                        ctx, state_delta={CURRENT_STEP: post_execution_step}
                     )
                     for _frontend_render_event in frontend_render_event(
                         ctx,
@@ -263,9 +265,7 @@ class MCPRunEventsMixin(BaseMixin):
                         not event.partial
                         and event.content.parts[0].text
                         == 'All Function Calls Are Occurred Before, Continue'
-                        and ctx.session.state[PLAN]['steps'][
-                            ctx.session.state['plan_index']
-                        ]['status']
+                        and ctx.session.state[CURRENT_STEP]['status']
                         == PlanStepStatusEnum.PROCESS
                     ):
                         for _info_event in all_text_event(
