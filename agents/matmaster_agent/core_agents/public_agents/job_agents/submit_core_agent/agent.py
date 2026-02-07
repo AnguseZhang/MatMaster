@@ -100,11 +100,13 @@ class SubmitCoreMCPAgent(DisallowTransferAndContentLimitMCPAgent):
                             yield tool_response_failed_event
 
                         # 更新 plan 为失败
-                        update_plan = copy.deepcopy(ctx.session.state['plan'])
-                        update_plan['steps'][ctx.session.state['plan_index']][
-                            'status'
-                        ] = 'failed'
-                        yield update_state_event(ctx, state_delta={'plan': update_plan})
+                        post_execution_step = copy.deepcopy(get_current_step(ctx))
+                        post_execution_step[CURRENT_STEP_STATUS] = (
+                            PlanStepStatusEnum.FAILED
+                        )
+                        yield update_state_event(
+                            ctx, state_delta={CURRENT_STEP: post_execution_step}
+                        )
 
                         raise RuntimeError('Tool Execution Failed')
                     dict_result = load_tool_response(first_part)
