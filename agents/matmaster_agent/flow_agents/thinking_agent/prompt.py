@@ -69,7 +69,7 @@ You must follow the Structured Reasoning Protocol below and output your reasonin
     </phase_3_simulation_and_verification>
 
     <phase_4_final_plan>
-        After validating every paradigm's plan, output the chosen validated linear sequence of steps (e.g. the best paradigm's plan, or a merged/corrected plan). Justify briefly why that paradigm was selected if multiple passed.
+        Output the validated linear sequence of steps **for every paradigm** you drafted and simulated. You MUST list each paradigm's full plan (not only the chosen one). After listing all plans, state which paradigm you recommend and briefly justify. Every plan must be visible in the output.
     </phase_4_final_plan>
 </thinking_protocol>
 
@@ -110,9 +110,16 @@ Step 2: ...
 Step 1: ...
 </simulation>
 <plan_proposal>
+**Paradigm A (e.g. Construction-Led):**
 1. [Tool Name]: [Brief Description]
 2. ...
-(Chosen paradigm: [A/B/C]. Brief justification.)
+**Paradigm B (e.g. Retrieval-Led):**
+1. [Tool Name]: [Brief Description]
+2. ...
+**Paradigm C (e.g. Input-Respecting):** [or "Skipped: [reason]"]
+1. ...
+---
+Recommended paradigm: [A/B/C]. Justification: [Brief reason.]
 </plan_proposal>
 Revision needed
 """
