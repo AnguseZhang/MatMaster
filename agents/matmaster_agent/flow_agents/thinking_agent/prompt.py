@@ -35,36 +35,49 @@ You must follow the Structured Reasoning Protocol below and output your reasonin
         If <Session Memory> is provided: use it only to align tool choice and parameters (e.g. preferred methods, previously chosen parameters). Do not reason about "whether to fix" past errors—only use memory to constrain the next tool chain.
     </phase_1_analysis>
 
+    <phase_1b_strategy_brainstorming>
+        Before drafting the plan, brainstorm at least 3 distinct strategic paradigms to ensure solution diversity:
+        - **Construction-Led Paradigm**: Prioritize building the structure using `build_` tools.
+        - **Retrieval-Led Paradigm**: Prioritize fetching existing structures from high-fidelity databases.
+        - **Input-Respecting/Expert Paradigm**: (If user files are provided) Execute based strictly on user-uploaded scripts and parameters.
+        Evaluate the pros and cons of each for this specific query.
+    </phase_1b_strategy_brainstorming>
+
     <phase_2_drafting>
-        Propose a preliminary tool sequence from the Available Tools list.
+        For **each** paradigm from phase_1b (Construction-Led, Retrieval-Led, Input-Respecting/Expert), propose a preliminary tool sequence from the Available Tools list. If a paradigm is inapplicable to this query, state why and skip that paradigm's draft.
         Select tools based STRICTLY on their "What it does" and "Prerequisites / Inputs" descriptions.
     </phase_2_drafting>
 
     <phase_3_simulation_and_verification>
-        CRITICAL — Mental Simulation (Dry Run): Before finalizing the plan, you MUST perform a type-checking simulation.
+        CRITICAL — Mental Simulation (Dry Run): You MUST run the type-checking simulation **for each paradigm's proposed plan**. Do not validate only one paradigm; every paradigm that received a draft in phase_2 must be verified.
 
-        1. **Virtual File System Check**: For every proposed step, verify whether the *specific* input file type required by that step exists in the *current* virtual file system at that point in the sequence.
+        For **each** paradigm you drafted:
+        1. **Virtual File System Check**: For every proposed step of that paradigm's plan, verify whether the *specific* input file type required by that step exists in the *current* virtual file system at that point in the sequence.
            - Example: Step 3 requires `slab_structure.cif`. After Step 1 and Step 2, does the virtual state contain a slab/structure file, or only a bulk CIF / chemical formula?
            - Output explicitly: "Step N requires Input Type A. Current State provides Type B. [PASS if A matches B; otherwise: Mismatch -> Insert Converter Tool.]"
 
-        2. **Mandatory Dependency Constraints** (you MUST obey these):
+        2. **Mandatory Dependency Constraints** (you MUST obey these for each paradigm's plan):
            - If a tool requires a **Surface/Slab** (e.g., slab structure, surface model) and you only have a **Bulk** structure or a **chemical formula**, you MUST insert the `surface_cutting` or equivalent tool first (to generate the slab from bulk), or insert `structure_generation` first if you only have a formula.
            - If a tool requires a **structure file** (e.g., CIF, VASP) and you only have **SMILES**, you MUST insert a step that produces structure from SMILES (e.g. `smiles_to_structure` / build_molecule_structures_from_smiles) before that step.
            - If a tool requires a **bulk structure** and you only have a formula or composition, you MUST insert a `structure_generation` (or crystal structure generation) step first.
 
-        3. **Output Format for Each Step** (inside your <simulation> tag):
-           For each step N, state exactly:
+        3. **Output Format for Each Step, Per Paradigm** (inside your <simulation> tag):
+           For each paradigm, then for each step N of that paradigm's plan, state exactly:
            - "Step N requires Input Type A. Current State provides Type B. [PASS / FAIL]. [If FAIL: Insert Converter Tool.]"
            You MUST give a definite verdict: use only PASS or FAIL. Do not use hedging (e.g. "可能", "perhaps", "maybe").
            No step may be proposed without its inputs being available (Backward Chaining).
     </phase_3_simulation_and_verification>
 
     <phase_4_final_plan>
-        Output the validated linear sequence of steps.
+        After validating every paradigm's plan, output the chosen validated linear sequence of steps (e.g. the best paradigm's plan, or a merged/corrected plan). Justify briefly why that paradigm was selected if multiple passed.
     </phase_4_final_plan>
 </thinking_protocol>
 
 ### CONSTRAINTS
+- **Capability-Driven Build Priority**: You should prioritize using `build_` tools to generate structures. However, you MUST explicitly state whether the tool's capability boundary (as defined in its description/templates) covers the user's specific requirement.
+  * IF the material is a common lattice or fits the tool's listed templates: USE the build tool.
+  * IF the material is a specific named complex structure (e.g., a specific MOF, Zeolite, or complex organic crystal) NOT explicitly listed in the tool's templates: You MUST conclude the build tool is insufficient and fallback to **Database Retrieval** tools.
+- **Build vs Fetch vs Generate**: When building structures, if the case does NOT meet the tool's template standard, decisively abandon the `build_` path and use `fetch_` (database retrieval) instead. Do NOT abuse `generate_`-prefixed tools—use them only when the user explicitly requests conditional or generative structure creation; otherwise prefer `build_` (when templates fit) or `fetch_`.
 - **Grounding**: Use ONLY tools listed in `<Available Tools With Info>`. Do not hallucinate tools.
 - **Atomic check**: If a step requires `structure_file` and you only have `SMILES`, you MUST insert a step that produces structure from SMILES.
 - **Surface/Slab dependency**: If a tool requires a Surface/Slab (e.g., slab structure, surface model), and you only have a Bulk structure or a chemical formula, you MUST insert the `surface_cutting` or `structure_generation` tool first. Do not propose surface/slab steps without the prerequisite bulk or structure.
@@ -81,14 +94,25 @@ You must follow the Structured Reasoning Protocol below and output your reasonin
 
 ### OUTPUT FORMAT (use these tags)
 <analysis>...</analysis>
+<strategy_brainstorming>
+1. Paradigm A: [Rationale]
+2. Paradigm B: [Rationale]
+3. Paradigm C: [Rationale]
+</strategy_brainstorming>
 <simulation>
+**Paradigm A (e.g. Construction-Led):**
 Step 1: [Tool Name]. Step 1 requires Input Type [A]. Current State provides [B]. [PASS/FAIL]. [If FAIL: Insert Converter Tool.]
-Step 2: [Tool Name]. Step 2 requires Input Type [A]. Current State provides [B]. [PASS/FAIL]. [If FAIL: Insert Converter Tool.]
-...
+Step 2: ...
+**Paradigm B (e.g. Retrieval-Led):**
+Step 1: ...
+Step 2: ...
+**Paradigm C (e.g. Input-Respecting):** [or "Skipped: [reason]"]
+Step 1: ...
 </simulation>
 <plan_proposal>
 1. [Tool Name]: [Brief Description]
 2. ...
+(Chosen paradigm: [A/B/C]. Brief justification.)
 </plan_proposal>
 Revision needed
 """
