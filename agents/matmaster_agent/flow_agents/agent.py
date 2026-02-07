@@ -878,9 +878,10 @@ class MatMasterFlowAgent(LlmAgent):
         ):
             yield _scene_event
 
+        execution_count = 0
         while True:
             if not is_job_submitted_step(ctx):
-                skip_thinking = scenes_contain_query_job_status(ctx)
+                skip_thinking = scenes_contain_query_job_status(ctx) or execution_count
                 async for _step_make_event in self._run_step_make_agent(
                     ctx,
                     UPDATE_USER_CONTENT,
@@ -891,6 +892,7 @@ class MatMasterFlowAgent(LlmAgent):
 
             async for _plan_execute_event in self._run_plan_execute_agent(ctx):
                 yield _plan_execute_event
+            execution_count += 1
 
             # 检查是否为等待异步任务执行完成的阶段
             if not is_job_submitted_step(ctx):
