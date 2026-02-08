@@ -11,6 +11,7 @@ from agents.matmaster_agent.flow_agents.schema import FlowStatusEnum
 from agents.matmaster_agent.llm_config import MatMasterLlmConfig
 from agents.matmaster_agent.state import (
     BIZ,
+    CURRENT_STEP,
     MULTI_PLANS,
     PLAN,
     PLAN_CONFIRM,
@@ -119,30 +120,14 @@ def check_plan(ctx: InvocationContext):
 
 def should_bypass_confirmation(ctx: InvocationContext) -> bool:
     """Determine whether to skip plan confirmation based on the tools in the plan."""
-    plan_steps = ctx.session.state['plan'].get('steps', [])
-    tool_count = len(
-        plan_steps
-    )  # plan steps are `actual_steps` validated by `tool_name` before appended
+    current_step = ctx.session.state[CURRENT_STEP]
 
-    # Check if there is exactly one tool in the plan
-    if tool_count == 1:
-        # Find the first (and only) tool name
-        first_tool_name = plan_steps[0].get('tool_name', '')
+    # Find the first (and only) tool name
+    first_tool_name = current_step.get('tool_name', '')
 
-        # Check if this tool has bypass_confirmation set to True
-        if ALL_TOOLS.get(first_tool_name, {}).get('bypass_confirmation') is True:
-            return True
-
-    # TODO: Add more logic here for handling multiple tools in the plan
-    elif tool_count == 2:
-        first_tool_name = plan_steps[0].get('tool_name', '')
-        second_tool_name = plan_steps[1].get('tool_name', '')
-
-        if (
-            first_tool_name == 'web-search'
-            and second_tool_name == 'extract_info_from_webpage'
-        ):
-            return True
+    # Check if this tool has bypass_confirmation set to True
+    if ALL_TOOLS.get(first_tool_name, {}).get('bypass_confirmation') is True:
+        return True
 
     return False
 

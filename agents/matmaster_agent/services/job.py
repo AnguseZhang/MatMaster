@@ -362,8 +362,8 @@ async def parse_and_prepare_err(
 if __name__ == '__main__':
     print(
         asyncio.run(
-            parse_and_prepare_err(
-                job_id='2e42dde813fa452f99aabde95ccbb7cd',
+            check_job_create_service(
+                project_id=os.getenv('MATERIALS_PROJECT_ID'),
                 access_key=os.getenv('MATERIALS_ACCESS_KEY'),
             )
         )

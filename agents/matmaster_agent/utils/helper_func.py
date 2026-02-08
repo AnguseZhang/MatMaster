@@ -17,6 +17,7 @@ from yaml.scanner import ScannerError
 from agents.matmaster_agent.constant import FRONTEND_STATE_KEY, MATMASTER_AGENT_NAME
 from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
 from agents.matmaster_agent.logger import PrefixFilter
+from agents.matmaster_agent.state import CURRENT_STEP
 
 logger = logging.getLogger(__name__)
 logger.addFilter(PrefixFilter(MATMASTER_AGENT_NAME))
@@ -184,7 +185,7 @@ def get_new_function_call_indices(
 
 
 def get_current_step_function_call(current_function_calls, ctx):
-    current_step = ctx.state['plan']['steps'][ctx.state['plan_index']]
+    current_step = ctx.state[CURRENT_STEP]
     current_step_tool_name, current_step_satus = (
         current_step['tool_name'],
         current_step['status'],
@@ -210,9 +211,7 @@ def manual_build_current_function_call(callback_context: CallbackContext):
     logger.warning(
         f'{callback_context.session.id} current_function_calls empty， manually build one'
     )
-    current_step = callback_context.state['plan']['steps'][
-        callback_context.state['plan_index']
-    ]
+    current_step = callback_context.state[CURRENT_STEP]
     function_call_id = f"added_{str(uuid.uuid4()).replace('-', '')[:24]}"
     current_function_calls = [
         {

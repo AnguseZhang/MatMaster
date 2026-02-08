@@ -9,8 +9,13 @@ from agents.matmaster_agent.core_agents.comp_agents.dntransfer_climit_agent impo
     DisallowTransferAndContentLimitLlmAgent,
 )
 from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
+from agents.matmaster_agent.flow_agents.step_utils import get_current_step
 from agents.matmaster_agent.llm_config import LLMConfig
-from agents.matmaster_agent.locales import i18n
+from agents.matmaster_agent.state import (
+    CURRENT_STEP,
+    CURRENT_STEP_STATUS,
+    CURRENT_STEP_TOOL_NAME,
+)
 from agents.matmaster_agent.sub_agents.built_in_agent.llm_tool_agent.constant import (
     TOOL_AGENT_NAME,
 )
@@ -33,19 +38,13 @@ class LLMToolAgent(DisallowTransferAndContentLimitLlmAgent):
         async for event in super()._run_events(ctx):
             yield event
 
-        update_plan = copy.deepcopy(ctx.session.state['plan'])
-        update_plan['steps'][ctx.session.state['plan_index']][
-            'status'
-        ] = PlanStepStatusEnum.SUCCESS
-        yield update_state_event(ctx, state_delta={'plan': update_plan})
-
-        current_step = ctx.session.state['plan']['steps'][
-            ctx.session.state['plan_index']
-        ]
-        current_step_tool_name = current_step['tool_name']
+        post_execution_step = copy.deepcopy(get_current_step(ctx))
+        post_execution_step[CURRENT_STEP_STATUS] = PlanStepStatusEnum.SUCCESS
+        yield update_state_event(ctx, state_delta={CURRENT_STEP: post_execution_step})
+        current_step_tool_name = post_execution_step[CURRENT_STEP_TOOL_NAME]
         step_title = ctx.session.state.get('step_title', {}).get(
             'title',
-            f"{i18n.t(ctx.session.state['separate_card_info'])} {ctx.session.state['plan_index'] + 1}: {current_step_tool_name}",
+            current_step_tool_name,
         )
         for matmaster_flow_event in context_function_event(
             ctx,

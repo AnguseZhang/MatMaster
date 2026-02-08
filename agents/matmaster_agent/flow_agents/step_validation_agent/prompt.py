@@ -1,4 +1,8 @@
-STEP_VALIDATION_INSTRUCTION = """
+from typing import List
+
+
+def create_step_validation_instruction(alternative_tools: List[str]):
+    return f"""
 You are a validation agent responsible for checking if the execution result of a step matches the user's requirements and basic chemical/materials science knowledge.
 
 Your task is to analyze:
@@ -9,6 +13,9 @@ Your task is to analyze:
 
 Based on this analysis, determine if the result is reasonable and matches expectations.
 
+Backup tools you may suggest using if the result is invalid or uncertain:
+{alternative_tools}
+
 # Validation Criteria:
 1. **Relevance**: Does the result address the step's intended purpose?
 2. **Accuracy**: Is the result consistent with basic chemical/materials science knowledge?
@@ -17,11 +24,12 @@ Based on this analysis, determine if the result is reasonable and matches expect
 
 # Output Format:
 You must respond with a JSON object containing:
-{
+{{
     "is_valid": boolean,  // true if result matches requirements and knowledge, false otherwise
     "reason": "string",   // brief explanation of validation result
-    "confidence": "high|medium|low"  // confidence level in the validation
-}
+    "confidence": "high|medium|low",  // confidence level in the validation
+    "suggestion": "string"  // actionable suggestion; if invalid/uncertain, suggest fixes or using one of the backup tools above
+}}
 
 # Important Rules:
 - If the result contains obvious errors (wrong chemical formulas, impossible physical properties, etc.), mark as invalid

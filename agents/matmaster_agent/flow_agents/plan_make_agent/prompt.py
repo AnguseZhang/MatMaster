@@ -13,27 +13,16 @@ def get_static_plan_system_block(available_tools_with_info: str) -> str:
 
 ### OUTPUT LANGUAGE:
 All natural-language fields in the output MUST be written in {{target_language}}.
-This includes (but is not limited to): "intro", each plan's "plan_description", each step's "step_description", each step's "feasibility", and "overall".
+This includes (but is not limited to): each step's "step_description", and each step's "feasibility".
 Do NOT mix languages inside these fields unless the user explicitly requests bilingual output.
-
-### PLAN_DESCRIPTION FORMAT:
-Each plan's "plan_description" MUST start with "方案 x：" where x is the plan index starting from 1 in the order they appear in the "plans" array.
-Example (in {{target_language}}):
-- "方案 1：……"
-- "方案 2：……"
-Constraints:
-- The prefix must be exactly "方案 x：" (Arabic numeral + full-width Chinese colon).
-- Do NOT add any content before this prefix.
 
 ### STEP_DESCRIPTION FORMAT:
 Each step's "step_description" MUST strictly follow this format:
-- Start with an Arabic numeral index beginning at 1, incrementing by 1 within EACH plan (1, 2, 3, ...).
-- Immediately after the number, use an English period "." (e.g., "1.").
-- Then use the phrasing: "使用<工具名>工具进行<工作内容>".
-- If "tool_name" is null, the phrasing MUST be: "使用llm_tool工具进行<工作内容>" (still must follow numbering).
+- Use the phrasing: "使用<工具名>工具进行<工作内容>".
+- If "tool_name" is null, the phrasing MUST be: "使用llm_tool工具进行<工作内容>".
 Examples (in {{target_language}}):
-- "1. 使用ToolA工具进行读取用户提供的结构并执行能量计算"
-- "2. 使用llm_tool工具进行总结结果并生成报告"
+- "使用ToolA工具进行读取用户提供的结构并执行能量计算"
+- "使用llm_tool工具进行总结结果并生成报告"
 
 Constraints:
 - Do NOT add extra prefixes/suffixes outside this template.
@@ -43,29 +32,16 @@ Constraints:
 ### RE-PLANNING LOGIC:
 If the input contains errors from previous steps, analyze the failure and adjust the current plan (e.g., fix parameters or change tools) to resolve the issue. Mention the fix in the "step_description" while still following the required format. Do not ask the user whether to fix—output the adjusted plan directly. Do not end intro/overall with a question.
 
-### MULTI-PLAN GENERATION (NEW):
-Generate MULTIPLE alternative plans (at least 3, unless impossible) that all satisfy the user request.
-Each plan MUST use a DIFFERENT tool orchestration strategy (i.e., different tool choices and/or different step ordering).
-If there is only one feasible orchestration due to tool constraints, still output multiple plans and clearly explain in each plan's "feasibility" why divergence is not possible.
-
-Return a JSON structure with the following format:
+### OUTPUT FORMAT (UPDATED):
+Return ONLY ONE JSON object representing EXACTLY ONE step (not an array; no extra keys; no surrounding text).
+Do NOT output "intro", "plans", "plan_description", or "overall".
+Do NOT output multiple alternative plans.
+Always output exactly this schema:
 {{
-  "intro": <string>,   // MUST be in {{target_language}}
-  "plans": [
-    {{
-      "plan_id": <string>,
-      "plan_description": <string>,  // MUST be in {{target_language}} and start with "方案 x："
-      "steps": [
-        {{
-          "tool_name": <string|null>,  // Name of the tool to use (exact match from available list). Use null if no suitable tool exists
-          "step_description": <string>,     // MUST be in {{target_language}} and follow STEP_DESCRIPTION FORMAT
-          "feasibility": <string>,     // MUST be in {{target_language}}
-          "status": "plan"             // Always return "plan"
-        }}
-      ]
-    }}
-  ],
-  "overall": <string>  // MUST be in {{target_language}}
+  "tool_name": <string|null>,  // Name of the tool to use (exact match from available list). Use null if no suitable tool exists
+  "step_description": <string>,     // MUST be in {{target_language}} and follow STEP_DESCRIPTION FORMAT
+  "feasibility": <string>,     // MUST be in {{target_language}}
+  "status": "plan"             // Always return "plan"
 }}
 
 CRITICAL GUIDELINES:
@@ -76,8 +52,6 @@ CRITICAL GUIDELINES:
 5. Use null for tool_name only when no appropriate tool exists in the available tools list
 6. Never invent or assume tools - only use tools explicitly listed in the available tools
 7. Match tools precisely to requirements - if functionality doesn't align exactly, use null
-8. Ensure each plan's steps array represents a complete execution sequence for the request
-9. Across different plans, avoid producing identical step lists; vary tooling and/or ordering whenever feasible.
 
 EXECUTION PRINCIPLES:
 - Make sure that the previous steps can provide the input information required for the current step, such as the file URL
@@ -85,19 +59,19 @@ EXECUTION PRINCIPLES:
 - **File URLs should be treated as direct inputs to processing tools - no separate download, parsing, or preparation steps**
 - **Assume processing tools can handle URLs directly and include all necessary preprocessing capabilities**
 - **Skip any intermediate file preparation steps - go directly to the core processing task**
-- **For multiple structures: Always use one step per structure per operation type (generation → structure1, generation → structure2; retrieval → structure1, retrieval → structure2; etc.)**
-- **Maintain strict sequential processing: complete all operations for one structure before moving to the next, or group by operation type across all structures**
+- **For multiple structures: Always use one step per structure per operation type**
 - Prioritize accuracy over assumptions
 - Maintain logical flow in step sequencing
 - Ensure step_descriptions clearly communicate purpose
 - Validate tool compatibility before assignment
 
-### SELF-CHECK (NEW, MUST FOLLOW BEFORE OUTPUT):
+### SELF-CHECK (UPDATED, MUST FOLLOW BEFORE OUTPUT):
 Before returning the final JSON, verify:
-- "intro" and "overall" exist and are fully in {{target_language}}.
-- Every "plan_description" starts with "方案 x：" where x increments from 1 in the order of the "plans" array.
-- Every "step_description" starts with "1." for the first step of each plan, and increments sequentially with no gaps.
-- Every "step_description" contains "使用" + (exact tool name or "llm_tool") + "工具进行".
+- Output is a SINGLE JSON object (no surrounding text/markdown).
+- No keys other than: tool_name, step_description, feasibility, status.
+- "status" is exactly "plan".
+- "step_description" does NOT need to start with a number.
+- "step_description" contains "使用" + (exact tool name or "llm_tool") + "工具进行".
 - The tool name written in "step_description" exactly equals the corresponding "tool_name" (or "llm_tool" when tool_name is null).
 - All natural-language fields are fully in {{target_language}}.
 """
