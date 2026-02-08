@@ -27,6 +27,7 @@ Limits: OpenLAM does NOT support space group, band gap, or "elements list" filte
 
 ### C) OPTIMADE (cross-provider, flexible composition filters)
 when the user needs:
+- Raw filter: alexandria, cmr, cod, mcloud, mcloudarchive, mp, mpdd, mpds, nmd, odbx, omdb, oqmd, tcod, twodmatpedia
 - cross-provider search (e.g., "search in mp/cod/oqmd..."), OR
 - flexible logical composition constraints, OR
 - structure-type family queries (anonymous formula like AB2C4), OR
