@@ -134,13 +134,6 @@ from agents.matmaster_agent.sub_agents.MrDice_agent.optimade_agent.agent import 
 from agents.matmaster_agent.sub_agents.MrDice_agent.optimade_agent.constant import (
     OPTIMADE_DATABASE_AGENT_NAME,
 )
-from agents.matmaster_agent.sub_agents.MrDice_agent.structure_search_agent.agent import (
-    StructureSearchAgentBase,
-    structure_search_toolset,
-)
-from agents.matmaster_agent.sub_agents.MrDice_agent.structure_search_agent.constant import (
-    STRUCTURE_SEARCH_AGENT_NAME,
-)
 from agents.matmaster_agent.sub_agents.NMR_agent.agent import (
     NMRAgent,
     nmr_toolset,
@@ -221,6 +214,13 @@ from agents.matmaster_agent.sub_agents.structure_generate_agent.agent import (
 )
 from agents.matmaster_agent.sub_agents.structure_generate_agent.constant import (
     StructureGenerateAgentName,
+)
+from agents.matmaster_agent.sub_agents.structure_search_agent.agent import (
+    StructureSearchAgentBase,
+    structure_search_toolset,
+)
+from agents.matmaster_agent.sub_agents.structure_search_agent.constant import (
+    STRUCTURE_SEARCH_AGENT_NAME,
 )
 from agents.matmaster_agent.sub_agents.superconductor_agent.agent import (
     SuperconductorAgent,

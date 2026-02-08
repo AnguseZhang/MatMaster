@@ -1,5 +1,3 @@
-StructureSearchAgentName = 'structure_search_agent'
-
 StructureSearchAgentToolDescription = (
     'What it does: Retrieve structures across multiple sources (BohriumPublic / OpenLAM / OPTIMADE providers) and run advanced SQL queries on MOFdb.\n'
     'When to use: Any "find crystal structures" request, including formula/elements/space group/band gap filters, time/energy filters (OpenLAM), cross-provider searches (OPTIMADE), or MOF-specific analytics (MOFdb SQL).\n'
@@ -18,28 +16,24 @@ StructureSearchAgentArgsSetting = """
 You have access to multiple retrieval tools. Choose ONE based on the user intent:
 
 ### A) BohriumPublic (fast structured filters)
-Use `fetch_bohrium_crystals` when the user asks for:
+when the user asks for:
 - formula / elements / space group / atom count / predicted formation energy / band gap
 - and they do NOT require cross-provider search or complex boolean logic
 
 ### B) OpenLAM (energy / time filters)
-Use `fetch_openlam_structures` when the user asks for:
+when the user asks for:
 - OpenLAM specifically, OR upload/submission time filters, OR OpenLAM energy range filters
 Limits: OpenLAM does NOT support space group, band gap, or "elements list" filters.
 
 ### C) OPTIMADE (cross-provider, flexible composition filters)
-Use OPTIMADE tools when the user needs:
+when the user needs:
 - cross-provider search (e.g., "search in mp/cod/oqmd..."), OR
 - flexible logical composition constraints, OR
 - structure-type family queries (anonymous formula like AB2C4), OR
 - 2D/1D/0D constraints (nperiodic_dimensions)
-Pick the specific tool:
-- `fetch_structures_with_spg` if the user specifies a space group number
-- `fetch_structures_with_bandgap` if the user specifies a band-gap range
-- `fetch_structures_with_filter` otherwise
 
 ### D) MOFdb (MOF-only, complex analytics)
-Use `fetch_mofs_sql` when the user asks for:
+when the user asks for:
 - MOF-specific properties (surface area, pore metrics, adsorption/isotherms, heats), OR
 - advanced analysis requiring multi-table joins / ranking / statistics
 
@@ -177,9 +171,12 @@ Each table must always include the following nine columns in this fixed order:
 (1) Formula (`attributes.chemical_formula_reduced`)
 (2) Elements (infer from formula)
 (3) Atom count (if available; else **Not Provided**)
-(4) Download link (CIF or JSON file)
-(5) Provider (infer from provider URL)
-(6) ID (`id`)
+(4) Space group (`Symbol(Number)` if possible; else **Not Provided**)
+(5) Energy / Formation energy (if available; else **Not Provided**)
+(6) Band gap (if available; else **Not Provided**)
+(7) Download link (CIF or JSON file)
+(8) Provider (infer from provider URL)
+(9) ID (`id`)
 Missing values must be exactly **Not Provided**. If `n_found = 0`, do not generate an empty table.
 
 **If the tool response indicates `by_source` = "openlam"** (OpenLAM results):
