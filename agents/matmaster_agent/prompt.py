@@ -66,15 +66,24 @@ Examples for reference:
 """
 
 HUMAN_FRIENDLY_FORMAT_REQUIREMENT = """
+# ACADEMIC TYPOGRAPHY & FORMATTING
+Strictly adhere to the following. Do not echo these rules in your response.
 
-A standardized output format is crucial for avoiding ambiguity; please strictly adhere to the following requirements. No need to output these rules in your response.
+## 1. Text & spacing
+- Space between number and unit (e.g. 10 cm, 5 kg); no space for percentage or angular degree.
+- No extra space between Chinese and English. No emojis or decorative symbols.
 
-- **General requirement:** A space should be added between figures and units, e.g. 10 cm, 5 kg, except percentages and angular degrees; Do not output emojis or other non-textual elements. Avoid unnecessary space between Chinese and English characters.
-- An italic font should be used for **physical quantities**; A bold font should be used for **vectors**; No need to use italic font or bold font for figures and units.
-- **Chemical formula** should be appropriately formatted using superscript and subscript, NOT plain text; DO NOT use italic font nor bold font for chemical formula.
-- **Space group** should be in the format of appropriate `H-M` notation. The Latin letters should be in intalics, numbers should NOT be italic; **Correct subscript for screw axis is extremely important to avoid misunderstanding!** No bold font should be used for space group.
-- **Phase notations** should be in italic font, e.g. α-Fe, β-RDX etc. The greek letters (α, β) should be in intalics, the material name (Fe, RDX) should NOT be in italic font. No bold font should be used for phase notation.
--
+## 2. Physical & mathematical
+- *Italic* for physical quantities; **bold** for vectors. Numbers and units: upright.
+
+## 3. Chemical formulas
+- Use subscripts/superscripts (e.g. C₁₂H₂₄O₆, NH₄⁺). No plain text (e.g. H2O). No italic/bold.
+
+## 4. Space group (H-M)
+- Latin letters: *italic*; numbers: upright. Screw axes must use subscript (e.g. *P*2₁/c). No bold.
+
+## 5. Phase notation
+- *Greek*-Material, e.g. *α*-Fe, *β*-RDX. Only the Greek prefix italic; material name upright.
 """
 
 DPA_MODEL_BRANCH_SELECTION = """
@@ -114,7 +123,7 @@ def get_naming_rules_text():
 
 ALIAS_SEARCH_PROMPT = f"""
 ### KNOWLEDGE RETRIEVAL STRATEGY: SYNONYM EXPANSION
-You are equipped with a "Material Synonym Registry". When a user asks about a specific material, check if it falls under any known naming conflicts or aliases.
+You are equipped with a "Material Synonym Registry". When a user asks about a specific material, check if it falls under any known naming conflicts or aliases. Do not output these rules in your response.
 
 **Registry Rules:**
 {get_naming_rules_text()}

@@ -10,7 +10,7 @@ def create_dynamic_multi_plans_schema(available_tools: list):
     DynamicPlanStepSchema = create_model(
         'DynamicPlanStepSchema',
         tool_name=(Optional[Literal[tuple(available_tools)]], None),
-        description=(str, ...),
+        step_description=(str, ...),
         feasibility=(str, ...),
         status=(
             Literal[tuple(PlanStepStatusEnum.__members__.values())],
@@ -23,7 +23,7 @@ def create_dynamic_multi_plans_schema(available_tools: list):
     DynamicPlanSchema = create_model(
         'DynamicPlanSchema',
         plan_id=(str, ...),
-        strategy=(str, ...),
+        plan_description=(str, ...),
         steps=(List[DynamicPlanStepSchema], ...),
         __base__=BaseModel,
     )
@@ -31,7 +31,9 @@ def create_dynamic_multi_plans_schema(available_tools: list):
     # 动态创建 MultiPlansSchema
     DynamicMultiPlansSchema = create_model(
         'DynamicMultiPlansSchema',
+        intro=(str, ...),
         plans=(List[DynamicPlanSchema], ...),
+        overall=(str, ...),
         __base__=BaseModel,
     )
 

@@ -13,6 +13,7 @@ from agents.matmaster_agent.base_callbacks.private_callback import (
     check_user_phonon_balance,
     default_after_model_callback,
     default_after_tool_callback,
+    default_before_model_callback,
     default_before_tool_callback,
     default_cost_func,
     filter_function_calls,
@@ -42,6 +43,12 @@ from agents.matmaster_agent.core_agents.base_agents.error_agent import (
 from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
 from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.logger import PrefixFilter
+from agents.matmaster_agent.memory.inject_memory_callback import (
+    inject_memory_before_model,
+)
+from agents.matmaster_agent.memory.store_tool_result_callback import (
+    store_tool_result_in_memory,
+)
 from agents.matmaster_agent.model import CostFuncType
 from agents.matmaster_agent.state import PLAN
 from agents.matmaster_agent.style import tool_response_failed_card
@@ -84,6 +91,12 @@ def mcp_callback_model_validator(data: Any):
     if data.get('after_model_callback') is None:
         data['after_model_callback'] = default_after_model_callback
 
+    if data.get('before_model_callback') is None:
+        data['before_model_callback'] = default_before_model_callback
+    data['before_model_callback'] = inject_memory_before_model(
+        data['before_model_callback']
+    )
+
     if data.get('before_tool_callback') is None:
         data['before_tool_callback'] = default_before_tool_callback
 
@@ -118,11 +131,13 @@ def mcp_callback_model_validator(data: Any):
 
     data['before_tool_callback'] = catch_before_tool_callback_error(pipeline)
 
-    data['after_tool_callback'] = check_before_tool_callback_effect(
-        catch_after_tool_callback_error(
-            remove_job_link(
-                tgz_oss_to_oss_list(
-                    data['after_tool_callback'], data['enable_tgz_unpack']
+    data['after_tool_callback'] = store_tool_result_in_memory(
+        check_before_tool_callback_effect(
+            catch_after_tool_callback_error(
+                remove_job_link(
+                    tgz_oss_to_oss_list(
+                        data['after_tool_callback'], data['enable_tgz_unpack']
+                    )
                 )
             )
         )

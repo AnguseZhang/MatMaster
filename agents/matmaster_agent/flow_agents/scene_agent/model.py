@@ -126,3 +126,9 @@ class SceneEnum(DescriptiveEnum):
         'perovskite_research',
         'Research, literature/database search, and semantic mining focused on perovskite solar cells (efficiency, stability, additives, architectures, new molecules).',
     )
+
+    # job/task status only (no planning/thinking needed)
+    QUERY_JOB_STATUS = (
+        'query_job_status',
+        'User only asks to check task/job status or get task results. e.g. 查询任务, 查看任务, 查看任务状态, 查看任务结果, 任务怎么样了, 任务进度, check task status, check task results. Use this when the sole intent is to query status or retrieve results of submitted jobs, not to create a new plan.',
+    )

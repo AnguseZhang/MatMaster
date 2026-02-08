@@ -49,6 +49,7 @@ FINANCE_API_BASE = f'https://finance-web{URL_PART}.dp.tech'
 BOHRIUM_COM = f'https://www{URL_PART}.bohrium.com'
 BOHRIUM_HOST = f'https://bohrium{URL_PART}.dp.tech'
 ICL_SERVICE_URL = '101.126.90.82:8001'
+MEMORY_SERVICE_URL = '101.126.90.82:8002'
 MATMASTER_TOOLS_SERVER = f'https://matmaster-tools-server{URL_PART}.bohrium.com'
 if CURRENT_ENV == 'test':
     DFLOW_HOST = 'https://lbg-workflow-mlops.test.dp.tech'

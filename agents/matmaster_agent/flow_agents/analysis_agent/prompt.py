@@ -1,9 +1,14 @@
+from agents.matmaster_agent.utils.sanitize_braces import sanitize_braces
+
+
 def get_analysis_instruction(plan):
+    plan_str = plan if isinstance(plan, str) else str(plan)
+    plan_str = sanitize_braces(plan_str)
     return f"""
 分析 plan 变量的结果和之前的对话历史，来对本次计划的执行进行总结后展示给用户：
 
 <Plan Content>
-{plan}
+{plan_str}
 
 <Plan Structure>
 {{

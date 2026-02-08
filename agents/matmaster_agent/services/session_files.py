@@ -12,7 +12,8 @@ async def get_session_files(session_id: str) -> List[str]:
             response.raise_for_status()
             json_content = await response.json()
 
-            return json_content.get('data', {}).get('files', [])
+            data = json_content.get('data') or {}
+            return data.get('files', []) if isinstance(data, dict) else []
 
 
 async def insert_session_files(session_id: str, files: List[str]) -> List[str]:
@@ -24,7 +25,8 @@ async def insert_session_files(session_id: str, files: List[str]) -> List[str]:
             response.raise_for_status()
             json_content = await response.json()
 
-            return json_content.get('data', {}).get('files', [])
+            data = json_content.get('data') or {}
+            return data.get('files', []) if isinstance(data, dict) else []
 
 
 if __name__ == '__main__':

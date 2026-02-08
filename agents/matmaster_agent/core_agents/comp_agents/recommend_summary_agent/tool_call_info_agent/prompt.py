@@ -1,6 +1,12 @@
+from agents.matmaster_agent.utils.sanitize_braces import with_sanitized_braces
+
+
+@with_sanitized_braces('user_prompt', 'agent_prompt')
 def gen_tool_call_info_instruction(
     user_prompt, agent_prompt, tool_doc, tool_schema, tool_args_recommend_prompt
 ):
+    user_prompt = user_prompt or ''
+    agent_prompt = agent_prompt or ''
     return f"""
 You are an AI agent that matches user requests to available tools. Your task is to analyze the user's query against the complete parameter schema.
 

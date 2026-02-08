@@ -1,8 +1,11 @@
 from typing import Any, Mapping
 
+from agents.matmaster_agent.utils.sanitize_braces import sanitize_braces
+
 
 def get_report_instruction(plan: Mapping[str, Any]) -> str:
     """Return an instruction prompt to generate a self-contained markdown report."""
+    plan_str = sanitize_braces(str(plan))
 
     return f"""
 
@@ -115,7 +118,7 @@ TASK: Analyze topic and collected facts, then rewrite the report based on collec
 - [网页标题](URL) - 说明它支持了报告中的哪条事实/结论
 
 <Plan Content>
-{plan}
+{plan_str}
 
 （提示：你可以从对话/工具输出中抽取“用户输入文件”“执行时间”“执行概况”等信息；无法确定就用“-”。）
 

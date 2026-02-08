@@ -69,8 +69,9 @@ async def validate_lammps_file_urls(tool, args, tool_context: ToolContext):
 
     # Define the file path arguments that need to be validated for each tool
     file_path_args = {
+        'orchestrate_input': [('structure_file',)],
+        'convert_structural_format': [('structure_file',)],
         'run_lammps': [('input_file',), ('structure_file',), ('potential_file',)],
-        'convert_lammps_structural_format': [('structure_file',)],
     }
 
     # Get the argument names that contain file paths for this tool

@@ -7,10 +7,8 @@ from google.genai.types import Content, Part
 
 from agents.matmaster_agent.constant import MATMASTER_AGENT_NAME, ModelRole
 from agents.matmaster_agent.flow_agents.constant import (
-    MATMASTER_FLOW,
-    UNIVERSAL_CONTEXT_FILTER_KEYWORDS,
+    THINKING_CONTEXT_FILTER_KEYWORDS,
 )
-from agents.matmaster_agent.flow_agents.expand_agent.constant import EXPAND_AGENT
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.utils.context_utils import is_content_has_keywords
 
@@ -19,21 +17,20 @@ logger.addFilter(PrefixFilter(MATMASTER_AGENT_NAME))
 logger.setLevel(logging.INFO)
 
 
-async def filter_plan_info_llm_contents(
+async def filter_thinking_llm_contents(
     callback_context: CallbackContext, llm_request: LlmRequest
 ) -> Optional[LlmResponse]:
     contents = []
     for content in llm_request.contents[::-1]:
         if is_content_has_keywords(
             content,
-            UNIVERSAL_CONTEXT_FILTER_KEYWORDS + [EXPAND_AGENT] + [MATMASTER_FLOW],
+            THINKING_CONTEXT_FILTER_KEYWORDS,
         ):
             continue
-        else:
-            contents.insert(0, content)
+        contents.insert(0, content)
 
     logger.info(
-        f'{callback_context.session.id} {callback_context.agent_name} contents = {contents}'
+        f'{callback_context.session.id} {callback_context.agent_name} contents = {len(contents)}'
     )
 
     if not contents:

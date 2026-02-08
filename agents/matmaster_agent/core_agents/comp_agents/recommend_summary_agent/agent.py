@@ -63,7 +63,7 @@ from agents.matmaster_agent.prompt import (
     GLOBAL_SCHEMA_INSTRUCTION,
     get_vocabulary_enforce_prompt,
 )
-from agents.matmaster_agent.state import RECOMMEND_PARAMS
+from agents.matmaster_agent.state import RECOMMEND_PARAMS, STEP_DESCRIPTION
 from agents.matmaster_agent.sub_agents.tools import ALL_TOOLS
 from agents.matmaster_agent.utils.event_utils import (
     context_function_event,
@@ -214,7 +214,7 @@ class BaseAgentWithRecAndSum(
         )
 
         self.tool_call_info_agent.instruction = gen_tool_call_info_instruction(
-            user_prompt=current_step['description'],
+            user_prompt=current_step[STEP_DESCRIPTION],
             agent_prompt=self.instruction,
             tool_doc=tool_doc,
             tool_schema=tool_schema,

@@ -831,7 +831,7 @@ ALL_TOOLS = {
     },
     'fetch_structures_with_filter': {
         'belonging_agent': OPTIMADE_DATABASE_AGENT_NAME,
-        'scene': [SceneEnum.DATABASE_SEARCH],
+        'scene': [SceneEnum.DATABASE_SEARCH, SceneEnum.STRUCTURE_GENERATE],
         'description': OptimadeFilterToolDescription,
         'args_setting': f"{OptimadeFilterArgsSetting}",
         'alternative': [
@@ -844,7 +844,7 @@ ALL_TOOLS = {
     },
     'fetch_structures_with_spg': {
         'belonging_agent': OPTIMADE_DATABASE_AGENT_NAME,
-        'scene': [SceneEnum.DATABASE_SEARCH],
+        'scene': [SceneEnum.DATABASE_SEARCH, SceneEnum.STRUCTURE_GENERATE],
         'description': OptimadeSpgToolDescription,
         'args_setting': f"{OptimadeSpgArgsSetting}",
         'alternative': [
@@ -857,7 +857,7 @@ ALL_TOOLS = {
     },
     'fetch_structures_with_bandgap': {
         'belonging_agent': OPTIMADE_DATABASE_AGENT_NAME,
-        'scene': [SceneEnum.DATABASE_SEARCH],
+        'scene': [SceneEnum.DATABASE_SEARCH, SceneEnum.STRUCTURE_GENERATE],
         'description': OptimadeBandgapToolDescription,
         'args_setting': f"{OptimadeBandgapArgsSetting}",
         'alternative': [
@@ -870,7 +870,7 @@ ALL_TOOLS = {
     },
     'fetch_bohrium_crystals': {
         'belonging_agent': BOHRIUMPUBLIC_DATABASE_AGENT_NAME,
-        'scene': [SceneEnum.DATABASE_SEARCH],
+        'scene': [SceneEnum.DATABASE_SEARCH, SceneEnum.STRUCTURE_GENERATE],
         'description': BohriumPublicAgentToolDescription,
         'args_setting': f"{BohriumPublicAgentArgsSetting}",
         'alternative': [
@@ -883,7 +883,7 @@ ALL_TOOLS = {
     },
     'fetch_openlam_structures': {
         'belonging_agent': OPENLAM_DATABASE_AGENT_NAME,
-        'scene': [SceneEnum.DATABASE_SEARCH],
+        'scene': [SceneEnum.DATABASE_SEARCH, SceneEnum.STRUCTURE_GENERATE],
         'description': OpenlamAgentToolDescription,
         'args_setting': f"{OpenlamAgentArgsSetting}",
         'alternative': [
@@ -896,7 +896,7 @@ ALL_TOOLS = {
     },
     'fetch_mofs_sql': {
         'belonging_agent': MOFDB_DATABASE_AGENT_NAME,
-        'scene': [SceneEnum.DATABASE_SEARCH],
+        'scene': [SceneEnum.DATABASE_SEARCH, SceneEnum.STRUCTURE_GENERATE],
         'description': MofdbAgentToolDescription,
         'args_setting': f"{MofdbAgentArgsSetting}",
         'alternative': ['web-search'],
@@ -1475,7 +1475,7 @@ ALL_TOOLS = {
             'What it does: Generate input scripts for simulation/calculation engines. '
             'Supports: LAMMPS, ABACUS, VASP, QE (Quantum ESPRESSO), Psi4, Gaussian, ORCA.\n'
             'When to use: Create input from description.\n'
-            'Prerequisites / Inputs: structural information; engine_type (one of: lammps, abacus, vasp, qe, psi4, gaussian, orca), natural language task.\n'
+            'Prerequisites / Inputs: engine_type (one of: lammps, abacus, vasp, qe, psi4, gaussian, orca), natural language task.\n'
             'Outputs: Input script content.\n'
             'Cannot do / Limits: Script generation only.\n'
             'Cost / Notes: Low.'
@@ -1503,7 +1503,7 @@ ALL_TOOLS = {
         'description': (
             'What it does: Run LAMMPS simulations.\n'
             'When to use: Perform MD or minimization.\n'
-            'Prerequisites / Inputs: LAMMPS data file.\n'
+            'Prerequisites / Inputs: Converted LAMMPS structural data file; Input script.\n'
             'Outputs: Simulation results.\n'
             'Cannot do / Limits: Requires LAMMPS format.\n'
             'Cost / Notes: High (simulation time).'

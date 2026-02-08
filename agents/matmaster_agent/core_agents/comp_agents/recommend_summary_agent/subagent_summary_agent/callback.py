@@ -12,7 +12,6 @@ from agents.matmaster_agent.flow_agents.constant import (
     MATMASTER_GENERATE_NPS,
     UNIVERSAL_CONTEXT_FILTER_KEYWORDS,
 )
-from agents.matmaster_agent.flow_agents.plan_info_agent.constant import PLAN_INFO_AGENT
 from agents.matmaster_agent.flow_agents.plan_make_agent.constant import PLAN_MAKE_AGENT
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.utils.context_utils import is_content_has_keywords
@@ -30,7 +29,7 @@ async def filter_summary_llm_contents(
         if is_content_has_keywords(
             content,
             UNIVERSAL_CONTEXT_FILTER_KEYWORDS
-            + [PLAN_MAKE_AGENT, PLAN_INFO_AGENT]
+            + [PLAN_MAKE_AGENT]
             + [MATMASTER_FLOW, MATMASTER_FLOW_PLANS, MATMASTER_GENERATE_NPS],
         ):
             continue

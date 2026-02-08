@@ -1,3 +1,36 @@
+from agents.matmaster_agent.utils.sanitize_braces import with_sanitized_braces
+
+# --- Context section headers (injected before EXPAND_INSTRUCTION when present) ---
+SECTION_SHORT_TERM_MEMORY = 'SHORT-TERM WORKING MEMORY'
+SECTION_SESSION_FILES = 'SESSION FILES'
+
+MEMORY_SECTION_HEADER = (
+    f'# {SECTION_SHORT_TERM_MEMORY}\n'
+    'Use the following when expanding the user request.\n\n'
+)
+SESSION_FILES_SECTION_HEADER = (
+    f'# {SECTION_SESSION_FILES}\n'
+    'Files already produced in this session. If the user refers to a previous step (e.g. "第一步", "上一步", "刚才") '
+    'and these files exist, expand only the new step; do not re-add structure-building steps.\n\n'
+)
+
+
+@with_sanitized_braces('short_term_memory_block', 'session_file_summary')
+def build_expand_context(
+    short_term_memory_block: str = '',
+    session_file_summary: str = '',
+) -> str:
+    """Build the optional context block (memory + session files) to prepend to expand instruction."""
+    parts = []
+    if short_term_memory_block:
+        parts.append(MEMORY_SECTION_HEADER + short_term_memory_block.strip() + '\n\n')
+    if session_file_summary:
+        parts.append(
+            SESSION_FILES_SECTION_HEADER + session_file_summary.strip() + '\n\n'
+        )
+    return ''.join(parts)
+
+
 EXPAND_INSTRUCTION = """
 You are a computational materials science assistant specializing in structure generation. Follow this structured protocol for all user requests:
 
