@@ -53,42 +53,6 @@ from agents.matmaster_agent.sub_agents.HEAkb_agent.prompt import (
     HEAKbAgentToolDescription,
 )
 from agents.matmaster_agent.sub_agents.LAMMPS_agent.constant import LAMMPS_AGENT_NAME
-from agents.matmaster_agent.sub_agents.MrDice_agent.bohriumpublic_agent.constant import (
-    BOHRIUMPUBLIC_DATABASE_AGENT_NAME,
-)
-from agents.matmaster_agent.sub_agents.MrDice_agent.bohriumpublic_agent.prompt import (
-    BohriumPublicAgentArgsSetting,
-    BohriumPublicAgentSummaryPrompt,
-    BohriumPublicAgentToolDescription,
-)
-from agents.matmaster_agent.sub_agents.MrDice_agent.mofdb_agent.constant import (
-    MOFDB_DATABASE_AGENT_NAME,
-)
-from agents.matmaster_agent.sub_agents.MrDice_agent.mofdb_agent.prompt import (
-    MofdbAgentArgsSetting,
-    MofdbAgentSummaryPrompt,
-    MofdbAgentToolDescription,
-)
-from agents.matmaster_agent.sub_agents.MrDice_agent.openlam_agent.constant import (
-    OPENLAM_DATABASE_AGENT_NAME,
-)
-from agents.matmaster_agent.sub_agents.MrDice_agent.openlam_agent.prompt import (
-    OpenlamAgentArgsSetting,
-    OpenlamAgentSummaryPrompt,
-    OpenlamAgentToolDescription,
-)
-from agents.matmaster_agent.sub_agents.MrDice_agent.optimade_agent.constant import (
-    OPTIMADE_DATABASE_AGENT_NAME,
-)
-from agents.matmaster_agent.sub_agents.MrDice_agent.optimade_agent.prompt import (
-    OptimadeAgentSummaryPrompt,
-    OptimadeBandgapArgsSetting,
-    OptimadeBandgapToolDescription,
-    OptimadeFilterArgsSetting,
-    OptimadeFilterToolDescription,
-    OptimadeSpgArgsSetting,
-    OptimadeSpgToolDescription,
-)
 from agents.matmaster_agent.sub_agents.NMR_agent.constant import (
     NMR_AGENT_NAME,
 )
@@ -146,6 +110,14 @@ from agents.matmaster_agent.sub_agents.STEELkb_agent.prompt import (
 )
 from agents.matmaster_agent.sub_agents.structure_generate_agent.constant import (
     StructureGenerateAgentName,
+)
+from agents.matmaster_agent.sub_agents.structure_search_agent.constant import (
+    STRUCTURE_SEARCH_AGENT_NAME,
+)
+from agents.matmaster_agent.sub_agents.structure_search_agent.prompt import (
+    StructureSearchAgentArgsSetting,
+    StructureSearchAgentSummaryPrompt,
+    StructureSearchAgentToolDescription,
 )
 from agents.matmaster_agent.sub_agents.superconductor_agent.constant import (
     SuperconductorAgentName,
@@ -829,78 +801,15 @@ ALL_TOOLS = {
         'summary_prompt': STEELPredictAgentSummaryPrompt,
         'self_check': False,
     },
-    'fetch_structures_with_filter': {
-        'belonging_agent': OPTIMADE_DATABASE_AGENT_NAME,
-        'scene': [SceneEnum.DATABASE_SEARCH, SceneEnum.STRUCTURE_GENERATE],
-        'description': OptimadeFilterToolDescription,
-        'args_setting': f"{OptimadeFilterArgsSetting}",
+    'fetch_structures_from_db': {
+        'belonging_agent': STRUCTURE_SEARCH_AGENT_NAME,
+        'scene': [SceneEnum.DATABASE_SEARCH],
+        'description': StructureSearchAgentToolDescription,
+        'args_setting': f"{StructureSearchAgentArgsSetting}",
         'alternative': [
-            'fetch_bohrium_crystals',
-            'fetch_openlam_structures',
             'web-search',
         ],
-        'summary_prompt': OptimadeAgentSummaryPrompt,
-        'self_check': True,
-    },
-    'fetch_structures_with_spg': {
-        'belonging_agent': OPTIMADE_DATABASE_AGENT_NAME,
-        'scene': [SceneEnum.DATABASE_SEARCH, SceneEnum.STRUCTURE_GENERATE],
-        'description': OptimadeSpgToolDescription,
-        'args_setting': f"{OptimadeSpgArgsSetting}",
-        'alternative': [
-            'fetch_bohrium_crystals',
-            'fetch_structures_with_filter',
-            'web-search',
-        ],
-        'summary_prompt': OptimadeAgentSummaryPrompt,
-        'self_check': True,
-    },
-    'fetch_structures_with_bandgap': {
-        'belonging_agent': OPTIMADE_DATABASE_AGENT_NAME,
-        'scene': [SceneEnum.DATABASE_SEARCH, SceneEnum.STRUCTURE_GENERATE],
-        'description': OptimadeBandgapToolDescription,
-        'args_setting': f"{OptimadeBandgapArgsSetting}",
-        'alternative': [
-            'fetch_bohrium_crystals',
-            'fetch_structures_with_filter',
-            'web-search',
-        ],
-        'summary_prompt': OptimadeAgentSummaryPrompt,
-        'self_check': True,
-    },
-    'fetch_bohrium_crystals': {
-        'belonging_agent': BOHRIUMPUBLIC_DATABASE_AGENT_NAME,
-        'scene': [SceneEnum.DATABASE_SEARCH, SceneEnum.STRUCTURE_GENERATE],
-        'description': BohriumPublicAgentToolDescription,
-        'args_setting': f"{BohriumPublicAgentArgsSetting}",
-        'alternative': [
-            'fetch_structures_with_filter',
-            'web-search',
-            'fetch_openlam_structures',
-        ],
-        'summary_prompt': BohriumPublicAgentSummaryPrompt,
-        'self_check': True,
-    },
-    'fetch_openlam_structures': {
-        'belonging_agent': OPENLAM_DATABASE_AGENT_NAME,
-        'scene': [SceneEnum.DATABASE_SEARCH, SceneEnum.STRUCTURE_GENERATE],
-        'description': OpenlamAgentToolDescription,
-        'args_setting': f"{OpenlamAgentArgsSetting}",
-        'alternative': [
-            'fetch_structures_with_filter',
-            'web-search',
-            'fetch_openlam_structures',
-        ],
-        'summary_prompt': OpenlamAgentSummaryPrompt,
-        'self_check': True,
-    },
-    'fetch_mofs_sql': {
-        'belonging_agent': MOFDB_DATABASE_AGENT_NAME,
-        'scene': [SceneEnum.DATABASE_SEARCH, SceneEnum.STRUCTURE_GENERATE],
-        'description': MofdbAgentToolDescription,
-        'args_setting': f"{MofdbAgentArgsSetting}",
-        'alternative': ['web-search'],
-        'summary_prompt': MofdbAgentSummaryPrompt,
+        'summary_prompt': StructureSearchAgentSummaryPrompt,
         'self_check': True,
     },
     'calculate_reaction_profile': {
