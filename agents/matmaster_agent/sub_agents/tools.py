@@ -909,8 +909,6 @@ ALL_TOOLS = {
         ),
         'args_setting': f'Parameter guidance: Lattice constant requirements due to symmetry constraints: sc/fcc/bcc/diamond/rocksalt/cesiumchloride/zincblende/fluorite → only a; hcp/wurtzite → a and c; orthorhombic/monoclinic → a, b, c. Set conventional=True by default unless primitive cell is explicitly required. For elements, use element symbols; for compounds, use chemical formula (e.g., "NaCl"). {STRUCTURE_BUILDING_SAVENAME}',
         'alternative': [
-            'fetch_bohrium_crystals',
-            'fetch_structures_with_filter',
             'build_bulk_structure_by_wyckoff',
         ],
         'bypass_confirmation': True,
@@ -993,8 +991,6 @@ ALL_TOOLS = {
         ),
         'args_setting': f'Parameter guidance: Space Group: Integer (e.g., 225) or Symbol (e.g., "Fm-3m"). Wyckoff Consistency: The provided coordinates must mathematically belong to the specific Wyckoff position (e.g., if using position 4a at (0,0,0), do not input (0.5, 0.5, 0) just because it\'s in the same unit cell; only input the canonical generator). Lattice: Angles in degrees, lengths in Å. Fractional Coordinates: Must be in [0, 1). Strictly Use the Asymmetric Unit: You must provide only the generating coordinates for each Wyckoff orbit. Do NOT Pre-calculate Symmetry: The function will automatically apply all space group operators to your input. If you manually input coordinates that are already symmetry-equivalent (e.g., providing both (x, y, z) and (-x, -y, -z) in a centrosymmetric structure), the function will generate them again, causing catastrophic atom overlapping. Redundancy Rule: Before adding a coordinate, check if it can be generated from an existing input coordinate via any operator in the Space Group. If yes, discard it. One Wyckoff letter = One coordinate triplet input. {STRUCTURE_BUILDING_SAVENAME}',
         'alternative': [
-            'fetch_bohrium_crystals',
-            'fetch_structures_with_filter',
             'build_bulk_structure_by_template',
         ],
         'bypass_confirmation': True,
