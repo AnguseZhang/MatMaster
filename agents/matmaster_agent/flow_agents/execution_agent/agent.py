@@ -14,29 +14,35 @@ from agents.matmaster_agent.core_agents.comp_agents.dntransfer_climit_agent impo
     DisallowTransferAndContentLimitLlmAgent,
 )
 from agents.matmaster_agent.flow_agents.constant import (
-    EXECUTION_TYPE_LABEL_CHANGE_TOOL,
-    EXECUTION_TYPE_LABEL_RETRY,
     MATMASTER_SUPERVISOR_AGENT,
 )
-from agents.matmaster_agent.flow_agents.execution_agent.utils import (
-    should_exit_retryLoop,
-)
 from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
+from agents.matmaster_agent.flow_agents.step_utils import (
+    get_current_step,
+    get_current_step_validation,
+    is_job_submitted_step,
+)
 from agents.matmaster_agent.flow_agents.step_validation_agent.prompt import (
-    STEP_VALIDATION_INSTRUCTION,
+    create_step_validation_instruction,
 )
 from agents.matmaster_agent.flow_agents.style import separate_card
 from agents.matmaster_agent.flow_agents.utils import (
     check_plan,
     find_alternative_tool,
     get_agent_for_tool,
-    has_self_check,
 )
 from agents.matmaster_agent.llm_config import MatMasterLlmConfig
-from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.prompt import MatMasterCheckTransferPrompt
-from agents.matmaster_agent.state import PLAN, STEP_DESCRIPTION, StepKey
+from agents.matmaster_agent.state import (
+    CURRENT_STEP,
+    CURRENT_STEP_DESCRIPTION,
+    CURRENT_STEP_STATUS,
+    CURRENT_STEP_TOOL_NAME,
+    HISTORY_STEPS,
+    PLAN,
+    StepKey,
+)
 from agents.matmaster_agent.sub_agents.mapping import (
     MatMasterSubAgentsEnum,
 )
@@ -91,17 +97,16 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
         yield update_state_event(ctx, state_delta={PLAN: update_plan})
 
     async def _construct_function_call_ctx(
-        self, ctx: InvocationContext, index
+        self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
-        update_plan = copy.deepcopy(ctx.session.state['plan'])
-        current_tool_name = update_plan['steps'][index]['tool_name']
-        current_tool_description = update_plan['steps'][index][STEP_DESCRIPTION]
-        update_plan['steps'][index]['status'] = PlanStepStatusEnum.PROCESS
+        current_step = copy.deepcopy(ctx.session.state[CURRENT_STEP])
+        current_step_tool_name = current_step['tool_name']
+        current_step_tool_description = current_step[CURRENT_STEP_DESCRIPTION]
+        current_step['status'] = PlanStepStatusEnum.PROCESS
         yield update_state_event(
             ctx,
             state_delta={
-                'plan': update_plan,
-                'plan_index': index,
+                CURRENT_STEP: current_step,
             },
         )
         for materials_plan_function_call_event in context_function_event(
@@ -109,25 +114,19 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
             self.name,
             'materials_plan_function_call',
             {
-                'msg': f'According to the plan, I will call the `{current_tool_name}`: {current_tool_description}'
+                'msg': f'According to the plan, I will call the `{current_step_tool_name}`: {current_step_tool_description}'
             },
             ModelRole,
         ):
             yield materials_plan_function_call_event
 
     async def _core_execution_agent(
-        self, ctx: InvocationContext, index
+        self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
         logger.info(
             f'{ctx.session.id} Before Run: plan_index = {ctx.session.state["plan_index"]}, plan = {ctx.session.state['plan']}'
         )
-        if ctx.session.state[PLAN]['steps'][index]['retry_count']:
-            separate_card_info = 'ReExecuteStep'
-            retry_info = f'({ctx.session.state[PLAN]['steps'][index]['retry_count']}/{MAX_TOOL_RETRIES})'
-        else:
-            separate_card_info = 'Step'
-            retry_info = ''
-
+        separate_card_info = 'Step'
         yield update_state_event(
             ctx,
             state_delta={
@@ -138,29 +137,12 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
         # 引导标题
         async for title_event in self.title_agent.run_async(ctx):
             yield title_event
-        if ctx.session.state[PLAN]['steps'][index]['retry_count']:
-            step_title = (
-                i18n.t(separate_card_info)
-                + f'{retry_info}'
-                + ': '
-                + ctx.session.state.get('step_title', {}).get('title', '')
-            )
-        else:
-            step_title = ctx.session.state.get('step_title', {}).get('title', '')
-        if (
-            ctx.session.state[PLAN]['steps'][index]['status']
-            == PlanStepStatusEnum.SUBMITTED
-        ):
+        step_title = ctx.session.state.get('step_title', {}).get('title', '')
+
+        if ctx.session.state[CURRENT_STEP]['status'] == PlanStepStatusEnum.SUBMITTED:
             step_title = '获取任务结果'
 
-        # 展示文案：更换工具 / 重试工具 / 空（正常执行），直接传给前端
-        if ctx.session.state.pop('matmaster_flow_switched_tool', None):
-            execution_type_label = EXECUTION_TYPE_LABEL_CHANGE_TOOL
-        elif ctx.session.state[PLAN]['steps'][index]['retry_count']:
-            execution_type_label = EXECUTION_TYPE_LABEL_RETRY
-        else:
-            execution_type_label = ''
-
+        execution_type_label = ''
         yield update_state_event(
             ctx,
             state_delta={
@@ -194,10 +176,10 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
             yield matmaster_flow_event
 
         # 核心执行工具（更换工具时新工具所属 Agent 可能不在 sub_agents，需动态获取）
-        current_tool_name = ctx.session.state[PLAN]['steps'][index]['tool_name']
-        target_agent = get_agent_for_tool(current_tool_name, self.sub_agents)
+        current_step_tool_name = ctx.session.state[CURRENT_STEP]['tool_name']
+        target_agent = get_agent_for_tool(current_step_tool_name, self.sub_agents)
         logger.info(
-            f'{ctx.session.id} tool_name = {current_tool_name}, target_agent = {target_agent.name}'
+            f'{ctx.session.id} tool_name = {current_step_tool_name}, target_agent = {target_agent.name}'
         )
         async for event in target_agent.run_async(ctx):
             yield event
@@ -206,11 +188,11 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
         )
 
     async def _tool_result_validation(
-        self, ctx: InvocationContext, index
+        self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
-        current_tool_name = ctx.session.state[PLAN]['steps'][index]['tool_name']
-        current_tool_description = ctx.session.state[PLAN]['steps'][index][
-            STEP_DESCRIPTION
+        current_step_tool_name = ctx.session.state[CURRENT_STEP][CURRENT_STEP_TOOL_NAME]
+        current_step_tool_description = ctx.session.state[CURRENT_STEP][
+            CURRENT_STEP_DESCRIPTION
         ]
         user_text = (
             ctx.user_content.parts[0].text
@@ -218,16 +200,21 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
             else ''
         )
         user_text = sanitize_braces(user_text)
-        current_tool_description = sanitize_braces(current_tool_description or '')
+        current_step_tool_description = sanitize_braces(
+            current_step_tool_description or ''
+        )
         lines = (
             f"用户原始请求: {user_text}",
-            f"当前步骤描述: {current_tool_description}",
-            f"工具名称: {current_tool_name}",
+            f"当前步骤描述: {current_step_tool_description}",
+            f"工具名称: {current_step_tool_name}",
             '请根据以上信息判断，工具的参数配置及对应的执行结果是否严格满足用户原始需求。',
         )
         validation_instruction = '\n'.join(lines)
         self.validation_agent.instruction = (
-            STEP_VALIDATION_INSTRUCTION + validation_instruction
+            create_step_validation_instruction(
+                find_alternative_tool(current_step_tool_name)
+            )
+            + validation_instruction
         )
 
         async for validation_event in self.validation_agent.run_async(ctx):
@@ -266,9 +253,11 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
         update_plan = copy.deepcopy(ctx.session.state['plan'])
         update_plan['steps'][index]['status'] = PlanStepStatusEnum.PROCESS
         update_plan['steps'][index]['validation_failure_reason'] = validation_reason
-        original_description = ctx.session.state[PLAN]['steps'][index][STEP_DESCRIPTION]
+        original_description = ctx.session.state[PLAN]['steps'][index][
+            CURRENT_STEP_DESCRIPTION
+        ]
         update_plan['steps'][index][
-            STEP_DESCRIPTION
+            CURRENT_STEP_DESCRIPTION
         ] = f"{original_description}\n\n注意：上次执行因以下原因校验失败，请改进：{validation_reason}"
         yield update_state_event(ctx, state_delta={'plan': update_plan})
 
@@ -312,11 +301,11 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
         update_plan['steps'][index]['tool_name'] = next_tool
         update_plan['steps'][index]['status'] = PlanStepStatusEnum.PROCESS
         original_description = ctx.session.state[PLAN]['steps'][index][
-            STEP_DESCRIPTION
+            CURRENT_STEP_DESCRIPTION
         ].split('\n\n注意：')[
             0
         ]  # 移除之前的失败原因
-        update_plan['steps'][index][STEP_DESCRIPTION] = original_description
+        update_plan['steps'][index][CURRENT_STEP_DESCRIPTION] = original_description
         yield update_state_event(
             ctx,
             state_delta={
@@ -327,140 +316,30 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
 
     @override
     async def _run_events(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
-        plan = ctx.session.state['plan']
-        logger.info(f'{ctx.session.id} plan = {plan}')
+        # 制造工具调用上下文，已提交的任务跳过该步骤
+        if not is_job_submitted_step(ctx):
+            async for (
+                _construct_function_call_event
+            ) in self._construct_function_call_ctx(ctx):
+                yield _construct_function_call_event
 
-        for index, initial_step in enumerate(plan['steps']):
-            initial_current_tool_name = initial_step['tool_name']
-            tried_tools = [initial_current_tool_name]
-            alternatives = find_alternative_tool(initial_current_tool_name)
+        # 核心工具调用
+        async for _core_execution_event in self._core_execution_agent(ctx):
+            yield _core_execution_event
 
-            tool_attempt_success = False
-            while not tool_attempt_success:
-                if (
-                    ctx.session.state[PLAN]['steps'][index]['status']
-                    == PlanStepStatusEnum.SUCCESS
-                ):
-                    tool_attempt_success = True
-                    break
-                else:
-                    # 初始化 retry_count
-                    async for _update_retry_event in self._update_retry_count(
-                        ctx, index, 0
-                    ):
-                        yield _update_retry_event
+        post_execution_step = get_current_step(ctx)
+        if post_execution_step[CURRENT_STEP_STATUS] != PlanStepStatusEnum.SUBMITTED:
+            # 校验工具结果
+            async for _tool_result_validation_event in self._tool_result_validation(
+                ctx
+            ):
+                yield _tool_result_validation_event
+        # 异步任务，直接退出当前函数
+        else:
+            return
 
-                    # 同一工具重试
-                    while (
-                        ctx.session.state[PLAN]['steps'][index]['retry_count']
-                        <= MAX_TOOL_RETRIES
-                    ):
-                        # 制造工具调用上下文，已提交的任务跳过该步骤
-                        if (
-                            ctx.session.state[PLAN]['steps'][index]['status']
-                            != PlanStepStatusEnum.SUBMITTED
-                        ):
-                            async for (
-                                _construct_function_call_event
-                            ) in self._construct_function_call_ctx(ctx, index):
-                                yield _construct_function_call_event
-
-                        # 核心工具调用
-                        async for _core_execution_event in self._core_execution_agent(
-                            ctx, index
-                        ):
-                            yield _core_execution_event
-
-                        current_steps = ctx.session.state['plan']['steps']
-                        # 工具调用结果返回【成功】
-                        if current_steps[index]['status'] == PlanStepStatusEnum.SUCCESS:
-                            # 对成功的工具调用结果进行校验
-                            if has_self_check(
-                                ctx.session.state[PLAN]['steps'][index]['tool_name']
-                            ):
-                                # 校验工具结果
-                                async for (
-                                    _tool_result_validation_event
-                                ) in self._tool_result_validation(ctx, index):
-                                    yield _tool_result_validation_event
-
-                                validation_result = ctx.session.state.get(
-                                    'step_validation', {}
-                                )
-                                is_valid = validation_result.get('is_valid', True)
-                                validation_reason = validation_result.get('reason', '')
-
-                                # “假成功”结果，计划重试
-                                if (not is_valid) and ctx.session.state[PLAN]['steps'][
-                                    index
-                                ]['retry_count'] < MAX_TOOL_RETRIES:
-                                    async for (
-                                        _prepare_retry_fake_success_event
-                                    ) in self._prepare_retry_fake_success(
-                                        ctx, index, validation_reason
-                                    ):
-                                        yield _prepare_retry_fake_success_event
-                                else:
-                                    # 校验成功，步骤完成
-                                    tool_attempt_success = True
-                                    break
-                            else:
-                                # 无需校验，步骤完成
-                                tool_attempt_success = True
-                                break
-                        # 工具调用失败，且符合重试条件
-                        elif (
-                            current_steps[index]['status'] == PlanStepStatusEnum.FAILED
-                            and ctx.session.state[PLAN]['steps'][index]['retry_count']
-                            < MAX_TOOL_RETRIES
-                        ):
-                            # 对于某些错误，重试没有必要，直接退出
-                            if should_exit_retryLoop(ctx):
-                                break
-
-                            validation_result = ctx.session.state.get(
-                                'step_validation', {}
-                            )
-                            validation_reason = validation_result.get('reason', '')
-                            async for (
-                                _prepare_retry_failed_result_event
-                            ) in self._prepare_retry_failed_result(
-                                ctx, index, validation_reason
-                            ):
-                                yield _prepare_retry_failed_result_event
-                        # 异步任务，直接退出当前函数
-                        elif (
-                            current_steps[index]['status']
-                            == PlanStepStatusEnum.SUBMITTED
-                        ):
-                            return
-                        else:
-                            # 其他状态（SUBMITTED等），退出循环
-                            break
-
-                    # 更换其他工具重试
-                    if (
-                        not tool_attempt_success
-                        and ctx.session.state['plan']['steps'][index]['status']
-                        != PlanStepStatusEnum.SUBMITTED
-                    ):
-                        available_alts = [
-                            alt for alt in alternatives if alt not in tried_tools
-                        ]
-                        if available_alts:
-                            # 尝试替换工具
-                            next_tool = available_alts[0]
-                            tried_tools.append(next_tool)
-                            async for (
-                                _prepare_retry_other_tool_event
-                            ) in self._prepare_retry_other_tool(ctx, index, next_tool):
-                                yield _prepare_retry_other_tool_event
-                        else:
-                            logger.warning(
-                                f'{ctx.session.id} No more alternative tools for step {index + 1}'
-                            )
-                            break  # 退出tool while
-
-            # 最终仍然没有成功，中止计划
-            if not tool_attempt_success:
-                break
+        update_history_steps = copy.deepcopy(ctx.session.state[HISTORY_STEPS])
+        update_history_steps.append(
+            {**post_execution_step, **get_current_step_validation(ctx)}
+        )
+        yield update_state_event(ctx, state_delta={HISTORY_STEPS: update_history_steps})

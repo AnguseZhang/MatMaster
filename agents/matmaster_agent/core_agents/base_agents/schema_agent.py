@@ -13,6 +13,7 @@ from agents.matmaster_agent.core_agents.base_agents.error_agent import (
 from agents.matmaster_agent.core_agents.comp_agents.dntransfer_climit_agent import (
     CombinedDisallowTransferAndContentLimitMixin,
 )
+from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.utils.event_utils import (
     context_function_event,
     is_function_call,
@@ -22,6 +23,8 @@ from agents.matmaster_agent.utils.event_utils import (
 from agents.matmaster_agent.utils.helper_func import extract_json_from_string
 
 logger = logging.getLogger(__name__)
+logger.addFilter(PrefixFilter(MATMASTER_AGENT_NAME))
+logger.setLevel(logging.INFO)
 
 
 class SchemaAgent(ErrorHandleLlmAgent):
@@ -41,7 +44,7 @@ class SchemaAgent(ErrorHandleLlmAgent):
                             r',(\s*[}\]])', r'\1', repaired_raw_text
                         )  # 移除尾随逗号
                         logger.info(
-                            f'[{MATMASTER_AGENT_NAME}]:[{ctx.session.id}] repaired_raw_text = {repaired_raw_text}'
+                            f'{ctx.session.id} {self.name} repaired_raw_text = {repaired_raw_text}'
                         )
                         schema_info: dict = json.loads(repaired_raw_text)
 

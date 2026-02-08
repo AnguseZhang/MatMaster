@@ -17,7 +17,13 @@ from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.model import UserContent
 from agents.matmaster_agent.prompt import get_user_content_lang
 from agents.matmaster_agent.services.quota import check_quota_service, use_quota_service
-from agents.matmaster_agent.state import ERROR_DETAIL, ERROR_OCCURRED, PLAN, UPLOAD_FILE
+from agents.matmaster_agent.state import (
+    ERROR_DETAIL,
+    ERROR_OCCURRED,
+    HISTORY_STEPS,
+    PLAN,
+    UPLOAD_FILE,
+)
 from agents.matmaster_agent.utils.helper_func import get_user_id
 
 logger = logging.getLogger(__name__)
@@ -130,6 +136,10 @@ async def matmaster_prepare_state(
     # 重试步骤或者是继续步骤
     callback_context.state['separate_card_info'] = callback_context.state.get(
         'separate_card_info', ''
+    )
+    # 历史的所有执行过程
+    callback_context.state[HISTORY_STEPS] = callback_context.state.get(
+        HISTORY_STEPS, []
     )
 
 
