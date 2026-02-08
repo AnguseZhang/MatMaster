@@ -53,41 +53,13 @@ from agents.matmaster_agent.sub_agents.HEAkb_agent.prompt import (
     HEAKbAgentToolDescription,
 )
 from agents.matmaster_agent.sub_agents.LAMMPS_agent.constant import LAMMPS_AGENT_NAME
-from agents.matmaster_agent.sub_agents.MrDice_agent.bohriumpublic_agent.constant import (
-    BOHRIUMPUBLIC_DATABASE_AGENT_NAME,
+from agents.matmaster_agent.sub_agents.structure_search_agent.constant import (
+    STRUCTURE_SEARCH_AGENT_NAME,
 )
-from agents.matmaster_agent.sub_agents.MrDice_agent.bohriumpublic_agent.prompt import (
-    BohriumPublicAgentArgsSetting,
-    BohriumPublicAgentSummaryPrompt,
-    BohriumPublicAgentToolDescription,
-)
-from agents.matmaster_agent.sub_agents.MrDice_agent.mofdb_agent.constant import (
-    MOFDB_DATABASE_AGENT_NAME,
-)
-from agents.matmaster_agent.sub_agents.MrDice_agent.mofdb_agent.prompt import (
-    MofdbAgentArgsSetting,
-    MofdbAgentSummaryPrompt,
-    MofdbAgentToolDescription,
-)
-from agents.matmaster_agent.sub_agents.MrDice_agent.openlam_agent.constant import (
-    OPENLAM_DATABASE_AGENT_NAME,
-)
-from agents.matmaster_agent.sub_agents.MrDice_agent.openlam_agent.prompt import (
-    OpenlamAgentArgsSetting,
-    OpenlamAgentSummaryPrompt,
-    OpenlamAgentToolDescription,
-)
-from agents.matmaster_agent.sub_agents.MrDice_agent.optimade_agent.constant import (
-    OPTIMADE_DATABASE_AGENT_NAME,
-)
-from agents.matmaster_agent.sub_agents.MrDice_agent.optimade_agent.prompt import (
-    OptimadeAgentSummaryPrompt,
-    OptimadeBandgapArgsSetting,
-    OptimadeBandgapToolDescription,
-    OptimadeFilterArgsSetting,
-    OptimadeFilterToolDescription,
-    OptimadeSpgArgsSetting,
-    OptimadeSpgToolDescription,
+from agents.matmaster_agent.sub_agents.structure_search_agent.prompt import (
+    StructureSearchAgentArgsSetting,
+    StructureSearchAgentSummaryPrompt,
+    StructureSearchAgentToolDescription,
 )
 from agents.matmaster_agent.sub_agents.NMR_agent.constant import (
     NMR_AGENT_NAME,
@@ -1605,212 +1577,34 @@ ALL_TOOLS = {
         'summary_prompt': STEELPredictAgentSummaryPrompt,
         'self_check': False,
     },
-    'fetch_structures_with_filter': {
-        'belonging_agent': OPTIMADE_DATABASE_AGENT_NAME,
+    'fetch_structures_from_db': {
+        'belonging_agent': STRUCTURE_SEARCH_AGENT_NAME,
         'scene': [SceneEnum.DATABASE_SEARCH],
-        'description': OptimadeFilterToolDescription,
-        'args_setting': f"{OptimadeFilterArgsSetting}",
+        'description': StructureSearchAgentToolDescription,
+        'args_setting': f"{StructureSearchAgentArgsSetting}",
         'alternative': [
-            'fetch_bohrium_crystals',
-            'fetch_openlam_structures',
             'web-search',
         ],
-        'summary_prompt': OptimadeAgentSummaryPrompt,
+        'summary_prompt': StructureSearchAgentSummaryPrompt,
         'self_check': True,
     },
-    'fetch_structures_with_filter_zh': {
-        'belonging_agent': OPTIMADE_DATABASE_AGENT_NAME,
+    'fetch_structures_from_db_zh': {
+        'belonging_agent': STRUCTURE_SEARCH_AGENT_NAME,
         'scene': [SceneEnum.DATABASE_SEARCH],
         'description': (
-            '功能：向OPTIMADE提供者发送过滤字符串进行结构搜索。\n'
-            '使用场景：用于灵活的组成/化学式查询，无需空间群或带隙约束。\n'
+            '功能：从多个数据源（BohriumPublic / OpenLAM / OPTIMADE 提供者）检索晶体结构，或对 MOFdb 运行高级 SQL 查询。\n'
+            '使用场景：任何“查找晶体结构”的请求，包括按化学式/元素/空间群/带隙筛选、或针对 MOF 的特定分析（MOFdb SQL）。\n'
             '数据库搜索\n'
             '使用方法：\n'
-            '1. 输入：OPTIMADE过滤字符串。\n'
-            '2. 输出：匹配的结构。\n'
+            '1. 输入：结构化筛选条件（化学式/元素/空间群范围）、筛选条件，筛选字符串，或 MOFdb SQL 语句。\n'
+            '2. 输出：CIF/JSON 格式的结构或元数据；MOFdb 返回 SQL 查询结果行及可选的结构文件链接。\n'
             '3. 注意事项：\n'
-            '   完整的OPTIMADE过滤语言；并行查询。\n'
-            '4. 成本/备注：中等。\n',
-        ),
-        'args_setting': f"{OptimadeFilterArgsSetting}",
-        'alternative': [
-            'fetch_bohrium_crystals',
-            'fetch_openlam_structures',
-            'web-search',
-        ],
-        'summary_prompt': OptimadeAgentSummaryPrompt,
-        'self_check': True,
-    },
-    'fetch_structures_with_spg': {
-        'belonging_agent': OPTIMADE_DATABASE_AGENT_NAME,
-        'scene': [SceneEnum.DATABASE_SEARCH],
-        'description': OptimadeSpgToolDescription,
-        'args_setting': f"{OptimadeSpgArgsSetting}",
-        'alternative': [
-            'fetch_bohrium_crystals',
-            'fetch_structures_with_filter',
-            'web-search',
-        ],
-        'summary_prompt': OptimadeAgentSummaryPrompt,
-        'self_check': True,
-    },
-    'fetch_structures_with_spg_zh': {
-        'belonging_agent': OPTIMADE_DATABASE_AGENT_NAME,
-        'scene': [SceneEnum.DATABASE_SEARCH],
-        'description': (
-            '功能：通过空间群编号搜索结构，可附加可选过滤器。\n'
-            '使用场景：当用户指定空间群编号或原型结构时。\n'
-            '数据库搜索\n'
-            '使用方法：\n'
-            '1. 输入：空间群编号和OPTIMADE过滤字符串。\n'
-            '2. 输出：匹配空间群的结构。\n'
-            '3. 注意事项：\n'
-            '   提供者特定的空间群过滤器。\n'
-            '4. 成本/备注：中等。\n',
-        ),
-        'args_setting': f"{OptimadeSpgArgsSetting}",
-        'alternative': [
-            'fetch_bohrium_crystals',
-            'fetch_structures_with_filter',
-            'web-search',
-        ],
-        'summary_prompt': OptimadeAgentSummaryPrompt,
-        'self_check': True,
-    },
-    'fetch_structures_with_bandgap': {
-        'belonging_agent': OPTIMADE_DATABASE_AGENT_NAME,
-        'scene': [SceneEnum.DATABASE_SEARCH],
-        'description': OptimadeBandgapToolDescription,
-        'args_setting': f"{OptimadeBandgapArgsSetting}",
-        'alternative': [
-            'fetch_bohrium_crystals',
-            'fetch_structures_with_filter',
-            'web-search',
-        ],
-        'summary_prompt': OptimadeAgentSummaryPrompt,
-        'self_check': True,
-    },
-    'fetch_structures_with_bandgap_zh': {
-        'belonging_agent': OPTIMADE_DATABASE_AGENT_NAME,
-        'scene': [SceneEnum.DATABASE_SEARCH],
-        'description': (
-            '功能：通过带隙范围搜索结构，可附加可选过滤器。\n'
-            '使用场景：当用户指定带隙范围时。\n'
-            '数据库搜索\n',
-            '使用方法：\n'
-            '1. 输入：带隙范围和OPTIMADE过滤字符串。\n'
-            '2. 输出：带隙在范围内的结构。\n'
-            '3. 注意事项：\n'
-            '   提供者特定的带隙过滤器。\n'
-            '4. 成本/备注：中等。\n',
-        ),
-        'args_setting': f"{OptimadeBandgapArgsSetting}",
-        'alternative': [
-            'fetch_bohrium_crystals',
-            'fetch_structures_with_filter',
-            'web-search',
-        ],
-        'summary_prompt': OptimadeAgentSummaryPrompt,
-        'self_check': True,
-    },
-    'fetch_bohrium_crystals': {
-        'belonging_agent': BOHRIUMPUBLIC_DATABASE_AGENT_NAME,
-        'scene': [SceneEnum.DATABASE_SEARCH],
-        'description': BohriumPublicAgentToolDescription,
-        'args_setting': f"{BohriumPublicAgentArgsSetting}",
-        'alternative': [
-            'fetch_structures_with_filter',
-            'web-search',
-            'fetch_openlam_structures',
-        ],
-        'summary_prompt': BohriumPublicAgentSummaryPrompt,
-        'self_check': True,
-    },
-    'fetch_bohrium_crystals_zh': {
-        'belonging_agent': BOHRIUMPUBLIC_DATABASE_AGENT_NAME,
-        'scene': [SceneEnum.DATABASE_SEARCH],
-        'description': (
-            '功能：从Bohrium Public数据库检索晶体结构。\n'
-            '使用场景：用于化学式、元素、空间群、原子数、形成能、带隙查询。\n'
-            '数据库搜索\n'
-            '使用方法：\n'
-            '1. 输入：化学式、元素等过滤器。\n'
-            '2. 输出：CIF或JSON格式的结构。\n'
-            '3. 注意事项：\n'
-            '   不支持逻辑表达式；比OPTIMADE更快。\n'
+            '   OPTIMADE 筛选必须遵循标准语法；MOFdb 仅限 MOF 相关数据；OpenLAM 不提供空间群/带隙信息。\n'
             '4. 成本/备注：低。\n',
         ),
-        'args_setting': f"{BohriumPublicAgentArgsSetting}",
-        'alternative': [
-            'fetch_structures_with_filter',
-            'web-search',
-            'fetch_openlam_structures',
-        ],
-        'summary_prompt': BohriumPublicAgentSummaryPrompt,
-        'self_check': True,
-    },
-    'fetch_openlam_structures': {
-        'belonging_agent': OPENLAM_DATABASE_AGENT_NAME,
-        'scene': [SceneEnum.DATABASE_SEARCH],
-        'description': OpenlamAgentToolDescription,
-        'args_setting': f"{OpenlamAgentArgsSetting}",
-        'alternative': [
-            'fetch_structures_with_filter',
-            'web-search',
-            'fetch_openlam_structures',
-        ],
-        'summary_prompt': OpenlamAgentSummaryPrompt,
-        'self_check': True,
-    },
-    'fetch_openlam_structures_zh': {
-        'belonging_agent': OPENLAM_DATABASE_AGENT_NAME,
-        'scene': [SceneEnum.DATABASE_SEARCH],
-        'description': (
-            '功能：从OpenLAM数据库检索晶体结构。\n'
-            '使用场景：当查询OpenLAM特定材料或基于时间的过滤器时。\n'
-            '数据库搜索\n'
-            '使用方法：\n'
-            '1. 输入：化学式、能量范围、提交时间过滤器。\n'
-            '2. 输出：CIF或JSON格式的结构。\n'
-            '3. 注意事项：\n'
-            '   不支持空间群、带隙、元素列表或逻辑过滤器。\n'
-            '4. 成本/备注：中等。\n',
-        ),
-        'args_setting': f"{OpenlamAgentArgsSetting}",
-        'alternative': [
-            'fetch_structures_with_filter',
-            'web-search',
-            'fetch_openlam_structures',
-        ],
-        'summary_prompt': OpenlamAgentSummaryPrompt,
-        'self_check': True,
-    },
-    'fetch_mofs_sql': {
-        'belonging_agent': MOFDB_DATABASE_AGENT_NAME,
-        'scene': [SceneEnum.DATABASE_SEARCH],
-        'description': MofdbAgentToolDescription,
-        'args_setting': f"{MofdbAgentArgsSetting}",
+        'args_setting': f"{StructureSearchAgentArgsSetting}",
         'alternative': ['web-search'],
-        'summary_prompt': MofdbAgentSummaryPrompt,
-        'self_check': True,
-    },
-    'fetch_mofs_sql_zh': {
-        'belonging_agent': MOFDB_DATABASE_AGENT_NAME,
-        'scene': [SceneEnum.DATABASE_SEARCH],
-        'description': (
-            '功能：对MOF数据库执行SQL查询。\n'
-            '使用场景：用于复杂的MOF查询，包括多表连接和统计分析。\n'
-            '数据库搜索\n'
-            '使用方法：\n'
-            '1. 输入：SQL查询字符串。\n'
-            '2. 输出：查询结果。\n'
-            '3. 注意事项：\n'
-            '   特定于MOF；支持高级SQL。\n'
-            '4. 成本/备注：中等。\n',
-        ),
-        'args_setting': f"{MofdbAgentArgsSetting}",
-        'alternative': ['web-search'],
-        'summary_prompt': MofdbAgentSummaryPrompt,
+        'summary_prompt': StructureSearchAgentSummaryPrompt,
         'self_check': True,
     },
     'calculate_reaction_profile': {
