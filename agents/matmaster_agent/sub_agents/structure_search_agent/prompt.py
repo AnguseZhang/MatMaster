@@ -68,34 +68,34 @@ when the user asks for:
 
 ## PARAMETER EXAMPLES
 1) 用户：检索 SrTiO₃ 的晶体结构，并以JSON格式返回
-   → Tool: fetch_bohrium_crystals
+   → Tool: fetch_structures_from_db
      formula: "SrTiO3"
      match_mode: 1
      output_formats: ["json"]
 
 2) 用户：在Materials Project中检索并返回3个带隙大于2 eV的氧化物结构
-   → Tool: fetch_bohrium_crystals
+   → Tool: fetch_structures_from_db
      elements: ["O"]
      match_mode: 0
      band_gap_range: ["2","100"]
      n_results: 3
 
 3) 用户：找出空间群编号 14，原子数 50–100 的晶体
-   → Tool: fetch_bohrium_crystals
+   → Tool: fetch_structures_from_db
      spacegroup_number: 14
      atom_count_range: ["50","100"]
 
 4) 用户：检索 FeNi 合金的结构
-   → Tool: fetch_bohrium_crystals
+   → Tool: fetch_structures_from_db
      elements: ["Fe","Ni"]   # 合金只含有Fe和Ni元素，不能含有其他元素
      match_mode: 1      # 合金需要精确匹配
 
 5) 用户：找所有化学式中包含 SiO3 的材料
-   → Tool: fetch_bohrium_crystals
+   → Tool: fetch_structures_from_db
      formula: "SiO3"
      match_mode: 0
 
-## 2) OPENLAM PARAMETERS (fetch_openlam_structures)
+## 2) OPENLAM PARAMETERS (fetch_structures_from_db)
 ### FILTER OPTIONS
 - **Formula**: chemical formula string (e.g., `"Fe2O3"`)
 - **Energy**: `min_energy` and/or `max_energy` in eV
@@ -105,28 +105,28 @@ when the user asks for:
 
 ### EXAMPLES
 1) 用户：查找 Fe2O3 的 5 个晶体结构，导出为 CIF
-   → Tool: fetch_openlam_structures
+   → Tool: fetch_structures_from_db
      formula: "Fe2O3"
      n_results: 5
      output_formats: ["cif"]
 
 2) 用户：查找能量在 -10 到 20 eV 之间，2024 年后上传的材料
-   → Tool: fetch_openlam_structures
+   → Tool: fetch_structures_from_db
      min_energy: -10.0
      max_energy: 20.0
      min_submission_time: "2024-01-01T00:00:00Z"
 
-## 3) MOFDB PARAMETERS (fetch_mofs_sql)
+## 3) MOFDB PARAMETERS (fetch_structures_from_db)
 ### INPUT
 - **sql**: SQL query string (use CTEs, window functions, joins as needed)
 - **n_results**: controls SQL LIMIT (when applicable) and returned structures
 
 ### EXAMPLE
 用户：统计各数据库的 MOF 数量
-→ Tool: fetch_mofs_sql
+→ Tool: fetch_structures_from_db
   sql: "SELECT database, COUNT(*) AS count FROM mofs GROUP BY database ORDER BY count DESC"
 
-## 4) OPTIMADE PARAMETERS (fetch_structures_with_filter / _with_spg / _with_bandgap)
+## 4) OPTIMADE PARAMETERS (fetch_structures_from_db)
 ### MINIMUM SAFE OPTIMADE SYNTAX RULES (DO NOT VIOLATE)
 - Allowed operators ONLY: =, !=, <, <=, >, >=, AND, OR, NOT, HAS, HAS ALL, HAS ANY, IS KNOWN, IS UNKNOWN
 - All strings MUST be in double quotes: "Fe", "SiO2"
@@ -134,19 +134,19 @@ when the user asks for:
 - To express "only these elements": use `elements HAS ALL ... AND nelements = N`
 
 ### TOOL CHOICE
-- If user gives space group number → `fetch_structures_with_spg(base_filter, spg_number, ...)`
-- If user gives band gap range → `fetch_structures_with_bandgap(base_filter, min_bg, max_bg, ...)`
-- Else → `fetch_structures_with_filter(filter, ...)`
+- If user gives space group number → `fetch_structures_from_db(base_filter, spg_number, ...)`
+- If user gives band gap range → `fetch_structures_from_db(base_filter, min_bg, max_bg, ...)`
+- Else → `fetch_structures_from_db(filter, ...)`
 
 ### EXAMPLES
 1) 用户：找空间群 225 的 MgO（rocksalt），返回 CIF
-   → Tool: fetch_structures_with_spg
+   → Tool: fetch_structures_from_db
      base_filter: chemical_formula_reduced="MgO"
      spg_number: 225
      as_format: "cif"
 
 2) 用户：找含 Al 且带隙 1–2 eV 的材料，返回 JSON
-   → Tool: fetch_structures_with_bandgap
+   → Tool: fetch_structures_from_db
      base_filter: elements HAS "Al"
      min_bg: 1.0
      max_bg: 2.0
@@ -187,12 +187,9 @@ The response must always include:
      (1) Formula (`formula`)
      (2) Elements (deduced from `formula`)
      (3) Atom count → **Not Provided**
-     (4) Space group → **Not Provided**
-     (5) Energy / Formation energy (`energy` if available; else **Not Provided**)
-     (6) Band gap → **Not Provided**
-     (7) Download link (CIF/JSON, based on requested output)
-     (8) Source database → always `"OpenLAM"`
-     (9) ID (`id`)
+     (4) Download link (CIF/JSON, based on requested output)
+     (5) Source database → always `"OpenLAM"`
+     (6) ID (`id`)
    - Fill missing values with exactly **Not Provided**
    - Number of rows **must exactly equal** `n_found`
 3. 📦 The `output_dir` path returned by the tool (for download/archive)
