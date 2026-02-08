@@ -112,28 +112,24 @@ from agents.matmaster_agent.sub_agents.LAMMPS_agent.agent import (
 from agents.matmaster_agent.sub_agents.LAMMPS_agent.constant import LAMMPS_AGENT_NAME
 from agents.matmaster_agent.sub_agents.MrDice_agent.bohriumpublic_agent.agent import (
     Bohriumpublic_AgentBase,
-    bohriumpublic_toolset,
 )
 from agents.matmaster_agent.sub_agents.MrDice_agent.bohriumpublic_agent.constant import (
     BOHRIUMPUBLIC_DATABASE_AGENT_NAME,
 )
 from agents.matmaster_agent.sub_agents.MrDice_agent.mofdb_agent.agent import (
     Mofdb_AgentBase,
-    mofdb_toolset,
 )
 from agents.matmaster_agent.sub_agents.MrDice_agent.mofdb_agent.constant import (
     MOFDB_DATABASE_AGENT_NAME,
 )
 from agents.matmaster_agent.sub_agents.MrDice_agent.openlam_agent.agent import (
     Openlam_AgentBase,
-    openlam_toolset,
 )
 from agents.matmaster_agent.sub_agents.MrDice_agent.openlam_agent.constant import (
     OPENLAM_DATABASE_AGENT_NAME,
 )
 from agents.matmaster_agent.sub_agents.MrDice_agent.optimade_agent.agent import (
     Optimade_AgentBase,
-    optimade_toolset,
 )
 from agents.matmaster_agent.sub_agents.MrDice_agent.optimade_agent.constant import (
     OPTIMADE_DATABASE_AGENT_NAME,
@@ -219,6 +215,13 @@ from agents.matmaster_agent.sub_agents.structure_generate_agent.agent import (
 from agents.matmaster_agent.sub_agents.structure_generate_agent.constant import (
     StructureGenerateAgentName,
 )
+from agents.matmaster_agent.sub_agents.structure_search_agent.agent import (
+    StructureSearchAgentBase,
+    structure_search_toolset,
+)
+from agents.matmaster_agent.sub_agents.structure_search_agent.constant import (
+    STRUCTURE_SEARCH_AGENT_NAME,
+)
 from agents.matmaster_agent.sub_agents.superconductor_agent.agent import (
     SuperconductorAgent,
     superconductor_toolset,
@@ -293,10 +296,7 @@ ALL_TOOLSET_DICT = {
     'polymer_kb_toolset': polymer_kb_toolset,
     'steel_kb_toolset': steel_kb_toolset,
     'steel_predict_toolset': steel_predict_toolset,
-    'optimade_toolset': optimade_toolset,
-    'bohriumpublic_toolset': bohriumpublic_toolset,
-    'openlam_toolset': openlam_toolset,
-    'mofdb_toolset': mofdb_toolset,
+    'structure_search_toolset': structure_search_toolset,
     'organic_reaction_toolset': organic_reaction_toolset,
     'perovskite_toolset': perovskite_toolset,
     'piloteye_electro_toolset': piloteye_electro_toolset,
@@ -337,6 +337,7 @@ AGENT_CLASS_MAPPING = {
     BOHRIUMPUBLIC_DATABASE_AGENT_NAME: Bohriumpublic_AgentBase,
     MOFDB_DATABASE_AGENT_NAME: Mofdb_AgentBase,
     OPENLAM_DATABASE_AGENT_NAME: Openlam_AgentBase,
+    STRUCTURE_SEARCH_AGENT_NAME: StructureSearchAgentBase,
     ORGANIC_REACTION_AGENT_NAME: OragnicReactionAgent,
     PerovskiteAgentName: PerovskiteAgent,
     PILOTEYE_ELECTRO_AGENT_NAME: PiloteyeElectroAgent,
@@ -380,6 +381,7 @@ class MatMasterSubAgentsEnum(str, Enum):
     BohriumPublicDatabaseAgent = BOHRIUMPUBLIC_DATABASE_AGENT_NAME
     MOFDBDatabaseAgent = MOFDB_DATABASE_AGENT_NAME
     OpenLAMDatabaseAgent = OPENLAM_DATABASE_AGENT_NAME
+    StructureSearchAgent = STRUCTURE_SEARCH_AGENT_NAME
     OrganicReactionAgent = ORGANIC_REACTION_AGENT_NAME
     PerovskiteAgent = PerovskiteAgentName
     PiloteyeElectroAgent = PILOTEYE_ELECTRO_AGENT_NAME
