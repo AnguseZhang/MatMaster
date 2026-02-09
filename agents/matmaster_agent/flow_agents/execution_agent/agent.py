@@ -36,7 +36,7 @@ from agents.matmaster_agent.llm_config import MatMasterLlmConfig
 from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.logger import PrefixFilter
 from agents.matmaster_agent.prompt import MatMasterCheckTransferPrompt
-from agents.matmaster_agent.state import PLAN, STEP_DESCRIPTION
+from agents.matmaster_agent.state import PLAN, STEP_DESCRIPTION, StepKey
 from agents.matmaster_agent.sub_agents.mapping import (
     MatMasterSubAgentsEnum,
 )
@@ -289,10 +289,10 @@ class MatMasterSupervisorAgent(DisallowTransferAndContentLimitLlmAgent):
             )
             # 在重试时更新步骤描述，包含校验失败的原因
             original_description = ctx.session.state[PLAN]['steps'][index][
-                'description'
+                StepKey.STEP_DESCRIPTION
             ]
             update_plan['steps'][index][
-                'description'
+                StepKey.STEP_DESCRIPTION
             ] = f"{original_description}\n\n注意：上次执行因以下原因校验失败，请改进：{validation_reason}"
         else:
             logger.info(

@@ -19,3 +19,7 @@ STEP_DESCRIPTION = 'step_description'
 
 class StateKey(StrEnum):
     pass
+
+
+class StepKey(StrEnum):
+    STEP_DESCRIPTION = 'step_description'
