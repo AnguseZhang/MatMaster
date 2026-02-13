@@ -22,6 +22,10 @@ from agents.matmaster_agent.sub_agents.mapping import (
 )
 from agents.matmaster_agent.sub_agents.tools import ALL_TOOLS
 
+from agents.matmaster_agent.flow_agents.tool_name_utils import (
+    normalize_tool_name_to_canonical,
+)
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -48,8 +52,11 @@ def get_tools_list(ctx: InvocationContext, scenes: list):
 
 
 def get_agent_name(tool_name, sub_agents):
+    canonical = normalize_tool_name_to_canonical(tool_name)
+    if canonical is None or canonical not in ALL_TOOLS:
+        raise RuntimeError(f"ToolName Error: {tool_name}")
     try:
-        target_agent_name = ALL_TOOLS[tool_name]['belonging_agent']
+        target_agent_name = ALL_TOOLS[canonical]['belonging_agent']
     except BaseException:
         raise RuntimeError(f"ToolName Error: {tool_name}")
 
@@ -62,12 +69,16 @@ def get_agent_for_tool(tool_name, sub_agents):
     """
     根据 tool_name 获取对应 Agent。若当前在 sub_agents 中则直接返回，
     否则动态构建（用于更换工具时，新工具所属 Agent 可能不在初始 sub_agents 中）。
+    支持 RAG/计划中的大写工具名（如 BUILD_BULK_STRUCTURE_BY_TEMPLATE）自动规范为 ALL_TOOLS 键。
     """
-    agent = get_agent_name(tool_name, sub_agents)
+    canonical = normalize_tool_name_to_canonical(tool_name)
+    if canonical is None or canonical not in ALL_TOOLS:
+        raise RuntimeError(f"ToolName Error: {tool_name}")
+    agent = get_agent_name(canonical, sub_agents)
     if agent is not None:
         return agent
     try:
-        target_agent_name = ALL_TOOLS[tool_name]['belonging_agent']
+        target_agent_name = ALL_TOOLS[canonical]['belonging_agent']
     except BaseException:
         raise RuntimeError(f"ToolName Error: {tool_name}")
     if target_agent_name not in AGENT_CLASS_MAPPING:
@@ -126,8 +137,10 @@ def should_bypass_confirmation(ctx: InvocationContext) -> bool:
 
     # Check if there is exactly one tool in the plan
     if tool_count == 1:
-        # Find the first (and only) tool name
-        first_tool_name = plan_steps[0].get('tool_name', '')
+        # Find the first (and only) tool name (normalize for ALL_TOOLS lookup)
+        first_tool_name = normalize_tool_name_to_canonical(
+            plan_steps[0].get('tool_name', '')
+        ) or plan_steps[0].get('tool_name', '')
 
         # Check if this tool has bypass_confirmation set to True
         if ALL_TOOLS.get(first_tool_name, {}).get('bypass_confirmation') is True:
@@ -135,8 +148,14 @@ def should_bypass_confirmation(ctx: InvocationContext) -> bool:
 
     # TODO: Add more logic here for handling multiple tools in the plan
     elif tool_count == 2:
-        first_tool_name = plan_steps[0].get('tool_name', '')
-        second_tool_name = plan_steps[1].get('tool_name', '')
+        first_tool_name = (
+            normalize_tool_name_to_canonical(plan_steps[0].get('tool_name', ''))
+            or plan_steps[0].get('tool_name', '')
+        )
+        second_tool_name = (
+            normalize_tool_name_to_canonical(plan_steps[1].get('tool_name', ''))
+            or plan_steps[1].get('tool_name', '')
+        )
 
         if (
             first_tool_name == 'web-search'
@@ -149,7 +168,8 @@ def should_bypass_confirmation(ctx: InvocationContext) -> bool:
 
 def find_alternative_tool(current_tool_name: str) -> List[str]:
     """Return alternative tool names for the current tool (maybe empty)."""
-    tool = ALL_TOOLS.get(current_tool_name)
+    canonical = normalize_tool_name_to_canonical(current_tool_name)
+    tool = ALL_TOOLS.get(canonical or current_tool_name)
     if not tool:
         return []
     return tool.get('alternative', [])
@@ -157,7 +177,8 @@ def find_alternative_tool(current_tool_name: str) -> List[str]:
 
 def has_self_check(current_tool_name: str) -> bool:
     """Return self check info for the current tool."""
-    tool = ALL_TOOLS.get(current_tool_name)
+    canonical = normalize_tool_name_to_canonical(current_tool_name)
+    tool = ALL_TOOLS.get(canonical or current_tool_name)
     if not tool:
         return False
     return tool.get('self_check', False)

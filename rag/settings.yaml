@@ -1,0 +1,159 @@
+### This config file contains required core defaults that must be set, along with a handful of common optional settings.
+### For a full list of available settings, see https://microsoft.github.io/graphrag/config/yaml/
+
+### LLM settings ###
+## There are a number of settings to tune the threading and token limits for LLM calls - check the docs.
+
+models:
+  default_chat_model:
+    type: chat
+    model_provider: openai
+    auth_type: api_key
+    api_key: ${PLAN_MAKE_API_KEY}
+    api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
+    model: qwen3-vl-plus
+    # 备选：Azure gpt-4o
+    #model_provider: azure
+    #api_key: ${AZURE_API_KEY}
+    #api_base: https://ty-pre-activation-17.openai.azure.com/
+    #api_version: 2024-12-01-preview
+    #model: gpt-4o
+    model_supports_json: true
+    concurrent_requests: 10
+    async_mode: threaded # or asyncio
+    retry_strategy: exponential_backoff
+    max_retries: 10
+    tokens_per_minute: null
+    requests_per_minute: null
+  default_embedding_model:
+    type: embedding
+    model_provider: openai
+    auth_type: api_key
+    api_key: ${PLAN_MAKE_API_KEY}
+    api_base: https://dashscope.aliyuncs.com/compatible-mode/v1
+    model: text-embedding-v4
+    concurrent_requests: 10
+    async_mode: threaded # or asyncio
+    retry_strategy: exponential_backoff
+    max_retries: 10
+    tokens_per_minute: null
+    requests_per_minute: null
+
+### Input settings ###
+
+input:
+  storage:
+    type: file # or blob
+    base_dir: "input"
+  file_type: text # [csv, text, json]
+
+# 工具编排向：尽量一工具一 chunk（每个 input/*.txt 一文件），单文件少被拆；group_by_columns [id] 按文档边界切
+chunks:
+  size: 3000
+  overlap: 150
+  group_by_columns: [id]
+
+### Output/storage settings ###
+## If blob storage is specified in the following four sections,
+## connection_string and container_name must be provided
+
+output:
+  type: file # [file, blob, cosmosdb]
+  base_dir: "output"
+    
+cache:
+  type: file # [file, blob, cosmosdb]
+  base_dir: "cache"
+
+reporting:
+  type: file # [file, blob]
+  base_dir: "logs"
+
+vector_store:
+  default_vector_store:
+    type: lancedb
+    db_uri: output/lancedb
+    container_name: default
+
+### Workflow settings ###
+
+embed_text:
+  model_id: default_embedding_model
+  vector_store_id: default_vector_store
+
+extract_graph:
+  model_id: default_chat_model
+  prompt: "prompts/extract_graph.txt"
+  # 工具能力图谱：仅抽取工具实体及其依赖关系
+  entity_types: [tool]
+  max_gleanings: 1
+
+summarize_descriptions:
+  model_id: default_chat_model
+  prompt: "prompts/summarize_descriptions.txt"
+  max_length: 800  # 增加长度以容纳 applicable_tasks 和 keywords 字段
+
+extract_graph_nlp:
+  text_analyzer:
+    extractor_type: regex_english # [regex_english, syntactic_parser, cfg]
+  async_mode: threaded # or asyncio
+
+# 放宽 prune：出现 1 次就保留、保留更多边、不删单连边节点，以便更多实体进社区、community report 更多
+prune_graph:
+  min_node_freq: 1
+  min_edge_weight_pct: 20
+  remove_ego_nodes: false
+
+# 工具编排向：整条工具链有机会落在同一 community，便于 community report 写出完整 TOOL CHAIN；max_cluster_size 调小可得到更多社区
+cluster_graph:
+  max_cluster_size: 12
+
+extract_claims:
+  enabled: false
+  model_id: default_chat_model
+  prompt: "prompts/extract_claims.txt"
+  description: "Any claims or facts that could be relevant to information discovery."
+  max_gleanings: 1
+
+community_reports:
+  model_id: default_chat_model
+  graph_prompt: "prompts/community_report_graph.txt"
+  text_prompt: "prompts/community_report_text.txt"
+  max_length: 2000
+  max_input_length: 8000
+
+embed_graph:
+  enabled: false # if true, will generate node2vec embeddings for nodes
+
+umap:
+  enabled: false # if true, will generate UMAP embeddings for nodes (embed_graph must also be enabled)
+
+snapshots:
+  graphml: false
+  embeddings: false
+
+### Query settings ###
+## The prompt locations are required here, but each search method has a number of optional knobs that can be tuned.
+## See the config docs: https://microsoft.github.io/graphrag/config/yaml/#query
+
+local_search:
+  chat_model_id: default_chat_model
+  embedding_model_id: default_embedding_model
+  prompt: "prompts/local_search_system_prompt.txt"
+
+global_search:
+  chat_model_id: default_chat_model
+  map_prompt: "prompts/global_search_map_system_prompt.txt"
+  reduce_prompt: "prompts/global_search_reduce_system_prompt.txt"
+  knowledge_prompt: "prompts/global_search_knowledge_system_prompt.txt"
+
+drift_search:
+  chat_model_id: default_chat_model
+  embedding_model_id: default_embedding_model
+  prompt: "prompts/drift_search_system_prompt.txt"
+  reduce_prompt: "prompts/drift_search_reduce_prompt.txt"
+
+basic_search:
+  chat_model_id: default_chat_model
+  embedding_model_id: default_embedding_model
+  prompt: "prompts/basic_search_system_prompt.txt"

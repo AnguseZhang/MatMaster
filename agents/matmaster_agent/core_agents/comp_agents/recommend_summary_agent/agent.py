@@ -54,6 +54,9 @@ from agents.matmaster_agent.core_agents.comp_agents.tool_connect_agent import (
     ToolConnectAgent,
 )
 from agents.matmaster_agent.flow_agents.model import PlanStepStatusEnum
+from agents.matmaster_agent.flow_agents.tool_name_utils import (
+    normalize_tool_name_to_canonical,
+)
 from agents.matmaster_agent.llm_config import MatMasterLlmConfig
 from agents.matmaster_agent.locales import i18n
 from agents.matmaster_agent.logger import PrefixFilter
@@ -209,7 +212,11 @@ class BaseAgentWithRecAndSum(
         if isinstance(tool_schema, str):
             tool_schema = tool_schema.replace('{', '[').replace('}', ']')
 
-        tool_args_recommend_prompt = ALL_TOOLS[current_step_tool_name].get(
+        canonical_tool = (
+            normalize_tool_name_to_canonical(current_step_tool_name)
+            or current_step_tool_name
+        )
+        tool_args_recommend_prompt = ALL_TOOLS.get(canonical_tool, {}).get(
             'args_setting', ''
         )
 
@@ -338,8 +345,12 @@ class BaseAgentWithRecAndSum(
         yield update_state_event(ctx, state_delta={'matmaster_flow_active': None})
 
         # TODO: needs a better way to handle customized summary prompt
-        if ALL_TOOLS[current_step_tool_name].get('summary_prompt') is not None:
-            custom_prompt = ALL_TOOLS[current_step_tool_name].get('summary_prompt')
+        canonical_tool = (
+            normalize_tool_name_to_canonical(current_step_tool_name)
+            or current_step_tool_name
+        )
+        if ALL_TOOLS.get(canonical_tool, {}).get('summary_prompt') is not None:
+            custom_prompt = ALL_TOOLS[canonical_tool].get('summary_prompt')
             self.summary_agent.instruction = (
                 f"{custom_prompt}\n\n{get_vocabulary_enforce_prompt()}"
             )
