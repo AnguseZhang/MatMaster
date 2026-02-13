@@ -1,7 +1,10 @@
 import copy
 import json
 import logging
-from asyncio import CancelledError
+import os
+import sys
+from asyncio import CancelledError, to_thread
+from pathlib import Path
 from typing import AsyncGenerator
 
 from google.adk.agents import InvocationContext, LlmAgent
@@ -98,6 +101,9 @@ from agents.matmaster_agent.flow_agents.thinking_agent.callback import (
     filter_thinking_llm_contents,
 )
 from agents.matmaster_agent.flow_agents.thinking_agent.constant import THINKING_AGENT
+from agents.matmaster_agent.flow_agents.tool_name_utils import (
+    normalize_tool_name_to_canonical,
+)
 from agents.matmaster_agent.flow_agents.utils import (
     check_plan,
     get_tools_list,
@@ -158,6 +164,95 @@ from agents.matmaster_agent.utils.sanitize_braces import sanitize_braces
 logger = logging.getLogger(__name__)
 logger.addFilter(PrefixFilter(MATMASTER_AGENT_NAME))
 logger.setLevel(logging.INFO)
+
+DEFAULT_RAG_ROOT_DIR = Path(
+    os.getenv(
+        "MATMASTER_RAG_ROOT_DIR",
+        str(Path(__file__).resolve().parents[3] / "rag"),
+    )
+).resolve()
+DEFAULT_RAG_SETTINGS_PATH = Path(
+    os.getenv(
+        "MATMASTER_RAG_SETTINGS_PATH",
+        str(DEFAULT_RAG_ROOT_DIR / "settings.yaml"),
+    )
+).resolve()
+
+
+def rag_result_to_multi_plans(parsed_data: dict) -> dict:
+    """把 rag parsed_data 适配为 flow 所需 multi_plans 结构。"""
+    intro = parsed_data.get('intro', '') if isinstance(parsed_data, dict) else ''
+    overall = parsed_data.get('overall', '') if isinstance(parsed_data, dict) else ''
+    raw_plans = parsed_data.get('plans', []) if isinstance(parsed_data, dict) else []
+    plans: list[dict] = []
+
+    for index, raw_plan in enumerate(raw_plans, start=1):
+        if not isinstance(raw_plan, dict):
+            continue
+
+        raw_steps = raw_plan.get('steps', [])
+        mapped_steps = []
+        total_steps = 0
+        real_tool_steps = 0
+        for raw_step in raw_steps:
+            if not isinstance(raw_step, dict):
+                continue
+            total_steps += 1
+            raw_tool_name = raw_step.get('tool_name')
+            if raw_tool_name:
+                real_tool_steps += 1
+
+            step_description = (
+                raw_step.get('step_description')
+                or raw_step.get('description')
+                or ''
+            )
+            canonical_tool = (
+                (normalize_tool_name_to_canonical(raw_tool_name) or raw_tool_name)
+                if raw_tool_name
+                else None
+            )
+            mapped_steps.append(
+                {
+                    'tool_name': canonical_tool or 'llm_tool',
+                    'step_description': step_description,
+                    'feasibility': raw_step.get('feasibility', ''),
+                    'status': raw_step.get('status') or 'plan',
+                }
+            )
+
+        if total_steps == 0:
+            feasibility = 'null'
+        elif real_tool_steps == 0:
+            feasibility = 'null'
+        elif real_tool_steps < total_steps:
+            feasibility = 'part'
+        else:
+            feasibility = 'full'
+
+        raw_plan_description = (
+            raw_plan.get('plan_description')
+            or raw_plan.get('strategy')
+            or f'方案 {index}'
+        )
+        plan_description = str(raw_plan_description)
+        if not plan_description.startswith(f'方案 {index}：'):
+            plan_description = f'方案 {index}：{plan_description}'
+
+        plans.append(
+            {
+                'plan_id': raw_plan.get('plan_id', f'plan_{index}'),
+                'plan_description': plan_description,
+                'steps': mapped_steps,
+                'feasibility': feasibility,
+            }
+        )
+
+    return {
+        'intro': intro,
+        'plans': plans,
+        'overall': overall,
+    }
 
 
 class MatMasterFlowAgent(LlmAgent):
@@ -338,7 +433,8 @@ class MatMasterFlowAgent(LlmAgent):
             tool_name = step.get('tool_name')
             if not tool_name:
                 continue
-            belonging_agent = ALL_TOOLS.get(tool_name, {}).get('belonging_agent')
+            canonical = normalize_tool_name_to_canonical(tool_name) or tool_name
+            belonging_agent = ALL_TOOLS.get(canonical, {}).get('belonging_agent')
             if belonging_agent and belonging_agent not in agent_names:
                 agent_names.append(belonging_agent)
 
@@ -488,10 +584,6 @@ class MatMasterFlowAgent(LlmAgent):
     async def _run_plan_make_agent(
         self,
         ctx: InvocationContext,
-        UPDATE_USER_CONTENT,
-        TOOLCHAIN_EXAMPLES_PROMPT,
-        *,
-        skip_thinking: bool = False,
     ) -> AsyncGenerator[Event, None]:
         # 制定计划
         if check_plan(ctx) == FlowStatusEnum.FAILED:
@@ -499,30 +591,12 @@ class MatMasterFlowAgent(LlmAgent):
         else:
             plan_title = i18n.t('PlanMake')
 
-        scenes = ctx.session.state['scenes']
-        available_tools = get_tools_list(ctx, scenes)
-        if not available_tools:
-            available_tools = ALL_AGENT_TOOLS_LIST
-        available_tools_with_info = {
-            item: {
-                'scene': ALL_TOOLS[item]['scene'],
-                'description': ALL_TOOLS[item]['description'],
-            }
-            for item in available_tools
-        }
-        available_tools_with_info_str = '\n'.join(
-            [
-                f"{key}\n    scene: {', '.join(value['scene'])}\n    description: {value['description']}"
-                for key, value in available_tools_with_info.items()
-            ]
-        )
-        query_for_memory = ctx.session.state.get('expand', {}).get(
-            'update_user_content', ''
-        ) or (
+        query_for_memory = (
             ctx.user_content.parts[0].text
             if ctx.user_content and ctx.user_content.parts
             else ''
         )
+        query_for_memory = query_for_memory.strip()
         short_term_memory_block = await format_short_term_memory(
             query_text=query_for_memory,
             session_id=ctx.session.id,
@@ -547,105 +621,43 @@ class MatMasterFlowAgent(LlmAgent):
         else:
             session_file_summary = 'Session has uploaded file(s): no.'
 
-        expand_state = ctx.session.state.get('expand', {})
-        original_query = expand_state.get('origin_user_content') or (
-            ctx.user_content.parts[0].text
-            if ctx.user_content and ctx.user_content.parts
-            else ''
-        )
-        expanded_query = expand_state.get('update_user_content', '')
+        rag_root_dir = DEFAULT_RAG_ROOT_DIR
+        rag_settings_path = DEFAULT_RAG_SETTINGS_PATH
+        if str(rag_root_dir) not in sys.path:
+            sys.path.insert(0, str(rag_root_dir))
 
-        # Thinking: skip for "query job status only" (e.g. 查看任务状态); run otherwise
-        thinking_text = ''
-        if not skip_thinking:
-            try:
-                for _thinking_ui_event in context_function_event(
-                    ctx,
-                    self.name,
-                    MATMASTER_THINKING_UI,
-                    None,
-                    ModelRole,
-                    {
-                        'matmaster_thinking_ui_args': json.dumps(
-                            {
-                                'title': '正在思考',
-                                'status': 'start',
-                            }
-                        )
-                    },
-                ):
-                    yield _thinking_ui_event
+        from make_plan_rag import run_make_plan_rag
 
-                self._thinking_agent.set_thinking_params(
-                    available_tools_with_info_str,
-                    session_file_summary,
-                    original_query,
-                    expanded_query,
-                    short_term_memory=short_term_memory_block,
-                )
-                last_full_text = ''
-                async for thinking_event in self._thinking_agent.run_async(ctx):
-                    yield thinking_event
-                    if (
-                        not getattr(thinking_event, 'partial', True)
-                        and getattr(thinking_event, 'content', None)
-                        and getattr(thinking_event.content, 'parts', None)
-                    ):
-                        parts_text = ''.join(
-                            p.text or ''
-                            for p in thinking_event.content.parts
-                            if getattr(p, 'text', None)
-                        )
-                        if parts_text.strip():
-                            last_full_text = parts_text.strip()
-                thinking_text = (last_full_text or '').strip()
-                if (
-                    getattr(self._thinking_agent, '_last_thinking_text', None)
-                    is not None
-                ):
-                    thinking_text = self._thinking_agent._last_thinking_text
-                logger.info(
-                    f'{ctx.session.id} reasoning_agent result length={len(thinking_text)}, '
-                    f'preview={repr(thinking_text[:300]) if thinking_text else "empty"}'
-                )
-                for _thinking_ui_event in context_function_event(
-                    ctx,
-                    self.name,
-                    MATMASTER_THINKING_UI,
-                    None,
-                    ModelRole,
-                    {
-                        'matmaster_thinking_ui_args': json.dumps(
-                            {
-                                'title': '已思考',
-                                'status': 'end',
-                            }
-                        )
-                    },
-                ):
-                    yield _thinking_ui_event
-            except Exception as e:
-                logger.warning(
-                    f'{ctx.session.id} reasoning_agent failed: {e}, proceed without thinking'
-                )
-        else:
-            logger.info(
-                f'{ctx.session.id} skip reasoning_agent (query_job_status_only)'
+        rag_result = None
+        rag_errors = []
+        rag_memory_context_parts = []
+        if short_term_memory_block:
+            rag_memory_context_parts.append(short_term_memory_block)
+        if session_file_summary:
+            rag_memory_context_parts.append(session_file_summary)
+        rag_memory_context = '\n\n'.join(rag_memory_context_parts)
+        for _ in range(2):
+            rag_result = await to_thread(
+                run_make_plan_rag,
+                mode='default',
+                query=query_for_memory,
+                root_dir=rag_root_dir,
+                memory_context=rag_memory_context,
+                settings_path=rag_settings_path,
+            )
+            if rag_result.is_valid and isinstance(rag_result.parsed_data, dict):
+                break
+            rag_errors = rag_result.errors
+
+        if rag_result is None or not rag_result.is_valid:
+            raise RuntimeError(
+                f'{ctx.session.id} rag make plan failed: {rag_errors}'
             )
 
-        self.plan_make_agent.instruction = get_plan_make_instruction(
-            available_tools_with_info_str
-            + UPDATE_USER_CONTENT
-            + TOOLCHAIN_EXAMPLES_PROMPT,
-            short_term_memory=short_term_memory_block,
-            thinking_context=thinking_text,
-            session_file_summary=session_file_summary,
-        )
-        self.plan_make_agent.output_schema = create_dynamic_multi_plans_schema(
-            available_tools
-        )
-        async for plan_event in self.plan_make_agent.run_async(ctx):
-            yield plan_event
+        update_multi_plans = rag_result_to_multi_plans(rag_result.parsed_data)
+        if not update_multi_plans.get('plans'):
+            raise RuntimeError(f'{ctx.session.id} rag make plan empty plans')
+        yield update_state_event(ctx, state_delta={'multi_plans': update_multi_plans})
 
         # 记忆写入：用 memory_writer_agent 从当前请求和计划提炼 insights，写入 kernel（不向用户展示）
         plan_info = ctx.session.state.get(MULTI_PLANS) or {}
@@ -662,9 +674,9 @@ class MatMasterFlowAgent(LlmAgent):
                 )
                 parts.append(f"方案{i + 1}摘要: {desc}\n步骤: {steps_brief}")
             plan_intro = '\n\n'.join(parts)
-        is_long_context = len(UPDATE_USER_CONTENT) >= LONG_CONTEXT_THRESHOLD
+        is_long_context = len(query_for_memory) >= LONG_CONTEXT_THRESHOLD
         self.memory_writer_agent.instruction = get_memory_writer_instruction(
-            UPDATE_USER_CONTENT, plan_intro, is_long_context=is_long_context
+            query_for_memory, plan_intro, is_long_context=is_long_context
         )
         async for _ in self.memory_writer_agent.run_async(ctx):
             pass
@@ -819,9 +831,11 @@ class MatMasterFlowAgent(LlmAgent):
             plan_steps = ctx.session.state['plan'].get('steps', [])
             tool_count = sum(1 for step in plan_steps if step.get('tool_name'))
 
+            first_tool = plan_steps[0].get('tool_name')
+            canonical_first = normalize_tool_name_to_canonical(first_tool) or first_tool
             is_async_agent = issubclass(
                 AGENT_CLASS_MAPPING[
-                    ALL_TOOLS[plan_steps[0]['tool_name']]['belonging_agent']
+                    ALL_TOOLS[canonical_first]['belonging_agent']
                 ],
                 BaseAsyncJobAgent,
             )
@@ -967,50 +981,17 @@ class MatMasterFlowAgent(LlmAgent):
     async def _run_research_flow(
         self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
-        # 先取短期记忆和会话已有文件，再扩写，避免第二步仍从头 expand（如“第一步的Fe，扩胞到20A”只做扩胞）
-        raw_user_text = ctx.user_content.parts[0].text if ctx.user_content.parts else ''
-        short_term_memory_block = await format_short_term_memory(
-            raw_user_text, ctx.session.id
-        )
-        session_files = await get_session_files(ctx.session.id)
-        session_file_summary = '\n'.join(session_files) if session_files else ''
-        # 扩写用户问题（带记忆 + 会话文件，延续上一步时只 expand 新步骤）
-        async for _expand_event in self._run_expand_agent(
-            ctx,
-            short_term_memory_block=short_term_memory_block,
-            session_file_summary=session_file_summary,
-        ):
-            yield _expand_event
-
-        # 构造 UPDATE_USER_CONTENT, SCENE_EXAMPLES_PROMPT, TOOLCHAIN_EXAMPLES_PROMPT
-        UPDATE_USER_CONTENT, SCENE_EXAMPLES_PROMPT, TOOLCHAIN_EXAMPLES_PROMPT = (
-            await self._build_icl_prompt(ctx)
-        )
-
-        # 划分问题场景
-        async for _scene_event in self._run_scene_agent(
-            ctx, UPDATE_USER_CONTENT, SCENE_EXAMPLES_PROMPT
-        ):
-            yield _scene_event
-
         # 清空 Plan 和 MULTI_PLANS
         if check_plan(ctx) == FlowStatusEnum.COMPLETE:
             yield update_state_event(ctx, state_delta={PLAN: {}, MULTI_PLANS: {}})
 
         # 制定计划（1. 无计划；2. 计划已完成；3. 计划失败；4. 用户未确认计划）
-        # 仅查询任务状态时跳过 thinking（查任务状态不 thinking）
-        skip_thinking = scenes_contain_query_job_status(ctx)
         if check_plan(ctx) in [
             FlowStatusEnum.NO_PLAN,
             FlowStatusEnum.COMPLETE,
             FlowStatusEnum.FAILED,
         ] or not is_plan_confirmed(ctx):
-            async for _plan_make_event in self._run_plan_make_agent(
-                ctx,
-                UPDATE_USER_CONTENT,
-                TOOLCHAIN_EXAMPLES_PROMPT,
-                skip_thinking=skip_thinking,
-            ):
+            async for _plan_make_event in self._run_plan_make_agent(ctx):
                 yield _plan_make_event
 
         # 从 MultiPlans 中选择某个计划

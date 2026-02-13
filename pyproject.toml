@@ -21,7 +21,16 @@ dependencies = [
     "deepdiff>=8.6.1",
     "fastmcp>=2.13.0.2",
     "mcp==1.22.0",
+    # RAG / graphrag (rag 目录 run_make_plan 等)
+    "graphrag==2.7.0",
+    "pyyaml>=6.0",
+    "openai>=1.0.0",
+    "pydantic>=2.0",
 ]
+
+# 首次或清锁后需执行: uv sync --prerelease=allow（graphrag 与 fastmcp 传递依赖冲突，需预发布版 graspologic 解析）
+[tool.uv]
+prerelease = "allow"
 
 [build-system]
 requires = ["hatchling"]
