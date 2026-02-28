@@ -1,8 +1,13 @@
-from agents.matmaster_agent.constant import CURRENT_ENV
+import copy
+
+from agents.matmaster_agent.constant import CURRENT_ENV, BohriumStorge, DFlowExecutor
 
 STRUCTURE_SEARCH_AGENT_NAME = 'structure_search_agent'
 
 if CURRENT_ENV in ['test', 'uat']:
-    STRUCTURE_SEARCH_URL = 'http://chvz1424099.bohrium.tech:50001/mcp'
+    STRUCTURE_SEARCH_URL = 'http://chvz1424099.bohrium.tech:50002/mcp'
 else:
-    STRUCTURE_SEARCH_URL = 'http://chvz1424099.bohrium.tech:50002/mcp?token=eGdk3puy52InRnuOuEbJdGACkos34rSOluFbQqL1HDQ'
+    STRUCTURE_SEARCH_URL = 'http://chvz1424099.bohrium.tech:50001/mcp'
+
+STRUCTURE_SEARCH_EXECUTOR = copy.deepcopy(DFlowExecutor)
+STRUCTURE_SEARCH_STORAGE = copy.deepcopy(BohriumStorge)
