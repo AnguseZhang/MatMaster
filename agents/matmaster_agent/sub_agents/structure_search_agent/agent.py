@@ -10,6 +10,8 @@ from agents.matmaster_agent.sub_agents.MrDice_agent.constant import MrDice_Agent
 from agents.matmaster_agent.sub_agents.structure_search_agent.constant import (
     STRUCTURE_SEARCH_AGENT_NAME,
     STRUCTURE_SEARCH_URL,
+    STRUCTURE_SEARCH_EXECUTOR,
+    STRUCTURE_SEARCH_STORAGE
 )
 
 mcp_params = StreamableHTTPServerParams(
@@ -17,8 +19,8 @@ mcp_params = StreamableHTTPServerParams(
 )
 structure_search_toolset = CalculationMCPToolset(
     connection_params=mcp_params,
-    storage=BohriumStorge,
-    executor=LOCAL_EXECUTOR,
+    storage=STRUCTURE_SEARCH_STORAGE,
+    executor=STRUCTURE_SEARCH_EXECUTOR,
 )
 
 
