@@ -15,7 +15,7 @@ ABACUS_AGENT_NAME = 'ABACUS_calculation_agent'
 ABACUS_CALCULATOR_BOHRIUM_EXECUTOR = copy.deepcopy(BohriumExecutor)
 ABACUS_CALCULATOR_BOHRIUM_EXECUTOR['machine']['remote_profile'][
     'image_address'
-] = 'registry.dp.tech/dptech/dp/native/prod-22618/abacusagenttools-matmaster-new-tool:v0.2.3'
+] = 'registry.dp.tech/dptech/dp/native/prod-22618/abacusagenttools-matmaster-out-log:v0.2.3'
 ABACUS_CALCULATOR_BOHRIUM_EXECUTOR['machine']['remote_profile'][
     'machine_type'
 ] = 'c32_m128_cpu'
